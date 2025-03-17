@@ -82,13 +82,13 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             multimedia: {
                 type: 'graph',
                 data: {
-                    chartData: [
+                    items: [
                         { name: 'Cost', value: 750000 },
                         { name: 'Time', value: 90 }
                     ]
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('perform bid document analysis')) {
@@ -96,7 +96,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'Which project would you like to analyze?',
             suggestions: ['Project Alpha', 'Project Beta', 'Project Gamma'],
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -127,7 +127,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                     url: 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('search suppliers')) {
@@ -135,7 +135,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'What product are you looking for?',
             suggestions: ['Server Racks', 'Cooling Systems', 'Power Units'],
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -168,13 +168,13 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             multimedia: {
                 type: 'graph',
                 data: {
-                    chartData: [
+                    items: [
                         { name: 'Hardware', value: 900000 },
                         { name: 'Services', value: 600000 }
                     ]
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('query database')) {
@@ -182,7 +182,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'What would you like to know from the database?',
             suggestions: ['Total spend Q1 2025', 'Vendor count', 'Category breakdown'],
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -197,13 +197,13 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                     url: 'https://via.placeholder.com/1200x800?text=Detailed+Procurement+Process+Diagram'
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('procurement process')) {
         return {
             sender: 'bot',
-            text: 'Here's an overview from the Knowledge Base: ![Procurement Process Diagram](https://via.placeholder.com/600x400?text=Procurement+Process)',
+            text: 'Heres an overview from the Knowledge Base: ![Procurement Process Diagram](https://via.placeholder.com/600x400?text=Procurement+Process)',
             report: {
                 title: 'Procurement Process Overview',
                 content: `
@@ -220,7 +220,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['AseekBot Knowledge Base - Proc Policies', 'https://quip-amazon.com/x4hTAVoyLqJQ'],
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('test image')) {
@@ -233,7 +233,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                     url: 'https://via.placeholder.com/800x600?text=Test+Image'
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -243,7 +243,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'Please provide ticket details via the Create Ticket button.',
             suggestions: [],
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -279,10 +279,10 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             multimedia: {
                 type: 'graph',
                 data: {
-                    chartData: files.map((f, i) => ({ name: f.name, value: 800000 + i * 400000 }))
+                    items: files.map((f, i) => ({ name: f.name, value: 800000 + i * 400000 }))
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
@@ -316,14 +316,14 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             multimedia: {
                 type: 'graph',
                 data: {
-                    chartData: [
+                    items: [
                         { name: 'Supplier A', price: 5000, leadTime: 10 },
                         { name: 'Supplier B', price: 4800, leadTime: 12 },
                         { name: 'Supplier C', price: 5200, leadTime: 8 }
                     ]
                 }
             },
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
     if (msg.includes('compare suppliers')) {
@@ -331,17 +331,15 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'Which product would you like to compare suppliers for?',
             suggestions: ['Server Racks', 'Cooling Systems', 'Power Units'],
-            timestamp: '',
+            timestamp: new Date().toISOString(),
         };
     }
 
     // Fallback response with ticket trigger properties
-    // Added triggerTicket and context properties to indicate that the unsatisfactory bot response should trigger the ticket form.
     return {
         sender: 'bot',
         text: "I didn't quite catch that. Try a quick link or clarify your request! Alternatively, I can create a ticket for further assistance.",
-        timestamp: '',
-        triggerTicket: true,
-        context: userMessage
+        timestamp: new Date().toISOString(),
+        triggerTicket: true
     };
 }
