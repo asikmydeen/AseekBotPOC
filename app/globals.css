@@ -1,0 +1,95 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply font-sans;
+}
+
+/* Add custom table styling */
+.prose table {
+  @apply border-collapse w-full my-4;
+}
+
+.prose thead {
+  @apply bg-opacity-70;
+}
+
+.prose th {
+  @apply p-2 border text-left font-semibold;
+}
+
+.prose td {
+  @apply p-2 border;
+}
+
+/* Dark mode specific styles */
+.dark .prose th {
+  @apply border-gray-600 bg-gray-700 text-gray-200;
+}
+
+.dark .prose td {
+  @apply border-gray-600 text-gray-200;
+}
+
+/* Light mode specific styles */
+.light .prose th {
+  @apply border-gray-300 bg-gray-200 text-gray-800;
+}
+
+.light .prose td {
+  @apply border-gray-300 text-gray-800;
+}
+
+/* Sidebar section dividers */
+.sidebar-section {
+  @apply py-2 border-b border-opacity-50;
+}
+
+.dark .sidebar-section {
+  @apply border-gray-700;
+}
+
+.light .sidebar-section {
+  @apply border-gray-300;
+}
+
+.sidebar-section:last-child {
+  @apply border-b-0;
+}
+
+/* Active navigation state */
+.active {
+  @apply bg-blue-500 bg-opacity-20 border-l-4 border-blue-500 font-semibold;
+}
+
+.dark .active {
+  @apply bg-blue-900 bg-opacity-30;
+}
+
+/* Sidebar container styling for layering */
+.sidebar-container {
+  @apply shadow-md;
+}
+
+.dark .sidebar-container {
+  @apply bg-gray-900 shadow-lg shadow-gray-950;
+}
+
+.light .sidebar-container {
+  @apply bg-gray-50 shadow-md shadow-gray-200;
+}
+
+/* Chat sidebar specific styling */
+.chat-sidebar {
+  @apply z-10;
+}
+
+.dark .chat-sidebar {
+  @apply bg-gray-800;
+}
+
+.light .chat-sidebar {
+  @apply bg-white;
+}
