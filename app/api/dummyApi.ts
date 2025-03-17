@@ -79,7 +79,15 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['https://quip-amazon.com/qSO9A69KUBMo', 'AseekBot Knowledge Base - Bid Docs'],
             },
-            multimedia: { type: 'graph', data: [{ name: 'Cost', value: 750000 }, { name: 'Time', value: 90 }] },
+            multimedia: {
+                type: 'graph',
+                data: {
+                    chartData: [
+                        { name: 'Cost', value: 750000 },
+                        { name: 'Time', value: 90 }
+                    ]
+                }
+            },
             timestamp: '',
         };
     }
@@ -113,7 +121,12 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['AseekBot Knowledge Base - Vendor Data', 'https://w.amazon.com/bin/view/BSFT-Ember/Amo-Bot/Design/'],
             },
-            multimedia: { type: 'video', data: 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4' },
+            multimedia: {
+                type: 'video',
+                data: {
+                    url: 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
+                }
+            },
             timestamp: '',
         };
     }
@@ -152,7 +165,15 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['AseekBot Redshift Data Warehouse', 'https://docs.aws.amazon.com/redshift/latest/mgmt/querying-data.html'],
             },
-            multimedia: { type: 'graph', data: [{ name: 'Hardware', value: 900000 }, { name: 'Services', value: 600000 }] },
+            multimedia: {
+                type: 'graph',
+                data: {
+                    chartData: [
+                        { name: 'Hardware', value: 900000 },
+                        { name: 'Services', value: 600000 }
+                    ]
+                }
+            },
             timestamp: '',
         };
     }
@@ -170,14 +191,19 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
         return {
             sender: 'bot',
             text: 'Here is the detailed procurement process diagram.',
-            multimedia: { type: 'image', data: 'https://via.placeholder.com/1200x800?text=Detailed+Procurement+Process+Diagram' },
+            multimedia: {
+                type: 'image',
+                data: {
+                    url: 'https://via.placeholder.com/1200x800?text=Detailed+Procurement+Process+Diagram'
+                }
+            },
             timestamp: '',
         };
     }
     if (msg.includes('procurement process')) {
         return {
             sender: 'bot',
-            text: 'Here’s an overview from the Knowledge Base: ![Procurement Process Diagram](https://via.placeholder.com/600x400?text=Procurement+Process)',
+            text: 'Here's an overview from the Knowledge Base: ![Procurement Process Diagram](https://via.placeholder.com/600x400?text=Procurement+Process)',
             report: {
                 title: 'Procurement Process Overview',
                 content: `
@@ -201,7 +227,12 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
         return {
             sender: 'bot',
             text: 'Here is a test image loaded automatically.',
-            multimedia: { type: 'image', data: 'https://via.placeholder.com/800x600?text=Test+Image' },
+            multimedia: {
+                type: 'image',
+                data: {
+                    url: 'https://via.placeholder.com/800x600?text=Test+Image'
+                }
+            },
             timestamp: '',
         };
     }
@@ -245,7 +276,12 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['AseekBot Knowledge Base - Bid Analysis', 'https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html'],
             },
-            multimedia: { type: 'graph', data: files.map((f, i) => ({ name: f.name, value: 800000 + i * 400000 })) },
+            multimedia: {
+                type: 'graph',
+                data: {
+                    chartData: files.map((f, i) => ({ name: f.name, value: 800000 + i * 400000 }))
+                }
+            },
             timestamp: '',
         };
     }
@@ -277,11 +313,16 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
                 `,
                 citations: ['AseekBot Knowledge Base - Vendor Metrics', 'https://w.amazon.com/bin/view/BSFT-Ember/Amo-Bot/Design/'],
             },
-            multimedia: { type: 'graph', data: [
-                { name: 'Supplier A', price: 5000, leadTime: 10 },
-                { name: 'Supplier B', price: 4800, leadTime: 12 },
-                { name: 'Supplier C', price: 5200, leadTime: 8 },
-            ] },
+            multimedia: {
+                type: 'graph',
+                data: {
+                    chartData: [
+                        { name: 'Supplier A', price: 5000, leadTime: 10 },
+                        { name: 'Supplier B', price: 4800, leadTime: 12 },
+                        { name: 'Supplier C', price: 5200, leadTime: 8 }
+                    ]
+                }
+            },
             timestamp: '',
         };
     }
@@ -298,7 +339,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
     // Added triggerTicket and context properties to indicate that the unsatisfactory bot response should trigger the ticket form.
     return {
         sender: 'bot',
-        text: "I didn’t quite catch that. Try a quick link or clarify your request! Alternatively, I can create a ticket for further assistance.",
+        text: "I didn't quite catch that. Try a quick link or clarify your request! Alternatively, I can create a ticket for further assistance.",
         timestamp: '',
         triggerTicket: true,
         context: userMessage

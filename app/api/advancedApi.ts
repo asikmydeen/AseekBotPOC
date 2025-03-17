@@ -227,5 +227,3 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     throw new Error('Failed to delete file. Please try again.');
   }
 }
-
-// Helper functions are no longer needed as they are now implemented in the API routes
