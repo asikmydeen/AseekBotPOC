@@ -148,16 +148,28 @@ export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [activeChat]);
 
-    // Delete a chat from history
     const removeChatFromHistory = useCallback((chatId: string) => {
         deleteChat(chatId);
         setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
 
-        // If active chat is deleted, create a new one
+        // If active chat is deleted, set a new active chat
         if (activeChat.id === chatId) {
-            createChat();
+            const remainingChats = chatHistory.filter(chat => chat.id !== chatId);
+            if (remainingChats.length > 0) {
+                // Set the most recent chat as active
+                const mostRecent = [...remainingChats].sort(
+                    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                )[0];
+                setActiveChat(mostRecent);
+            } else {
+                // If no chats left, create a new one
+                const newChat = createNewChat();
+                saveChat(newChat);
+                setChatHistory([newChat]);
+                setActiveChat(newChat);
+            }
         }
-    }, [activeChat, createChat]);
+    }, [activeChat, chatHistory, createChat]);
 
     // Rename a chat in history
     const renameChatHistory = useCallback((chatId: string, newTitle: string) => {
