@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     // Build the command input
     const commandInput: CommandInput = {
       agentId: '7FDALECWCL',
-      agentAliasId: '11OBDAVIQQ',
+      agentAliasId: 'CHKUTAAPUZ',
       sessionId,
       inputText: prompt,
     };
