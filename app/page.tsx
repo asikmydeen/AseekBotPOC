@@ -1,8 +1,9 @@
 // app/page.tsx
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import AppSidebar from './components/AppSidebar';
+import { useChatHistory } from './context/ChatHistoryContext';
 
 // Dynamically import ChatInterface with SSR disabled
 const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').then(mod => mod.default), {
@@ -10,15 +11,22 @@ const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').th
   loading: () => <div className="flex items-center justify-center h-screen">Loading chat interface...</div>
 });
 
-export default function Home() {
+function ChatApp() {
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [showDocumentAnalysisPrompt, setShowDocumentAnalysisPrompt] = useState<boolean>(false);
-  const [messages, setMessages] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Create ref without type definition initially
-  const chatInterfaceRef = useRef(null);
+  // Use ref to track if we're in the middle of a message update
+  const isUpdatingRef = useRef(false);
+  const lastMessagesRef = useRef<string>('');
+
+  // Access chat history context
+  const {
+    activeChat,
+    updateChatMessages,
+    isChatLoading
+  } = useChatHistory();
 
   const handleDocumentAnalysis = () => {
     setShowDocumentAnalysisPrompt(true);
@@ -29,18 +37,15 @@ export default function Home() {
   };
 
   // Create a handler for the triggerMessage that ensures document analysis is cleared
-  const handleTriggerMessage = (message) => {
-    // Clear any active document analysis before triggering new message
+  const handleTriggerMessage = (message: string) => {
     clearDocumentAnalysisPrompt();
-    // Set the trigger message
     setTriggerMessage(message);
   };
 
-  const scrollToMessage = (timestamp) => {
+  const scrollToMessage = (timestamp: string) => {
     const messageElement = document.getElementById(`message-${timestamp}`);
     if (messageElement) {
       messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Highlight the message briefly
       messageElement.classList.add('highlight-message');
       setTimeout(() => {
         messageElement.classList.remove('highlight-message');
@@ -49,54 +54,100 @@ export default function Home() {
   };
 
   // Handle file click - could open in a new tab or in a viewer component
-  const handleFileClick = (fileUrl) => {
+  const handleFileClick = useCallback((fileUrl: string) => {
     if (fileUrl) {
       window.open(fileUrl, '_blank');
     }
-  };
+  }, []);
 
   // When a prompt is clicked, set it as a trigger message
-  const handlePromptClick = (prompt) => {
+  const handlePromptClick = useCallback((prompt: string) => {
     handleTriggerMessage(prompt);
-  };
+  }, []);
 
   // This function will be passed to the ChatInterface to sync messages
-  const syncMessages = (newMessages) => {
-    setMessages(newMessages);
-  };
+  // with debouncing to prevent update loops
+  const syncMessages = useCallback((newMessages: any[]) => {
+    if (!newMessages || !Array.isArray(newMessages) || isUpdatingRef.current) {
+      return;
+    }
+
+    // Compare messages to avoid unnecessary updates
+    const messagesString = JSON.stringify(newMessages);
+    if (messagesString === lastMessagesRef.current) {
+      return;
+    }
+
+    // Set updating flag and message ref
+    isUpdatingRef.current = true;
+    lastMessagesRef.current = messagesString;
+
+    // Use setTimeout to break potential update cycles
+    setTimeout(() => {
+      try {
+        updateChatMessages(newMessages);
+      } catch (error) {
+        console.error("Error updating chat messages:", error);
+      } finally {
+        // Reset updating flag after a delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
+      }
+    }, 0);
+  }, [updateChatMessages]);
 
   // This function will be passed to the ChatInterface to sync uploaded files
-  const syncUploadedFiles = (newFiles) => {
-    setUploadedFiles(newFiles);
-  };
+  const syncUploadedFiles = useCallback((newFiles: any[]) => {
+    if (newFiles && Array.isArray(newFiles)) {
+      setUploadedFiles(newFiles);
+    }
+  }, []);
 
   // Toggle sidebar and track its state
-  const toggleSidebar = (isOpen) => {
+  const toggleSidebar = useCallback((isOpen: boolean) => {
     setSidebarOpen(isOpen);
-  };
+  }, []);
+
+  // Reset lastMessagesRef when active chat changes
+  useEffect(() => {
+    if (activeChat?.id) {
+      lastMessagesRef.current = JSON.stringify(activeChat.messages || []);
+    }
+  }, [activeChat?.id]);
 
   return (
     <div className="flex h-screen w-full">
       <AppSidebar
-        messages={messages}
-        filteredMessages={messages}
         uploadedFiles={uploadedFiles}
-        onHistoryClick={scrollToMessage}
-        onPinnedClick={scrollToMessage}
         onFileClick={handleFileClick}
         onPromptClick={handlePromptClick}
         onToggle={toggleSidebar}
       />
       <div className={`flex-1 h-screen ${sidebarOpen ? 'ml-[300px]' : 'ml-[60px]'} transition-all duration-300`}>
-        <ChatInterface
-          triggerMessage={triggerMessage}
-          onTriggerHandled={() => setTriggerMessage(null)}
-          showDocumentAnalysisPrompt={showDocumentAnalysisPrompt}
-          clearDocumentAnalysisPrompt={clearDocumentAnalysisPrompt}
-          onMessagesUpdate={syncMessages}
-          onFilesUpdate={syncUploadedFiles}
-        />
+        {isChatLoading ? (
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <ChatInterface
+            key={activeChat?.id || 'default'} // This ensures the component is re-mounted when chat changes
+            triggerMessage={triggerMessage}
+            onTriggerHandled={() => setTriggerMessage(null)}
+            showDocumentAnalysisPrompt={showDocumentAnalysisPrompt}
+            clearDocumentAnalysisPrompt={clearDocumentAnalysisPrompt}
+            onMessagesUpdate={syncMessages}
+            onFilesUpdate={syncUploadedFiles}
+            initialMessages={activeChat?.messages || []} // Pass the active chat messages with fallback
+          />
+        )}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <ChatApp />
   );
 }

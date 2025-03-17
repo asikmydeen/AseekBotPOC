@@ -58,20 +58,22 @@ interface ChatInterfaceProps {
     clearDocumentAnalysisPrompt?: () => void;
     onMessagesUpdate?: (messages: MessageType[]) => void;
     onFilesUpdate?: (files: any[]) => void;
+    initialMessages?: MessageType[]; // New prop for loading initial messages
 }
 
-// Changed from forwardRef to regular function component to fix the error
 export default function ChatInterface({
     triggerMessage,
     onTriggerHandled,
     showDocumentAnalysisPrompt = false,
     clearDocumentAnalysisPrompt,
     onMessagesUpdate,
-    onFilesUpdate
+    onFilesUpdate,
+    initialMessages = []
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const {
         messages,
+        setMessages, // Expose setMessages to load initial messages
         sendMessage,
         isThinking,
         progress,
@@ -89,8 +91,16 @@ export default function ChatInterface({
     } = useChatMessages({
         triggerMessage,
         onTriggerHandled,
-        onMessagesUpdate
+        onMessagesUpdate,
+        initialMessages // Pass initial messages to hook
     });
+
+    // Load initial messages when they change (when switching between chats)
+    useEffect(() => {
+        if (initialMessages && initialMessages.length > 0) {
+            setMessages(initialMessages);
+        }
+    }, [initialMessages, setMessages]);
 
     // Sync messages with parent component
     useEffect(() => {

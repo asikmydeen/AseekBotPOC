@@ -1,3 +1,4 @@
+// app/hooks/useChatMessages.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
@@ -50,20 +51,31 @@ export interface MessageType {
 interface UseChatMessagesProps {
   triggerMessage: string | null;
   onTriggerHandled: () => void;
-    onMessagesUpdate?: (messages: MessageType[]) => void;
-
+  onMessagesUpdate?: (messages: MessageType[]) => void;
+  initialMessages?: MessageType[]; // New prop for initial messages
 }
 
-export default function useChatMessages({ triggerMessage, onTriggerHandled, onMessagesUpdate }: UseChatMessagesProps) {
-  const [messages, setMessages] = useState<MessageType[]>([
-    {
-      sender: 'bot',
-      text: 'Hello! I\'m AseekBot, your AI assistant. How can I help you today?',
-      timestamp: new Date().toISOString(),
-      suggestions: [        'How can you help me?'
-      ]
+export default function useChatMessages({
+  triggerMessage,
+  onTriggerHandled,
+  onMessagesUpdate,
+  initialMessages = []
+}: UseChatMessagesProps) {
+  const [messages, setMessages] = useState<MessageType[]>(() => {
+    // Initialize with default welcome message only if no initial messages
+    if (initialMessages && initialMessages.length > 0) {
+      return initialMessages;
     }
-  ]);
+    return [
+      {
+        sender: 'bot',
+        text: 'Hello! I\'m AseekBot, your AI assistant. How can I help you today?',
+        timestamp: new Date().toISOString(),
+        suggestions: ['How can you help me?']
+      }
+    ];
+  });
+
   const [isThinking, setIsThinking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,22 +86,38 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled, onMe
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateRef = useRef<string>('');
+  const isUpdatingRef = useRef<boolean>(false);
 
-   useEffect(() => {
-    if (onMessagesUpdate) {
-      onMessagesUpdate(messages);
+  // Use this effect once to set initial messages
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+      // Record current messages to avoid re-updating
+      lastUpdateRef.current = JSON.stringify(initialMessages);
+      setMessages(initialMessages);
+    }
+  }, []); // Empty dependency array to run only once
+
+  // This effect handles syncing messages with parent ONLY when they change internally
+  useEffect(() => {
+    if (onMessagesUpdate && !isUpdatingRef.current) {
+      // Only update if messages have actually changed and aren't initial messages
+      const currentMessagesStr = JSON.stringify(messages);
+      if (currentMessagesStr !== lastUpdateRef.current) {
+        lastUpdateRef.current = currentMessagesStr;
+        onMessagesUpdate(messages);
+      }
     }
   }, [messages, onMessagesUpdate]);
 
   // Filter messages based on search query
   const filteredMessages = searchQuery
     ? messages.filter(msg =>
-        msg.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        msg.report?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        msg.report?.content.toLowerCase().includes(searchQuery.toLowerCase())
+        msg.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        msg.report?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        msg.report?.content?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : messages;
-
 
   // Handle sending messages
   const sendMessage = useCallback(async (text: string, attachments?: File[]) => {
@@ -158,7 +186,18 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled, onMe
           botMessage.attachments = response.attachments;
         }
 
-        setMessages(prev => [...prev, botMessage]);
+        // Mark as updating to prevent circular updates
+        isUpdatingRef.current = true;
+        setMessages(prev => {
+          const newMessages = [...prev, botMessage];
+          // Update the lastUpdateRef to prevent unnecessary updates
+          lastUpdateRef.current = JSON.stringify(newMessages);
+          return newMessages;
+        });
+        // Reset updating flag after a short delay to allow state to settle
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
       }, 500);
     } catch (error) {
       if (progressInterval.current) {
@@ -233,24 +272,49 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled, onMe
         suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined
       };
 
-      setMessages(prev => [...prev, errorMessage]);
+      // Mark as updating to prevent circular updates
+      isUpdatingRef.current = true;
+      setMessages(prev => {
+        const newMessages = [...prev, errorMessage];
+        // Update the lastUpdateRef to prevent unnecessary updates
+        lastUpdateRef.current = JSON.stringify(newMessages);
+        return newMessages;
+      });
+      // Reset updating flag after a short delay to allow state to settle
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
     }
-  }, [messages]);  // Handle reactions to messages
+  }, [messages]);
+
+  // Handle reactions to messages
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
-    setMessages(prev =>
-      prev.map((msg, i) =>
+    isUpdatingRef.current = true;
+    setMessages(prev => {
+      const newMessages = prev.map((msg, i) =>
         i === index ? { ...msg, reaction } : msg
-      )
-    );
+      );
+      lastUpdateRef.current = JSON.stringify(newMessages);
+      return newMessages;
+    });
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 100);
   }, []);
 
   // Handle pinning messages
   const handlePinMessage = useCallback((index: number) => {
-    setMessages(prev =>
-      prev.map((msg, i) =>
+    isUpdatingRef.current = true;
+    setMessages(prev => {
+      const newMessages = prev.map((msg, i) =>
         i === index ? { ...msg, pinned: !msg.pinned } : msg
-      )
-    );
+      );
+      lastUpdateRef.current = JSON.stringify(newMessages);
+      return newMessages;
+    });
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 100);
   }, []);
 
   // Handle suggestion clicks
@@ -359,6 +423,7 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled, onMe
 
   return {
     messages,
+    setMessages,
     filteredMessages,
     sendMessage,
     isThinking,

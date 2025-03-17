@@ -13,10 +13,12 @@ import {
     MdPalette,
     MdInfoOutline,
     MdSupportAgent,
-    MdLightbulb
+    MdLightbulb,
+    MdAdd
 } from 'react-icons/md';
-import { MessageType } from './chat/ChatInterface';
 import { useTheme } from '../context/ThemeContext';
+import { useChatHistory } from '../context/ChatHistoryContext';
+import HistoryList from './chat/HistoryList';
 
 interface UploadedFile {
     name: string;
@@ -26,32 +28,23 @@ interface UploadedFile {
 }
 
 interface AppSidebarProps {
-    messages: MessageType[];
-    filteredMessages: MessageType[];
     uploadedFiles: UploadedFile[];
-    onHistoryClick: (timestamp: string) => void;
-    onPinnedClick: (timestamp: string) => void;
     onFileClick: (fileUrl: string) => void;
     onPromptClick: (prompt: string) => void;
     onToggle?: (isOpen: boolean) => void;
 }
 
 export default function AppSidebar({
-    messages,
-    filteredMessages,
     uploadedFiles,
-    onHistoryClick,
-    onPinnedClick,
     onFileClick,
     onPromptClick,
     onToggle
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const { createChat } = useChatHistory();
+
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [activeTab, setActiveTab] = useState<string>('history');
-    const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
-
-    const pinnedMessages = messages.filter(message => message.pinned);
 
     const savedPrompts = [
         { title: 'Bid Document Analysis', text: 'Perform bid document analysis for Project Alpha' },
@@ -60,11 +53,6 @@ export default function AppSidebar({
         { title: 'Query Database', text: 'Query the database for Q1 2025 spending' },
         { title: 'Create Ticket', text: 'Create a ticket for network equipment issue' }
     ];
-
-    const scrollToMessage = (timestamp: string) => {
-        setActiveMessageId(`message-${timestamp}`);
-        onHistoryClick(timestamp);
-    };
 
     const sidebarVariants = {
         open: { width: '300px', opacity: 1 },
@@ -79,6 +67,14 @@ export default function AppSidebar({
         }
     };
 
+    const handleNewChat = () => {
+        createChat();
+        if (!isOpen) {
+            setIsOpen(true);
+            if (onToggle) onToggle(true);
+        }
+        setActiveTab('history');
+    };
 
     const formatFileSize = (bytes: number): string => {
         if (bytes === 0) return '0 Bytes';
@@ -109,9 +105,19 @@ export default function AppSidebar({
             {/* Sidebar Header */}
             <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 {isOpen && (
-                    <h2 className="text-xl font-bold flex items-center">
-                        <span className="mr-2">AseekBot</span>
-                    </h2>
+                    <div className="flex items-center justify-between w-full">
+                        <h2 className="text-xl font-bold flex items-center">
+                            <span className="mr-2">AseekBot</span>
+                        </h2>
+                        <button
+                            onClick={handleNewChat}
+                            className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-800'}`}
+                            aria-label="New Chat"
+                            title="New Chat"
+                        >
+                            <MdAdd size={24} />
+                        </button>
+                    </div>
                 )}
                 <button
                     onClick={toggleSidebar}
@@ -124,22 +130,14 @@ export default function AppSidebar({
 
             {/* Sidebar Tabs */}
             {isOpen && (
-                <div className={`grid grid-cols-5 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} p-1`}>
+                <div className={`grid grid-cols-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} p-1`}>
                     <button
                         onClick={() => setActiveTab('history')}
                         className={`p-2 rounded-md flex justify-center ${activeTab === 'history' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
-                        aria-label="History"
-                        title="History"
+                        aria-label="Chat History"
+                        title="Chat History"
                     >
                         <MdHistory size={20} />
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('pinned')}
-                        className={`p-2 rounded-md flex justify-center ${activeTab === 'pinned' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
-                        aria-label="Pinned Messages"
-                        title="Pinned Messages"
-                    >
-                        <MdPushPin size={20} />
                     </button>
                     <button
                         onClick={() => setActiveTab('files')}
@@ -171,88 +169,7 @@ export default function AppSidebar({
             {/* Sidebar Content */}
             <div className="h-[calc(100vh-112px)] overflow-y-auto p-4">
                 {isOpen && activeTab === 'history' && (
-                    <div>
-                        <div className="flex items-center mb-3">
-                            <MdHistory className="mr-2" size={20} />
-                            <h3 className="font-semibold text-lg">Chat History</h3>
-                        </div>
-                        {filteredMessages.length > 0 ? (
-                            <div className="space-y-2">
-                                {filteredMessages.map((message) => (
-                                    <div
-                                        key={`history-${message.timestamp}`}
-                                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                                ? 'bg-gray-800 hover:bg-gray-700'
-                                                : 'bg-gray-100 hover:bg-gray-200'
-                                            } ${activeMessageId === `message-${message.timestamp}` ? 'border-l-4 border-blue-500' : ''}`}
-                                        onClick={() => scrollToMessage(message.timestamp)}
-                                    >
-                                        <div className="flex items-start">
-                                            <div
-                                                className={`w-2 h-2 rounded-full mt-2 mr-2 ${message.sender === 'user' ? 'bg-green-500' : 'bg-blue-500'
-                                                    }`}
-                                            ></div>
-                                            <div className="flex-1 truncate">
-                                                <p className="text-sm font-medium">
-                                                    {message.sender === 'user' ? 'You' : 'AseekBot'}
-                                                </p>
-                                                <p className="text-xs truncate">
-                                                    {message.text && message.text.length > 60
-                                                        ? `${message.text.substring(0, 60)}...`
-                                                        : message.text}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                No messages yet
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {isOpen && activeTab === 'pinned' && (
-                    <div>
-                        <div className="flex items-center mb-3">
-                            <MdPushPin className="mr-2" size={20} />
-                            <h3 className="font-semibold text-lg">Pinned Messages</h3>
-                        </div>
-                        {pinnedMessages.length > 0 ? (
-                            <div className="space-y-2">
-                                {pinnedMessages.map((message) => (
-                                    <div
-                                        key={`pinned-${message.timestamp}`}
-                                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                                ? 'bg-gray-800 hover:bg-gray-700'
-                                                : 'bg-gray-100 hover:bg-gray-200'
-                                            }`}
-                                        onClick={() => onPinnedClick(message.timestamp)}
-                                    >
-                                        <div className="flex items-start">
-                                            <div className="w-2 h-2 rounded-full mt-2 mr-2 bg-blue-500"></div>
-                                            <div className="flex-1 truncate">
-                                                <p className="text-sm font-medium">
-                                                    {message.sender === 'user' ? 'You' : 'AseekBot'}
-                                                </p>
-                                                <p className="text-xs truncate">
-                                                    {message.text && message.text.length > 60
-                                                        ? `${message.text.substring(0, 60)}...`
-                                                        : message.text}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                No pinned messages yet
-                            </p>
-                        )}
-                    </div>
+                    <HistoryList isDarkMode={isDarkMode} />
                 )}
 
                 {isOpen && activeTab === 'files' && (
@@ -267,8 +184,8 @@ export default function AppSidebar({
                                     <div
                                         key={`file-${index}`}
                                         className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                                ? 'bg-gray-800 hover:bg-gray-700'
-                                                : 'bg-gray-100 hover:bg-gray-200'
+                                            ? 'bg-gray-800 hover:bg-gray-700'
+                                            : 'bg-gray-100 hover:bg-gray-200'
                                             }`}
                                         onClick={() => file.url && onFileClick(file.url)}
                                     >
@@ -309,8 +226,8 @@ export default function AppSidebar({
                                 <div
                                     key={`prompt-${index}`}
                                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                            ? 'bg-gray-800 hover:bg-gray-700'
-                                            : 'bg-gray-100 hover:bg-gray-200'
+                                        ? 'bg-gray-800 hover:bg-gray-700'
+                                        : 'bg-gray-100 hover:bg-gray-200'
                                         }`}
                                     onClick={() => onPromptClick(prompt.text)}
                                 >
@@ -335,8 +252,8 @@ export default function AppSidebar({
                                     <button
                                         onClick={toggleTheme}
                                         className={`px-3 py-2 rounded-md flex items-center ${isDarkMode
-                                                ? 'bg-gray-700 hover:bg-gray-600'
-                                                : 'bg-white hover:bg-gray-200 border border-gray-300'
+                                            ? 'bg-gray-700 hover:bg-gray-600'
+                                            : 'bg-white hover:bg-gray-200 border border-gray-300'
                                             }`}
                                     >
                                         <MdPalette className="mr-2" />
@@ -359,14 +276,6 @@ export default function AppSidebar({
                             </div>
 
                             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                                <p className="text-sm font-medium mb-2">Help & Support</p>
-                                <button className={`w-full text-left px-3 py-2 rounded-md flex items-center ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-200 border border-gray-300'}`}>
-                                    <MdSupportAgent className="mr-2" />
-                                    <span>Contact Support</span>
-                                </button>
-                            </div>
-
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">About</p>
                                 <div className="text-xs text-gray-500">
                                     <p className="mb-1">AseekBot v1.0.0</p>
@@ -382,20 +291,20 @@ export default function AppSidebar({
             {!isOpen && (
                 <div className="flex flex-col items-center pt-4 space-y-6">
                     <button
+                        onClick={handleNewChat}
+                        className={`p-2 rounded-md ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                        aria-label="New Chat"
+                        title="New Chat"
+                    >
+                        <MdAdd size={24} />
+                    </button>
+                    <button
                         onClick={() => { setActiveTab('history'); setIsOpen(true); }}
                         className={`p-2 rounded-md ${activeTab === 'history' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
                         aria-label="History"
                         title="History"
                     >
                         <MdHistory size={24} />
-                    </button>
-                    <button
-                        onClick={() => { setActiveTab('pinned'); setIsOpen(true); }}
-                        className={`p-2 rounded-md ${activeTab === 'pinned' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
-                        aria-label="Pinned Messages"
-                        title="Pinned Messages"
-                    >
-                        <MdPushPin size={24} />
                     </button>
                     <button
                         onClick={() => { setActiveTab('files'); setIsOpen(true); }}
