@@ -13,7 +13,7 @@ const BASE_DELAY = 1000; // 1 second base delay
  * @throws The last error encountered if all retries fail
  */
 async function retryWithExponentialBackoff<T>(operation: () => Promise<T>): Promise<T> {
-  let lastError: Error;
+  let lastError: Error = new Error('Operation failed after maximum retries');
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
