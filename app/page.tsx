@@ -2,7 +2,6 @@
 "use client";
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import Sidebar from './components/Sidebar';
 
 // Dynamically import ChatInterface with SSR disabled
 const ChatInterface = dynamic(() => import('./components/chat/ChatInterface'), { ssr: false });
@@ -30,11 +29,6 @@ export default function Home() {
 
   return (
     <div className="flex h-screen w-full">
-      <Sidebar
-        onQuickLinkClick={handleTriggerMessage}
-        onDocumentAnalysis={handleDocumentAnalysis}
-        onClearDocumentAnalysis={clearDocumentAnalysisPrompt}
-      />
       <div className="flex-1 h-screen">
         <ChatInterface
           triggerMessage={triggerMessage}
