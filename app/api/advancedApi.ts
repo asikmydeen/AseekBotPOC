@@ -59,13 +59,17 @@ export async function processChatMessage(
     // Add S3 file references if attachments are present
     if (attachments && attachments.length > 0) {
       // Map file objects to the format expected by the API route
-      // The API route will transform this into the Bedrock agent format
-      // The complete UploadedFile object contains the S3 URL in the 'url' property
-      const s3Files = attachments.map(file => ({
-        name: file.name,
-        mimeType: file.type,
-        s3Url: (file as unknown as UploadedFile).url || (file as unknown as UploadedFile).fileUrl // Fallback to fileUrl if url is not available
-      }));
+      const s3Files = attachments.map(file => {
+        // Get the file with additional properties via type casting
+        const uploadedFile = file as any;
+
+        return {
+          name: file.name,
+          mimeType: file.type,
+          // Use s3Url from the file or fall back to url/fileUrl properties
+          s3Url: uploadedFile.s3Url || uploadedFile.url || uploadedFile.fileUrl
+        };
+      });
 
       // Log file references for debugging
       console.debug('Sending file references to Bedrock agent:', s3Files);
