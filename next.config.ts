@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* Config for App Router API routes */
   reactStrictMode: true,
-  swcMinify: true,
 
   // Environment variables
   env: {
@@ -71,8 +70,9 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features for App Router
   experimental: {
+    forceSwcTransforms: true,
     // Ensure proper handling of server components
-    serverComponentsExternalPackages: [],
+    serverExternalPackages: [],
   },
 };
 

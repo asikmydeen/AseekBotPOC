@@ -11,7 +11,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - **AI-Powered Chat Interface**: Answers procurement and data center queries using AWS Bedrock
 - **Document Analysis**: Upload and analyze files with AWS S3 integration
 - **Ticket Creation System**: Triggers support tickets for unresolved queries
-- **Quick Links**: Access common operations like bid document analysis, supplier search, database queries, hardware compatibility checks
+- **Quick Links**: Access common operations like bid document analysis, supplier search, database queries
 - **PDF Export**: Save chat sessions for future reference
 - **Theme Support**: Toggle between light and dark mode using a context provider
 - **Multiple Agent Types**: Specialized agents for different operations (bid-analysis, technical-support, supplier-search, product-comparison)
@@ -81,7 +81,6 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - Bid document analysis
   - Supplier search
   - Database queries
-  - Hardware compatibility checks
   - And more specialized operations
 
 ### File Upload

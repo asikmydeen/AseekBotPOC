@@ -54,9 +54,16 @@ export interface MessageType {
 interface ChatInterfaceProps {
     triggerMessage: string | null;
     onTriggerHandled: () => void;
+    showDocumentAnalysisPrompt?: boolean;
+    clearDocumentAnalysisPrompt?: () => void;
 }
 
-export default function ChatInterface({ triggerMessage, onTriggerHandled }: ChatInterfaceProps) {
+export default function ChatInterface({
+    triggerMessage,
+    onTriggerHandled,
+    showDocumentAnalysisPrompt = false,
+    clearDocumentAnalysisPrompt
+}: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const {
         messages,
@@ -126,6 +133,16 @@ export default function ChatInterface({ triggerMessage, onTriggerHandled }: Chat
             }
         }
     }, [messages]);
+
+    // Effect to handle document analysis prompt
+    useEffect(() => {
+        if (showDocumentAnalysisPrompt) {
+            // Clear any existing uploaded files when document analysis prompt is shown
+            if (uploadedFiles.length > 0) {
+                clearUploadedFiles();
+            }
+        }
+    }, [showDocumentAnalysisPrompt, uploadedFiles.length, clearUploadedFiles]);
 
     // Get agent-specific styling
     const getAgentStyling = () => {
@@ -214,6 +231,25 @@ export default function ChatInterface({ triggerMessage, onTriggerHandled }: Chat
                 console.debug('Sending bid analysis files to agent:', JSON.stringify(bidAnalysisFiles, null, 2));
                 sendMessage("perform bid document analysis", bidAnalysisFiles);
                 clearUploadedFiles();
+                // Clear document analysis prompt if it was triggered from sidebar
+                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
+                    clearDocumentAnalysisPrompt();
+                }
+                break;
+            case 'document-analysis':
+                // Send message for general document analysis with attached files
+                const documentAnalysisFiles = validFiles.map(file => ({
+                    ...file,
+                    useCase: 'document-analysis'
+                }));
+
+                console.debug('Sending document analysis files to agent:', JSON.stringify(documentAnalysisFiles, null, 2));
+                sendMessage("analyze this document", documentAnalysisFiles);
+                clearUploadedFiles();
+                // Clear document analysis prompt if it was triggered from sidebar
+                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
+                    clearDocumentAnalysisPrompt();
+                }
                 break;
             case 'send-message':
                 // Send message with attached files
@@ -268,6 +304,32 @@ export default function ChatInterface({ triggerMessage, onTriggerHandled }: Chat
                 </div>
                 <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-opacity-90 backdrop-filter backdrop-blur-sm`}>
                     <div className="max-w-4xl mx-auto rounded-lg shadow-sm p-2">
+                        {/* Document Analysis Modal */}
+                        {showDocumentAnalysisPrompt && (
+                            <div className={`mb-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className={`font-medium text-lg ${isDarkMode ? 'text-white' : 'text-blue-700'}`}>
+                                        Document Analysis
+                                    </h3>
+                                    <button
+                                        onClick={() => clearDocumentAnalysisPrompt && clearDocumentAnalysisPrompt()}
+                                        className={`p-1 rounded-full ${
+                                            isDarkMode
+                                                ? 'text-gray-300 hover:bg-gray-600'
+                                                : 'text-gray-500 hover:bg-gray-200'
+                                        }`}
+                                        aria-label="Close"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    Upload a document for analysis. I can extract information, summarize content, and answer questions about your document.
+                                </p>
+                            </div>
+                        )}
                         <AnimatePresence>
                             {showTicketForm && (
                                 <TicketForm
@@ -294,19 +356,46 @@ export default function ChatInterface({ triggerMessage, onTriggerHandled }: Chat
                             suggestions={messages[messages.length - 1]?.suggestions}
                             onSuggestionClick={handleCustomSuggestionClick}
                         />
-                        <FileDropzone
-                            getRootProps={getRootProps}
-                            getInputProps={getInputProps}
-                            isUploading={isUploading}
-                            isDragActive={isDragActive}
-                            isDarkMode={isDarkMode}
-                            uploadProgress={progress}
-                            fileSizeLimit="10MB"
-                            uploadedFiles={uploadedFiles}
-                            onRemoveFile={removeFile}
-                        />
-                        {uploadedFiles.length > 0 && (
-                            <FileActionPrompt onAction={handleFileAction} />
+                        {/* Show file upload components when document analysis is triggered or files are being uploaded */}
+                        {(showDocumentAnalysisPrompt || uploadedFiles.length > 0) && (
+                            <>
+                                <FileDropzone
+                                    getRootProps={getRootProps}
+                                    getInputProps={getInputProps}
+                                    isUploading={isUploading}
+                                    isDragActive={isDragActive}
+                                    isDarkMode={isDarkMode}
+                                    uploadProgress={progress}
+                                    fileSizeLimit="10MB"
+                                    uploadedFiles={uploadedFiles}
+                                    onRemoveFile={removeFile}
+                                />
+                                {uploadedFiles.length > 0 && (
+                                    <FileActionPrompt
+                                        onAction={handleFileAction}
+                                        showDocumentAnalysisOption={showDocumentAnalysisPrompt}
+                                    />
+                                )}
+                                {showDocumentAnalysisPrompt && uploadedFiles.length === 0 && (
+                                    <div className={`mt-2 p-4 rounded-lg text-center ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-blue-50 text-blue-700'}`}>
+                                        <p className="font-medium">Please upload a document for analysis</p>
+                                        <p className="text-sm mt-1">Supported formats: PDF, DOCX, TXT, CSV, XLS, XLSX</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {!showDocumentAnalysisPrompt && uploadedFiles.length === 0 && (
+                            <FileDropzone
+                                getRootProps={getRootProps}
+                                getInputProps={getInputProps}
+                                isUploading={isUploading}
+                                isDragActive={isDragActive}
+                                isDarkMode={isDarkMode}
+                                uploadProgress={progress}
+                                fileSizeLimit="10MB"
+                                uploadedFiles={uploadedFiles}
+                                onRemoveFile={removeFile}
+                            />
                         )}
                         <ChatInput
                             inputHandler={(input: string) => {

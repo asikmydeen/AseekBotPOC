@@ -3,7 +3,7 @@ import { QuickLink } from '../types';
 
 export const quickLinks: QuickLink[] = [
     {
-        title: 'Perform Bid Document Analysis', description: 'Analyze bid documents for procurement.', message: 'Perform Bid Document Analysis',
+        title: 'Document Analysis', description: 'Analyze bid documents for procurement.', message: 'Perform Bid Document Analysis',
         id: '',
         text: ''
     },
@@ -23,7 +23,7 @@ export const quickLinks: QuickLink[] = [
         text: ''
     },
     {
-        title: 'Create Procurement Ticket', description: 'Generate a procurement ticket.', message: 'Create a procurement ticket',
+        title: 'Create a Ticket', description: 'Generate a procurement ticket.', message: 'Create a procurement ticket',
         id: '',
         text: ''
     },
@@ -31,12 +31,7 @@ export const quickLinks: QuickLink[] = [
         title: 'Compare Suppliers', description: 'Compare supplier metrics.', message: 'Compare suppliers',
         id: '',
         text: ''
-    },
-    {
-        title: 'Hardware Compatibility', description: 'Check hardware compatibility.', message: 'Check hardware compatibility',
-        id: '',
-        text: ''
-    },
+    }
 ];
 
 // Utility functions
@@ -295,46 +290,6 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
             sender: 'bot',
             text: 'Which product would you like to compare suppliers for?',
             suggestions: ['Server Racks', 'Cooling Systems', 'Power Units'],
-            timestamp: '',
-        };
-    }
-
-    // Hardware Compatibility
-    if (lastBotMessage === 'Which hardware components would you like to check compatibility for?') {
-        return {
-            sender: 'bot',
-            text: `Checking compatibility for ${userMessage}...`,
-            report: {
-                title: `Hardware Compatibility Report for ${userMessage}`,
-                content: `
-**Compatibility Overview**:
-- **Component**: ${userMessage}
-- **Compatible Systems**:
-  - Dell PowerEdge R750 (Firmware v2.3 or later)
-  - HPE ProLiant DL380 Gen10 (with updated BIOS)
-
-**Known Issues**:
-- May require firmware update for older systems.
-- Incompatible with legacy cooling modules (pre-2020).
-
-| Component       | Compatible | Notes                      |
-|-----------------|------------|----------------------------|
-| Dell R750       | Yes        | Firmware v2.3 required     |
-| HPE DL380 Gen10 | Yes        | BIOS update recommended    |
-| Legacy Systems  | No         | Incompatible due to age    |
-
-**Recommendation**: Ensure systems are updated to the latest firmware before integration.
-                `,
-                citations: ['AseekBot Knowledge Base - Hardware Specs', 'https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html'],
-            },
-            timestamp: '',
-        };
-    }
-    if (msg.includes('check hardware compatibility')) {
-        return {
-            sender: 'bot',
-            text: 'Which hardware components would you like to check compatibility for?',
-            suggestions: ['Dell PowerEdge R750', 'HPE ProLiant DL380', 'Cisco UCS C240'],
             timestamp: '',
         };
     }

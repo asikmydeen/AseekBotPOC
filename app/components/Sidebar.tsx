@@ -6,9 +6,10 @@ import { useState } from 'react';
 
 interface SidebarProps {
     onQuickLinkClick: (message: string) => void;
+    onDocumentAnalysis?: () => void;
 }
 
-export default function Sidebar({ onQuickLinkClick }: SidebarProps) {
+export default function Sidebar({ onQuickLinkClick, onDocumentAnalysis }: SidebarProps) {
     const { isDarkMode } = useTheme();
     const [activeLink, setActiveLink] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,13 +26,18 @@ export default function Sidebar({ onQuickLinkClick }: SidebarProps) {
             const action = link.title.toLowerCase();
             const parameter = link.description;
 
-            // Call the quickLinkApi with the action and parameter
-            const response = await quickLinkApi(action, parameter);
+            // Check if this is the Document Analysis quick link
+            if (action === 'document analysis' && onDocumentAnalysis) {
+                // Trigger the document analysis modal instead of calling the API
+                onDocumentAnalysis();
+            } else {
+                // For other quick links, call the API as usual
+                const response = await quickLinkApi(action, parameter);
+                console.log('Quick link API response:', response);
+            }
 
-            // Pass the message to the chat interface
+            // Pass the message to the chat interface for all quick links
             onQuickLinkClick(message);
-
-            console.log('Quick link API response:', response);
         } catch (error) {
             console.error('Error calling quick link API:', error);
             // Still trigger the chat message even if API fails

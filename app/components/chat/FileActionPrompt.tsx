@@ -20,11 +20,11 @@ const ActionChip = styled.button`
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  
+
   &:hover {
     background-color: #e0e0e0;
   }
-  
+
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
@@ -38,6 +38,9 @@ const FileActionPrompt: React.FC<FileActionPromptProps> = ({ onAction }) => {
 
   return (
     <Container>
+      <ActionChip onClick={() => handleActionClick('document-analysis')}>
+        Perform Document Analysis
+      </ActionChip>
       <ActionChip onClick={() => handleActionClick('bid-analysis')}>
         Perform Bid Document Analysis
       </ActionChip>

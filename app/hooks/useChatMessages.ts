@@ -163,14 +163,71 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled }: Us
       setIsThinking(false);
       setProgress(0);
 
+      // Define interface for API error response
+      interface ApiErrorResponse {
+        error: string;
+        message: string;
+        details?: string;
+        suggestions?: string[];
+      }
+
+      let errorTitle = 'Error';
+      let errorMsg = 'Sorry, I encountered an error processing your request. Please try again.';
+      let errorSuggestions: string[] = [];
+
+      // Try to extract structured error information
+      if (error instanceof Error) {
+        console.error('Error sending message:', error);
+
+        // Check if this is a response error with JSON data
+        if ('response' in error && error.response) {
+          try {
+            // Try to parse the error response as JSON
+            const errorResponse = error.response as ApiErrorResponse;
+
+            if (errorResponse.error && errorResponse.message) {
+              errorTitle = errorResponse.error;
+              errorMsg = errorResponse.message;
+
+              if (errorResponse.suggestions && errorResponse.suggestions.length > 0) {
+                errorSuggestions = errorResponse.suggestions;
+              }
+            }
+          } catch (parseError) {
+            // If parsing fails, fall back to the error message
+            errorMsg = error.message || errorMsg;
+          }
+        } else {
+          // For non-response errors, use the error message if available
+          errorMsg = error.message || errorMsg;
+        }
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle case where error is an object but not an Error instance
+        const errorObj = error as any;
+
+        if (errorObj.error && errorObj.message) {
+          errorTitle = errorObj.error;
+          errorMsg = errorObj.message;
+
+          if (errorObj.suggestions && Array.isArray(errorObj.suggestions)) {
+            errorSuggestions = errorObj.suggestions;
+          }
+        } else if (errorObj.message) {
+          errorMsg = errorObj.message;
+        }
+      }
+
+      // Create a more informative error message
+      const formattedErrorMsg = `**${errorTitle}**: ${errorMsg}`;
+
       const errorMessage: MessageType = {
         sender: 'bot',
-        text: 'Sorry, I encountered an error processing your request. Please try again.',
-        timestamp: new Date().toISOString()
+        text: formattedErrorMsg,
+        timestamp: new Date().toISOString(),
+        suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      console.error('Error sending message:', error);
     }
   }, [messages]);  // Handle reactions to messages
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
