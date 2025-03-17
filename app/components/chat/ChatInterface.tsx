@@ -1,3 +1,4 @@
+// app/components/chat/ChatInterface.tsx
 "use client";
 import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -55,13 +56,18 @@ interface ChatInterfaceProps {
     onTriggerHandled: () => void;
     showDocumentAnalysisPrompt?: boolean;
     clearDocumentAnalysisPrompt?: () => void;
+    onMessagesUpdate?: (messages: MessageType[]) => void;
+    onFilesUpdate?: (files: any[]) => void;
 }
 
+// Changed from forwardRef to regular function component to fix the error
 export default function ChatInterface({
     triggerMessage,
     onTriggerHandled,
     showDocumentAnalysisPrompt = false,
-    clearDocumentAnalysisPrompt
+    clearDocumentAnalysisPrompt,
+    onMessagesUpdate,
+    onFilesUpdate
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const {
@@ -80,7 +86,18 @@ export default function ChatInterface({
         setSelectedMultimedia,
         exportChatAsPDF,
         ticketTriggerContext
-    } = useChatMessages({ triggerMessage, onTriggerHandled });
+    } = useChatMessages({
+        triggerMessage,
+        onTriggerHandled,
+        onMessagesUpdate
+    });
+
+    // Sync messages with parent component
+    useEffect(() => {
+        if (onMessagesUpdate) {
+            onMessagesUpdate(messages);
+        }
+    }, [messages, onMessagesUpdate]);
 
     // Track the current active agent based on the latest bot message
     const [activeAgent, setActiveAgent] = useState<string>('default');
@@ -97,6 +114,13 @@ export default function ChatInterface({
         removeFile,
         clearUploadedFiles
     } = useFileUpload();
+
+    // Sync uploaded files with parent component
+    useEffect(() => {
+        if (onFilesUpdate) {
+            onFilesUpdate(uploadedFiles);
+        }
+    }, [uploadedFiles, onFilesUpdate]);
 
     const {
         showTicketForm,
@@ -334,7 +358,7 @@ export default function ChatInterface({
     };
 
     return (
-        <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
+        <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg ml-[60px]`}>
             <div className="flex-1 flex flex-col w-full">
                 <ChatHeader
                     isDarkMode={isDarkMode}

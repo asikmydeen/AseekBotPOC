@@ -50,9 +50,11 @@ export interface MessageType {
 interface UseChatMessagesProps {
   triggerMessage: string | null;
   onTriggerHandled: () => void;
+    onMessagesUpdate?: (messages: MessageType[]) => void;
+
 }
 
-export default function useChatMessages({ triggerMessage, onTriggerHandled }: UseChatMessagesProps) {
+export default function useChatMessages({ triggerMessage, onTriggerHandled, onMessagesUpdate }: UseChatMessagesProps) {
   const [messages, setMessages] = useState<MessageType[]>([
     {
       sender: 'bot',
@@ -73,6 +75,12 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled }: Us
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
 
+   useEffect(() => {
+    if (onMessagesUpdate) {
+      onMessagesUpdate(messages);
+    }
+  }, [messages, onMessagesUpdate]);
+
   // Filter messages based on search query
   const filteredMessages = searchQuery
     ? messages.filter(msg =>
@@ -81,6 +89,7 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled }: Us
         msg.report?.content.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : messages;
+
 
   // Handle sending messages
   const sendMessage = useCallback(async (text: string, attachments?: File[]) => {

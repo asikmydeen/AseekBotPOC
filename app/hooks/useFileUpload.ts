@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { uploadFileApi } from '../api/advancedApi';
 
@@ -19,12 +19,22 @@ export interface UploadedFile {
   error?: string;
 }
 
+interface UseFileUploadProps {
+  onFilesUpdate?: (files: UploadedFile[]) => void; // New callback prop
+}
+
 /**
  * Custom hook to handle file uploads using react-dropzone
  */
-const useFileUpload = () => {
+const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+    useEffect(() => {
+    if (onFilesUpdate) {
+      onFilesUpdate(uploadedFiles);
+    }
+  }, [uploadedFiles, onFilesUpdate]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
