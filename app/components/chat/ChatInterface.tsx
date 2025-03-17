@@ -14,6 +14,7 @@ import useChatMessages from '../../hooks/useChatMessages';
 import useFileUpload from '../../hooks/useFileUpload';
 import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
+import FileDropzone from './FileDropzone';
 
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
 
@@ -87,7 +88,16 @@ export default function ChatInterface({
     // Control the visibility of the file dropzone
     const [showFileDropzone, setShowFileDropzone] = useState<boolean>(false);
 
-    const { isUploading, getRootProps, getInputProps, isDragActive, uploadedFiles, removeFile, clearUploadedFiles } = useFileUpload(sendMessage);
+    const {
+        isUploading,
+        getRootProps,
+        getInputProps,
+        isDragActive,
+        uploadedFiles,
+        removeFile,
+        clearUploadedFiles
+    } = useFileUpload();
+
     const {
         showTicketForm,
         ticketDetails,
@@ -97,7 +107,33 @@ export default function ChatInterface({
         createTicket,
         closeTicketForm,
         openTicketForm
-    } = useTicketSystem(messages);
+    } = useTicketSystem();
+
+    // Add debugging logs to track uploaded files
+    useEffect(() => {
+        console.log("Uploaded files changed:", uploadedFiles);
+
+        // Automatically show file dropzone when files are uploaded
+        if (uploadedFiles.length > 0) {
+            setShowFileDropzone(true);
+        }
+    }, [uploadedFiles]);
+
+    // Function to clear all document analysis related state
+    const clearDocumentAnalysisState = () => {
+        // Clear any uploaded files
+        if (uploadedFiles.length > 0) {
+            clearUploadedFiles();
+        }
+
+        // Close the file dropzone
+        setShowFileDropzone(false);
+
+        // Clear the document analysis prompt if it's open and we have the clear function
+        if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
+            clearDocumentAnalysisPrompt();
+        }
+    };
 
     // Effect to check for triggerTicket flag in the latest bot message
     useEffect(() => {
@@ -137,13 +173,39 @@ export default function ChatInterface({
 
     // Effect to handle document analysis prompt
     useEffect(() => {
+        console.log("Document analysis prompt changed:", showDocumentAnalysisPrompt);
+
         if (showDocumentAnalysisPrompt) {
             // Clear any existing uploaded files when document analysis prompt is shown
             if (uploadedFiles.length > 0) {
                 clearUploadedFiles();
             }
+            setShowFileDropzone(true);
+        } else {
+            // When document analysis prompt is cleared and we don't have any uploaded files,
+            // also close the file dropzone
+            if (uploadedFiles.length === 0) {
+                setShowFileDropzone(false);
+            }
         }
     }, [showDocumentAnalysisPrompt, uploadedFiles.length, clearUploadedFiles]);
+
+    // Effect that runs whenever triggerMessage changes (which happens when sidebar links are clicked)
+    useEffect(() => {
+        if (triggerMessage) {
+            // If a new message is triggered from sidebar, clear document analysis state
+            clearDocumentAnalysisState();
+        }
+    }, [triggerMessage]);
+
+    const {
+        showFeedbackForm,
+        feedback,
+        setFeedback,
+        submitFeedback,
+        closeFeedbackForm,
+        openFeedbackForm
+    } = useFeedback();
 
     // Get agent-specific styling
     const getAgentStyling = () => {
@@ -187,14 +249,6 @@ export default function ChatInterface({
     };
 
     const agentStyle = getAgentStyling();
-    const {
-        showFeedbackForm,
-        feedback,
-        setFeedback,
-        submitFeedback,
-        closeFeedbackForm,
-        openFeedbackForm
-    } = useFeedback();
 
     // Create a custom suggestion handler that can open the ticket form when needed
     const handleCustomSuggestionClick = (suggestion: string) => {
@@ -269,6 +323,10 @@ export default function ChatInterface({
             case 'cancel':
                 // Clear uploaded files without sending a message
                 clearUploadedFiles();
+                // Also clear the document analysis prompt
+                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
+                    clearDocumentAnalysisPrompt();
+                }
                 break;
             default:
                 break;
@@ -308,10 +366,16 @@ export default function ChatInterface({
                                         Document Analysis
                                     </h3>
                                     <button
-                                        onClick={() => clearDocumentAnalysisPrompt && clearDocumentAnalysisPrompt()}
+                                        onClick={() => {
+                                            if (clearDocumentAnalysisPrompt) {
+                                                clearDocumentAnalysisPrompt();
+                                                setShowFileDropzone(false);
+                                                clearUploadedFiles();
+                                            }
+                                        }}
                                         className={`p-1 rounded-full ${isDarkMode
-                                                ? 'text-gray-300 hover:bg-gray-600'
-                                                : 'text-gray-500 hover:bg-gray-200'
+                                            ? 'text-gray-300 hover:bg-gray-600'
+                                            : 'text-gray-500 hover:bg-gray-200'
                                             }`}
                                         aria-label="Close"
                                     >
@@ -353,7 +417,7 @@ export default function ChatInterface({
                         />
 
                         {/* Show file upload components when document analysis is triggered or files are being uploaded */}
-                        {(showDocumentAnalysisPrompt || uploadedFiles.length > 0) && (
+                        {(showDocumentAnalysisPrompt || showFileDropzone || uploadedFiles.length > 0) && (
                             <>
                                 <div className="mb-2">
                                     <FileDropzone
@@ -376,13 +440,6 @@ export default function ChatInterface({
                                         showDocumentAnalysisOption={showDocumentAnalysisPrompt}
                                     />
                                 )}
-
-                                {showDocumentAnalysisPrompt && uploadedFiles.length === 0 && (
-                                    <div className={`mt-2 p-4 rounded-lg text-center ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-blue-50 text-blue-700'}`}>
-                                        <p className="font-medium">Please upload a document for analysis</p>
-                                        <p className="text-sm mt-1">Supported formats: PDF, DOCX, TXT, CSV, XLS, XLSX</p>
-                                    </div>
-                                )}
                             </>
                         )}
 
@@ -403,6 +460,8 @@ export default function ChatInterface({
                             }}
                             isThinking={isThinking}
                             isDarkMode={isDarkMode}
+                            onFileUploadToggle={() => setShowFileDropzone(!showFileDropzone)}
+                            showFileUpload={showFileDropzone}
                         />
                     </div>
                 </div>
@@ -411,7 +470,6 @@ export default function ChatInterface({
                 isOpen={!!selectedMultimedia}
                 onClose={() => setSelectedMultimedia(null)}
                 content={selectedMultimedia}
-                isDarkMode={isDarkMode}
             />
         </div>
     );

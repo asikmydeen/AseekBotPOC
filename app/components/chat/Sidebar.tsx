@@ -42,20 +42,8 @@ export default function Sidebar({
 
   return (
     <>
-      <motion.button
-        className={`fixed top-20 left-0 z-20 p-2 rounded-r-md ${
-          isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-        } shadow-md`}
-        onClick={() => setIsOpen(!isOpen)}
-        initial={false}
-        animate={{ left: isOpen ? '300px' : '0px' }}
-        transition={{ duration: 0.3 }}
-      >
-        {isOpen ? <MdChevronLeft size={24} /> : <MdChevronRight size={24} />}
-      </motion.button>
-
       <motion.div
-        className={`fixed top-0 left-0 h-full z-10 overflow-hidden ${
+        className={`fixed top-0 left-0 h-full z-10 overflow-hidden shadow-lg ${
           isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
         } shadow-lg`}
         initial={false}
@@ -63,7 +51,12 @@ export default function Sidebar({
         variants={sidebarVariants}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
-        <div className="h-full overflow-y-auto p-4 pt-20">
+        <div className="h-full overflow-y-auto p-4 pt-16">
+          {/* Sidebar Header */}
+          <div className="mb-4 pb-2 border-b dark:border-gray-700">
+            <h2 className="text-xl font-bold">Chat History</h2>
+          </div>
+
           {/* Pinned Messages Section */}
           <div className="mb-6 sidebar-section">
             <div className="flex items-center mb-3">

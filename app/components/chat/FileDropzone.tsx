@@ -17,6 +17,10 @@ interface UploadedFile {
   name: string;
   size: number;
   type: string;
+  status?: 'pending' | 'uploading' | 'success' | 'error';
+  progress?: number;
+  url?: string;
+  error?: string;
 }
 
 interface FileDropzoneProps {
@@ -53,6 +57,18 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
     setIsExpanded(initiallyExpanded);
   }, [initiallyExpanded]);
 
+  // Update expanded state when files are uploaded
+  useEffect(() => {
+    if (uploadedFiles.length > 0) {
+      setIsExpanded(true);
+    }
+  }, [uploadedFiles.length]);
+
+  // Log uploaded files for debugging
+  useEffect(() => {
+    console.log("FileDropzone received files:", uploadedFiles);
+  }, [uploadedFiles]);
+
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation();
     const newExpandedState = !isExpanded;
@@ -80,6 +96,45 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Get the status indicator for a file
+  const getFileStatusIndicator = (file: UploadedFile) => {
+    if (!file.status || file.status === 'pending') {
+      return null;
+    }
+
+    if (file.status === 'uploading' && typeof file.progress === 'number') {
+      return (
+        <div className="ml-2 text-xs">
+          <div className="w-16 h-1.5 bg-gray-300 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+              style={{ width: `${file.progress}%` }}
+            />
+          </div>
+          <span className="text-xs ml-1">{file.progress}%</span>
+        </div>
+      );
+    }
+
+    if (file.status === 'success') {
+      return (
+        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800'}`}>
+          ✓ Uploaded
+        </span>
+      );
+    }
+
+    if (file.status === 'error') {
+      return (
+        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800'}`}>
+          ✗ Error
+        </span>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -127,7 +182,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
           {fileSizeLimit && (
             <div className={`inline-block px-2 py-1 mb-2 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/70 text-blue-200' : 'bg-blue-100 text-blue-800'
               }`}>
-              Max file size: {fileSizeLimit}
+              Max file size: {fileSizeLimit}MB
             </div>
           )}
 
@@ -135,18 +190,19 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
             <div className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               <h4 className="text-xs font-medium mb-1 text-left">Uploaded Files:</h4>
               <ul className="space-y-1">
-                {uploadedFiles.map((file) => (
+                {uploadedFiles.map((file, index) => (
                   <li
-                    key={file.name}
+                    key={`${file.name}-${index}`}
                     className={`flex items-center justify-between p-1.5 rounded ${isDarkMode ? 'bg-gray-700/70' : 'bg-gray-100'
                       }`}
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center flex-1 min-w-0">
                       {getFileIcon(file.type)}
                       <span className="ml-2 text-sm truncate max-w-[200px]">{file.name}</span>
                       <span className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         ({formatFileSize(file.size)})
                       </span>
+                      {getFileStatusIndicator(file)}
                     </div>
                     {onRemoveFile && (
                       <button
@@ -156,8 +212,8 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                           onRemoveFile(file.name);
                         }}
                         className={`p-1 rounded-full ${isDarkMode
-                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-600'
-                            : 'text-gray-500 hover:text-red-500 hover:bg-gray-200'
+                          ? 'text-gray-400 hover:text-red-400 hover:bg-gray-600'
+                          : 'text-gray-500 hover:text-red-500 hover:bg-gray-200'
                           }`}
                       >
                         <FaTimes size={14} />
@@ -198,7 +254,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                 Drag and drop files here, or click to select files
               </p>
               <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Supported formats: PDF, DOCX, TXT, CSV, JPG, PNG
+                Supported formats: PDF, DOCX, TXT, CSV, JPG, PNG, XLS, XLSX
               </p>
 
               <div className="flex flex-wrap justify-center gap-2 mt-2">
@@ -216,6 +272,9 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   <FaFileImage className="text-purple-500 mr-1" size={16} /> JPG/PNG
+                </div>
+                <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <FaFileExcel className="text-green-600 mr-1" size={16} /> XLS/XLSX
                 </div>
               </div>
             </div>

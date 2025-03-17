@@ -93,3 +93,28 @@ body {
 .light .chat-sidebar {
   @apply bg-white;
 }
+
+/* Message highlight animation */
+@keyframes highlight-animation {
+  0% {
+    background-color: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.highlight-message {
+  animation: highlight-animation 2s ease-out;
+  @apply rounded-lg;
+}
+
+.dark .highlight-message {
+  animation: highlight-animation 2s ease-out;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.light .highlight-message {
+  animation: highlight-animation 2s ease-out;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}

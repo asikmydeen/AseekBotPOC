@@ -32,6 +32,7 @@ const useFileUpload = () => {
 
       try {
         setIsUploading(true);
+        console.log("Files dropped:", acceptedFiles.map(f => f.name));
 
         // Enforce maximum of 10 files
         const remainingSlots = 10 - uploadedFiles.length;
@@ -49,8 +50,14 @@ const useFileUpload = () => {
           progress: 0
         }));
 
+        console.log("New files to add:", newFiles);
+
         // Add files to state first with pending status
-        setUploadedFiles(prevFiles => [...prevFiles, ...newFiles]);
+        setUploadedFiles(prevFiles => {
+          const updatedFiles = [...prevFiles, ...newFiles];
+          console.log("Updated files state:", updatedFiles);
+          return updatedFiles;
+        });
 
         // Generate a session ID for this batch of uploads
         const sessionId = `session-${Date.now()}`;
@@ -62,28 +69,38 @@ const useFileUpload = () => {
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
               const fileIndex = prevFiles.length - filesToAdd.length + index;
-              updatedFiles[fileIndex] = {
-                ...updatedFiles[fileIndex],
-                status: 'uploading',
-                progress: 10 // Initial progress
-              };
+
+              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+                updatedFiles[fileIndex] = {
+                  ...updatedFiles[fileIndex],
+                  status: 'uploading',
+                  progress: 10 // Initial progress
+                };
+              }
+
               return updatedFiles;
             });
 
             // Call the upload API
             const uploadResult = await uploadFileApi(file, sessionId) as UploadResult;
 
+            console.log(`File ${file.name} uploaded:`, uploadResult);
+
             // Update with success status and URL
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
               const fileIndex = prevFiles.length - filesToAdd.length + index;
-              updatedFiles[fileIndex] = {
-                ...updatedFiles[fileIndex],
-                status: 'success',
-                progress: 100,
-                url: uploadResult.fileUrl,
-                fileId: uploadResult.fileId
-              };
+
+              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+                updatedFiles[fileIndex] = {
+                  ...updatedFiles[fileIndex],
+                  status: 'success',
+                  progress: 100,
+                  url: uploadResult.fileUrl,
+                  fileId: uploadResult.fileId
+                };
+              }
+
               return updatedFiles;
             });
 
@@ -93,11 +110,15 @@ const useFileUpload = () => {
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
               const fileIndex = prevFiles.length - filesToAdd.length + index;
-              updatedFiles[fileIndex] = {
-                ...updatedFiles[fileIndex],
-                status: 'error',
-                error: error instanceof Error ? error.message : 'Upload failed'
-              };
+
+              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+                updatedFiles[fileIndex] = {
+                  ...updatedFiles[fileIndex],
+                  status: 'error',
+                  error: error instanceof Error ? error.message : 'Upload failed'
+                };
+              }
+
               return updatedFiles;
             });
 
@@ -108,6 +129,8 @@ const useFileUpload = () => {
 
         // Wait for all uploads to complete
         await Promise.all(fileUploads);
+        console.log("All files processed. Current uploaded files:", uploadedFiles);
+
       } catch (error) {
         console.error('Error uploading files:', error);
       } finally {
@@ -118,10 +141,12 @@ const useFileUpload = () => {
   );
 
   const removeFile = useCallback((index: number) => {
+    console.log("Removing file at index:", index);
     setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   }, []);
 
   const clearUploadedFiles = useCallback(() => {
+    console.log("Clearing all uploaded files");
     setUploadedFiles([]);
   }, []);
 
@@ -135,7 +160,8 @@ const useFileUpload = () => {
       'application/msword': ['.doc'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/csv': ['.csv']
     },
     maxSize: 10485760, // 10MB
   });

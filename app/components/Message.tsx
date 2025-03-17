@@ -30,9 +30,10 @@ interface Props {
     onPin: () => void;
     isDarkMode: boolean;
     showCitations?: boolean;
+    id?: string;
 }
 
-function Message({ message, onMultimediaClick, onReact, onPin, isDarkMode, showCitations }: Props): JSX.Element {
+function Message({ message, onMultimediaClick, onReact, onPin, isDarkMode, showCitations, id }: Props): JSX.Element {
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const [showCitationPanel, setShowCitationPanel] = useState<boolean>(false);
     const [displayedText, setDisplayedText] = useState<string>('');
@@ -329,7 +330,7 @@ function Message({ message, onMultimediaClick, onReact, onPin, isDarkMode, showC
     };
 
     return (
-        <div className={`mb-8 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+        <div id={id} className={`mb-8 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
             <div className={`flex items-start gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                 {/* Avatar for bot or user */}
                 <div className={`flex-shrink-0 ${message.sender === 'user' ? 'ml-2' : 'mr-2'}`}>
@@ -504,6 +505,7 @@ export default React.memo(Message, (prevProps, nextProps): boolean => {
         prevProps.message.pinned === nextProps.message.pinned &&
         prevProps.isDarkMode === nextProps.isDarkMode &&
         prevProps.showCitations === nextProps.showCitations &&
-        JSON.stringify(prevProps.message.multimedia) === JSON.stringify(nextProps.message.multimedia)
+        JSON.stringify(prevProps.message.multimedia) === JSON.stringify(nextProps.message.multimedia) &&
+        prevProps.id === nextProps.id
     );
 });

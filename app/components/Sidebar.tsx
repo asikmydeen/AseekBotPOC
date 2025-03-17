@@ -7,6 +7,7 @@ import { useState } from 'react';
 interface SidebarProps {
     onQuickLinkClick: (message: string) => void;
     onDocumentAnalysis?: () => void;
+    onClearDocumentAnalysis?: () => void;
 }
 
 export default function Sidebar({ onQuickLinkClick, onDocumentAnalysis }: SidebarProps) {
@@ -24,20 +25,29 @@ export default function Sidebar({ onQuickLinkClick, onDocumentAnalysis }: Sideba
             // Extract action and parameter from the quick link
             const link = quickLinks[index];
             const action = link.title.toLowerCase();
-            const parameter = link.description;
 
-            // Check if this is the Document Analysis quick link
-            if (action === 'document analysis' && onDocumentAnalysis) {
-                // Trigger the document analysis modal instead of calling the API
-                onDocumentAnalysis();
-            } else {
-                // For other quick links, call the API as usual
-                const response = await quickLinkApi(action, parameter);
-                console.log('Quick link API response:', response);
+            // For any link other than Document Analysis, clear document analysis mode first
+            if (action !== 'document analysis' && onClearDocumentAnalysis) {
+                onClearDocumentAnalysis();
             }
 
-            // Pass the message to the chat interface for all quick links
-            onQuickLinkClick(message);
+            // Now handle the specific link
+            if (action === 'document analysis' && onDocumentAnalysis) {
+                // Call document analysis handler
+                onDocumentAnalysis();
+
+                // Clear loading state since we're not making an API call yet
+                setIsLoading(false);
+                setLoadingLinkIndex(null);
+                return; // Exit early - don't send a message
+            } else {
+                // For other quick links, call the API as usual
+                const response = await quickLinkApi(action, link.description);
+                console.log('Quick link API response:', response);
+
+                // Pass the message to the chat interface for all quick links
+                onQuickLinkClick(message);
+            }
         } catch (error) {
             console.error('Error calling quick link API:', error);
             // Still trigger the chat message even if API fails

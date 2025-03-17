@@ -79,16 +79,18 @@ const MessageList: React.FC<MessageListProps> = ({
         </div>
       ) : (
         messages.map((message, index) => (
-          <Message
-            key={`${message.timestamp}-${index}`}
-            message={message}
-            isDarkMode={isDarkMode}
-            onMultimediaClick={openMultimedia}
-            onReact={(reaction) => handleReaction(index, reaction)}
-            onPin={() => handlePinMessage(index)}
-            onDownload={() => {/* No-op download handler */}}
-            showCitations={true}
-          />
+          <div id={`message-${message.timestamp}`} key={`${message.timestamp}-${index}`}>
+            <Message
+              key={`${message.timestamp}-${index}`}
+              message={message}
+              isDarkMode={isDarkMode}
+              onMultimediaClick={openMultimedia}
+              onReact={(reaction) => handleReaction(index, reaction)}
+              onPin={() => handlePinMessage(index)}
+              onDownload={() => {/* No-op download handler */}}
+              showCitations={true}
+            />
+          </div>
         ))
       )}
 

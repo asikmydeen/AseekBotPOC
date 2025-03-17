@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 // Dynamically import ChatInterface with SSR disabled
 const ChatInterface = dynamic(() => import('./components/chat/ChatInterface'), { ssr: false });
 
+// app/page.tsx
 export default function Home() {
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [showDocumentAnalysisPrompt, setShowDocumentAnalysisPrompt] = useState<boolean>(false);
@@ -19,11 +20,20 @@ export default function Home() {
     setShowDocumentAnalysisPrompt(false);
   };
 
+  // Create a handler for the triggerMessage that ensures document analysis is cleared
+  const handleTriggerMessage = (message: string) => {
+    // Clear any active document analysis before triggering new message
+    clearDocumentAnalysisPrompt();
+    // Set the trigger message
+    setTriggerMessage(message);
+  };
+
   return (
     <div className="flex h-screen w-full">
       <Sidebar
-        onQuickLinkClick={setTriggerMessage}
+        onQuickLinkClick={handleTriggerMessage}
         onDocumentAnalysis={handleDocumentAnalysis}
+        onClearDocumentAnalysis={clearDocumentAnalysisPrompt}
       />
       <div className="flex-1 h-screen">
         <ChatInterface

@@ -58,10 +58,7 @@ export default function useChatMessages({ triggerMessage, onTriggerHandled }: Us
       sender: 'bot',
       text: 'Hello! I\'m AseekBot, your AI assistant. How can I help you today?',
       timestamp: new Date().toISOString(),
-      suggestions: [
-        'Tell me about Aseek',
-        'How can you help me?',
-        'What data sources do you use?'
+      suggestions: [        'How can you help me?'
       ]
     }
   ]);

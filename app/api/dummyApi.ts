@@ -23,7 +23,7 @@ export const quickLinks: QuickLink[] = [
         text: ''
     },
     {
-        title: 'Create a Ticket', description: 'Generate a procurement ticket.', message: 'Create a procurement ticket',
+        title: 'Create a Ticket', description: 'Generate a ticket.', message: 'Create a ticket',
         id: '',
         text: ''
     },
@@ -207,7 +207,7 @@ export async function fetchBotResponse(userMessage: string, history: MessageType
     }
 
     // Ticket Creation
-    if (msg.includes('create a procurement ticket')) {
+    if (msg.includes('create a ticket')) {
         return {
             sender: 'bot',
             text: 'Please provide ticket details via the Create Ticket button.',
