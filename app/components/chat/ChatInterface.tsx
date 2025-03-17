@@ -3,11 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useTheme } from '../../context/ThemeContext';
 import FileActionPrompt from './FileActionPrompt';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
-import FileDropzone from './FileDropzone';
 import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
@@ -15,7 +14,6 @@ import useChatMessages from '../../hooks/useChatMessages';
 import useFileUpload from '../../hooks/useFileUpload';
 import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
-
 
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
 
@@ -86,6 +84,9 @@ export default function ChatInterface({
     // Track the current active agent based on the latest bot message
     const [activeAgent, setActiveAgent] = useState<string>('default');
 
+    // Control the visibility of the file dropzone
+    const [showFileDropzone, setShowFileDropzone] = useState<boolean>(false);
+
     const { isUploading, getRootProps, getInputProps, isDragActive, uploadedFiles, removeFile, clearUploadedFiles } = useFileUpload(sendMessage);
     const {
         showTicketForm,
@@ -113,7 +114,7 @@ export default function ChatInterface({
                     setTicketDetails(prev => ({
                         ...prev,
                         title: "Assistance needed with: " + ticketTriggerContext.substring(0, 50) +
-                               (ticketTriggerContext.length > 50 ? "..." : ""),
+                            (ticketTriggerContext.length > 50 ? "..." : ""),
                         description: "User query: " + ticketTriggerContext
                     }));
                 }
@@ -276,7 +277,6 @@ export default function ChatInterface({
 
     return (
         <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
-
             <div className="flex-1 flex flex-col w-full">
                 <ChatHeader
                     isDarkMode={isDarkMode}
@@ -285,9 +285,7 @@ export default function ChatInterface({
                     setSearchQuery={setSearchQuery}
                     setShowFeedbackForm={openFeedbackForm}
                     setShowTicketForm={openTicketForm}
-                    exportChatAsPDF={exportChatAsPDF}
-                    activeAgentLabel={agentStyle.label}
-                    headerClassName={agentStyle.headerClass}
+                    exportChat={exportChatAsPDF}
                 />
                 <div className={`flex-1 overflow-y-auto p-6 ${isDarkMode ? 'bg-gray-850' : 'bg-white'} rounded-lg shadow-inner mx-2 my-2`}>
                     <MessageList
@@ -298,8 +296,6 @@ export default function ChatInterface({
                         openMultimedia={openMultimedia}
                         handleReaction={handleReaction}
                         handlePinMessage={handlePinMessage}
-                        agentBubbleClass={agentStyle.bubbleClass}
-                        agentIconClass={agentStyle.iconClass}
                     />
                 </div>
                 <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-opacity-90 backdrop-filter backdrop-blur-sm`}>
@@ -313,11 +309,10 @@ export default function ChatInterface({
                                     </h3>
                                     <button
                                         onClick={() => clearDocumentAnalysisPrompt && clearDocumentAnalysisPrompt()}
-                                        className={`p-1 rounded-full ${
-                                            isDarkMode
+                                        className={`p-1 rounded-full ${isDarkMode
                                                 ? 'text-gray-300 hover:bg-gray-600'
                                                 : 'text-gray-500 hover:bg-gray-200'
-                                        }`}
+                                            }`}
                                         aria-label="Close"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -356,26 +351,32 @@ export default function ChatInterface({
                             suggestions={messages[messages.length - 1]?.suggestions}
                             onSuggestionClick={handleCustomSuggestionClick}
                         />
+
                         {/* Show file upload components when document analysis is triggered or files are being uploaded */}
                         {(showDocumentAnalysisPrompt || uploadedFiles.length > 0) && (
                             <>
-                                <FileDropzone
-                                    getRootProps={getRootProps}
-                                    getInputProps={getInputProps}
-                                    isUploading={isUploading}
-                                    isDragActive={isDragActive}
-                                    isDarkMode={isDarkMode}
-                                    uploadProgress={progress}
-                                    fileSizeLimit="10MB"
-                                    uploadedFiles={uploadedFiles}
-                                    onRemoveFile={removeFile}
-                                />
+                                <div className="mb-2">
+                                    <FileDropzone
+                                        getRootProps={getRootProps}
+                                        getInputProps={getInputProps}
+                                        isUploading={isUploading}
+                                        isDragActive={isDragActive}
+                                        isDarkMode={isDarkMode}
+                                        uploadProgress={progress}
+                                        fileSizeLimit={10}
+                                        uploadedFiles={uploadedFiles}
+                                        onRemoveFile={removeFile}
+                                        initiallyExpanded={true}
+                                    />
+                                </div>
+
                                 {uploadedFiles.length > 0 && (
                                     <FileActionPrompt
                                         onAction={handleFileAction}
                                         showDocumentAnalysisOption={showDocumentAnalysisPrompt}
                                     />
                                 )}
+
                                 {showDocumentAnalysisPrompt && uploadedFiles.length === 0 && (
                                     <div className={`mt-2 p-4 rounded-lg text-center ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-blue-50 text-blue-700'}`}>
                                         <p className="font-medium">Please upload a document for analysis</p>
@@ -384,19 +385,7 @@ export default function ChatInterface({
                                 )}
                             </>
                         )}
-                        {!showDocumentAnalysisPrompt && uploadedFiles.length === 0 && (
-                            <FileDropzone
-                                getRootProps={getRootProps}
-                                getInputProps={getInputProps}
-                                isUploading={isUploading}
-                                isDragActive={isDragActive}
-                                isDarkMode={isDarkMode}
-                                uploadProgress={progress}
-                                fileSizeLimit="10MB"
-                                uploadedFiles={uploadedFiles}
-                                onRemoveFile={removeFile}
-                            />
-                        )}
+
                         <ChatInput
                             inputHandler={(input: string) => {
                                 // If there are uploaded files, log them for debugging
@@ -414,7 +403,6 @@ export default function ChatInterface({
                             }}
                             isThinking={isThinking}
                             isDarkMode={isDarkMode}
-                            activeAgent={activeAgent}
                         />
                     </div>
                 </div>
