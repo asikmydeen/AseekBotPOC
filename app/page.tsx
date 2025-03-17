@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import AppSidebar from './components/AppSidebar';
 
 // Dynamically import ChatInterface with SSR disabled
-// Make sure we're properly handling the dynamic import
 const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').then(mod => mod.default), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-screen">Loading chat interface...</div>
@@ -16,6 +15,7 @@ export default function Home() {
   const [showDocumentAnalysisPrompt, setShowDocumentAnalysisPrompt] = useState<boolean>(false);
   const [messages, setMessages] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Create ref without type definition initially
   const chatInterfaceRef = useRef(null);
@@ -70,6 +70,11 @@ export default function Home() {
     setUploadedFiles(newFiles);
   };
 
+  // Toggle sidebar and track its state
+  const toggleSidebar = (isOpen) => {
+    setSidebarOpen(isOpen);
+  };
+
   return (
     <div className="flex h-screen w-full">
       <AppSidebar
@@ -80,9 +85,9 @@ export default function Home() {
         onPinnedClick={scrollToMessage}
         onFileClick={handleFileClick}
         onPromptClick={handlePromptClick}
+        onToggle={toggleSidebar}
       />
-      <div className="flex-1 h-screen">
-        {/* Using a normal component reference without the ref for now to debug */}
+      <div className={`flex-1 h-screen ${sidebarOpen ? 'ml-[300px]' : 'ml-[60px]'} transition-all duration-300`}>
         <ChatInterface
           triggerMessage={triggerMessage}
           onTriggerHandled={() => setTriggerMessage(null)}

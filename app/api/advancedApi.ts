@@ -197,4 +197,31 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
   }
 }
 
+/**
+ * Deletes a file from S3 via API route
+ * @param fileUrl The S3 URL of the file to delete
+ * @returns Promise with the deletion result
+ */
+export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
+  try {
+    const s3Key = fileUrl.split('.amazonaws.com/')[1];
+    if (!s3Key) {
+      throw new Error('Invalid file URL');
+    }
+    const response = await fetch('/api/deleteFile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ s3Key })
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete file');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw new Error('Failed to delete file. Please try again.');
+  }
+}
+
 // Helper functions are no longer needed as they are now implemented in the API routes

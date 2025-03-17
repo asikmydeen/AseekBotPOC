@@ -33,6 +33,7 @@ interface AppSidebarProps {
     onPinnedClick: (timestamp: string) => void;
     onFileClick: (fileUrl: string) => void;
     onPromptClick: (prompt: string) => void;
+    onToggle?: (isOpen: boolean) => void;
 }
 
 export default function AppSidebar({
@@ -42,7 +43,8 @@ export default function AppSidebar({
     onHistoryClick,
     onPinnedClick,
     onFileClick,
-    onPromptClick
+    onPromptClick,
+    onToggle
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const [isOpen, setIsOpen] = useState<boolean>(true);
@@ -70,8 +72,13 @@ export default function AppSidebar({
     };
 
     const toggleSidebar = () => {
-        setIsOpen(!isOpen);
+        const newIsOpen = !isOpen;
+        setIsOpen(newIsOpen);
+        if (onToggle) {
+            onToggle(newIsOpen);
+        }
     };
+
 
     const formatFileSize = (bytes: number): string => {
         if (bytes === 0) return '0 Bytes';

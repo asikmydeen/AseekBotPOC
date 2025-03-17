@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { uploadFileApi } from '../api/advancedApi';
+import { uploadFileApi, deleteFileApi } from '../api/advancedApi';
 
 interface UploadResult {
   fileUrl: string;
@@ -150,10 +150,22 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
     [uploadedFiles.length]
   );
 
-  const removeFile = useCallback((index: number) => {
-    console.log("Removing file at index:", index);
-    setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-  }, []);
+  const removeFile = useCallback((fileName: string) => {
+    console.log("Removing file:", fileName);
+    const fileToRemove = uploadedFiles.find(file => file.name === fileName);
+    if (fileToRemove && fileToRemove.url) {
+      // Call the API to delete file from S3
+      deleteFileApi(fileToRemove.url)
+        .then(() => {
+          setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+        })
+        .catch(error => {
+          console.error("Failed to delete file from S3:", error);
+        });
+    } else {
+      setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+    }
+  }, [uploadedFiles]);
 
   const clearUploadedFiles = useCallback(() => {
     console.log("Clearing all uploaded files");

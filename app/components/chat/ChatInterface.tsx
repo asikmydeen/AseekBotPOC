@@ -358,7 +358,7 @@ export default function ChatInterface({
     };
 
     return (
-        <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg ml-[60px]`}>
+        <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
             <div className="flex-1 flex flex-col w-full">
                 <ChatHeader
                     isDarkMode={isDarkMode}
