@@ -2,7 +2,7 @@
 "use client";
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaPushPin, FaTrash, FaPen, FaEllipsisV, FaClock, FaStar } from 'react-icons/fa';
+import { FaPushed, FaTrash, FaPen, FaEllipsisV, FaClock, FaStar } from 'react-icons/fa';
 import { useChatHistory } from '../../context/ChatHistoryContext';
 
 interface HistoryItemProps {
@@ -35,12 +35,12 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     return (
         <div
             className={`p-3 rounded-lg cursor-pointer transition-all duration-200 relative mb-2 ${isActive
-                    ? isDarkMode
-                        ? 'bg-gray-700 border-l-4 border-blue-500'
-                        : 'bg-gray-200 border-l-4 border-blue-500'
-                    : isDarkMode
-                        ? 'bg-gray-800 hover:bg-gray-700'
-                        : 'bg-gray-100 hover:bg-gray-200'
+                ? isDarkMode
+                    ? 'bg-gray-700 border-l-4 border-blue-500'
+                    : 'bg-gray-200 border-l-4 border-blue-500'
+                : isDarkMode
+                    ? 'bg-gray-800 hover:bg-gray-700'
+                    : 'bg-gray-100 hover:bg-gray-200'
                 }`}
         >
             <div className="flex items-center" onClick={onClick}>
@@ -101,12 +101,12 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
                                     setShowOptions(false);
                                 }}
                             >
-                                <FaPushPin className="inline mr-2" /> {isPinned ? 'Unpin' : 'Pin'}
+                                <FaPushed className="inline mr-2" /> {isPinned ? 'Unpin' : 'Pin'}
                             </button>
                             <button
                                 className={`w-full text-left block px-4 py-2 text-sm ${isDarkMode
-                                        ? 'text-red-400 hover:bg-gray-700'
-                                        : 'text-red-600 hover:bg-gray-100'
+                                    ? 'text-red-400 hover:bg-gray-700'
+                                    : 'text-red-600 hover:bg-gray-100'
                                     }`}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -157,8 +157,8 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className={`w-full p-2 mb-4 border rounded-md ${isDarkMode
-                            ? 'bg-gray-700 text-white border-gray-600'
-                            : 'bg-white text-gray-900 border-gray-300'
+                        ? 'bg-gray-700 text-white border-gray-600'
+                        : 'bg-white text-gray-900 border-gray-300'
                         }`}
                     placeholder="Enter a new title"
                 />
@@ -172,10 +172,10 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
                     </button>
                     <button
                         className={`px-4 py-2 rounded-md ${!title.trim()
-                                ? 'bg-gray-500 cursor-not-allowed'
-                                : isDarkMode
-                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                    : 'bg-blue-500 hover:bg-blue-600'
+                            ? 'bg-gray-500 cursor-not-allowed'
+                            : isDarkMode
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-blue-500 hover:bg-blue-600'
                             } text-white`}
                         disabled={!title.trim()}
                         onClick={() => {
