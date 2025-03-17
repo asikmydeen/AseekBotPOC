@@ -1,102 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import {
-  BedrockAgentRuntimeClient,
-  InvokeAgentCommand,
-} from '@aws-sdk/client-bedrock-agent-runtime';
-
-// Define interface for command input
-interface CommandInput {
-  agentId: string;
-  agentAliasId: string;
-  sessionId: string;
-  inputText: string;
-  sessionState?: {
-    files: Array<{
-      name: string;
-      source: {
-        byteContent: Uint8Array;
-        mediaType: string;
-      };
-      useCase: string;
-    }>;
-  };
-}
-
-/**
- * Invokes the Amazon Bedrock agent with the given prompt and session ID
- * @param prompt - The user's message to send to the agent
- * @param sessionId - The session ID for conversation continuity
- * @param fileInfo - Optional file information if a file is attached
- * @returns Object containing sessionId and completion (agent's response)
- */
-async function invokeBedrockAgent(
-  prompt: string,
-  sessionId: string,
-  fileInfo?: { name: string; content: Uint8Array; type: string }
-) {
-  // Initialize the Bedrock agent client
-  const client = new BedrockAgentRuntimeClient({
-    region: 'us-east-1', // Use the appropriate region
-  });
-
-  // Set agent configuration parameters
-  const agentId = 'AJBHXXILZN';
-  const agentAliasId = 'AVKP1ITZAA';
-
-  // Prepare the command input
-  const commandInput: CommandInput = {
-    agentId,
-    agentAliasId,
-    sessionId,
-    inputText: prompt,
-  };
-
-  // If a file is attached, include it in the sessionState
-  if (fileInfo) {
-    commandInput.sessionState = {
-      files: [
-        {
-          name: fileInfo.name,
-          source: {
-            // Using byteContent for direct binary data approach
-            byteContent: fileInfo.content,
-            mediaType: fileInfo.type,
-          },
-          useCase: 'CHAT',
-        },
-      ],
-    };
-  }
-
-  // Create and send the command
-  const command = new InvokeAgentCommand(commandInput);
-
-  try {
-    const response = await client.send(command);
-
-    // Process the streaming response
-    let completion = '';
-
-    if (response.completion) {
-      for await (const chunk of response.completion) {
-        if (chunk.chunk?.bytes) {
-          // Decode the chunk and append to the completion
-          const decoder = new TextDecoder();
-          const text = decoder.decode(chunk.chunk.bytes);
-          completion += text;
-        }
-      }
-    }
-
-    return {
-      sessionId,
-      completion,
-    };
-  } catch (error) {
-    console.error('Error invoking Bedrock agent:', error);
-    throw error;
-  }
-}
+import { invokeBedrockAgent, BinaryFileInfo } from '../../utils/invokeBedrockAgent';
+import { handleApiError } from '../../utils/apiErrorHandler';
 
 /**
  * POST handler for the processMessage API route
@@ -126,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if a file is attached
-    let fileInfo;
+    let binaryFile: BinaryFileInfo | undefined;
 
     // Look for any field with key starting with 'file'
     for (const [key, value] of formData.entries()) {
@@ -137,18 +41,21 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        fileInfo = {
+        binaryFile = {
           name: file.name,
           content: uint8Array,
           type: file.type,
+          useCase: 'CHAT'
         };
 
         break; // Process only the first file for now
       }
     }
 
-    // Invoke the Bedrock agent
-    const result = await invokeBedrockAgent(prompt, sessionId, fileInfo);
+    // Invoke the Bedrock agent using the utility function
+    const result = await invokeBedrockAgent(prompt, sessionId, {
+      binaryFile
+    });
 
     // Transform the response to match the expected format in the Message component
     const transformedResponse = {
@@ -161,10 +68,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(transformedResponse);
   } catch (error) {
     console.error('Error processing message:', error);
-
-    return NextResponse.json(
-      { error: 'Failed to process message', details: (error as Error).message },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

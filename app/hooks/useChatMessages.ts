@@ -84,9 +84,30 @@ export default function useChatMessages({
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  // Stores the last serialized state of messages to prevent redundant updates
   const lastUpdateRef = useRef<string>('');
+  // Flag to prevent circular updates when modifying messages
   const isUpdatingRef = useRef<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Helper function to safely update messages while preventing circular updates
+   * @param updater Function that returns the new messages array
+   */
+  const safeUpdateMessages = useCallback((updater: (prev: MessageType[]) => MessageType[]) => {
+    // Mark as updating to prevent circular updates
+    isUpdatingRef.current = true;
+    setMessages(prev => {
+      const newMessages = updater(prev);
+      // Store serialized state for comparison
+      lastUpdateRef.current = JSON.stringify(newMessages);
+      return newMessages;
+    });
+    // Reset updating flag after a short delay to allow state to settle
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 100);
+  }, []);
 
   useEffect(() => {
     if (initialMessages && initialMessages.length > 0) {
@@ -95,6 +116,8 @@ export default function useChatMessages({
     }
   }, []);
 
+  // Synchronize messages with parent component when they change
+  // Uses the isUpdatingRef flag to prevent circular updates
   useEffect(() => {
     if (onMessagesUpdate && !isUpdatingRef.current) {
       const currentMessagesStr = JSON.stringify(messages);
@@ -204,18 +227,7 @@ export default function useChatMessages({
           botMessage.attachments = response.attachments;
         }
 
-        // Mark as updating to prevent circular updates
-        isUpdatingRef.current = true;
-        setMessages(prev => {
-          const newMessages = [...prev, botMessage];
-          lastUpdateRef.current = JSON.stringify(newMessages);
-          return newMessages;
-        });
-
-        // Reset updating flag after a short delay to allow state to settle
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
+        safeUpdateMessages(prev => [...prev, botMessage]);
       }, 500);
     } catch (error) {
       if (progressInterval.current) {
@@ -282,45 +294,21 @@ export default function useChatMessages({
         suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined
       };
 
-      isUpdatingRef.current = true;
-      setMessages(prev => {
-        const newMessages = [...prev, errorMessage];
-        lastUpdateRef.current = JSON.stringify(newMessages);
-        return newMessages;
-      });
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 100);
+      safeUpdateMessages(prev => [...prev, errorMessage]);
     }
   }, [messages]);
 
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
-    isUpdatingRef.current = true;
-    setMessages(prev => {
-      const newMessages = prev.map((msg, i) =>
-        i === index ? { ...msg, reaction } : msg
-      );
-      lastUpdateRef.current = JSON.stringify(newMessages);
-      return newMessages;
-    });
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 100);
-  }, []);
+    safeUpdateMessages(prev =>
+      prev.map((msg, i) => i === index ? { ...msg, reaction } : msg)
+    );
+  }, [safeUpdateMessages]);
 
   const handlePinMessage = useCallback((index: number) => {
-    isUpdatingRef.current = true;
-    setMessages(prev => {
-      const newMessages = prev.map((msg, i) =>
-        i === index ? { ...msg, pinned: !msg.pinned } : msg
-      );
-      lastUpdateRef.current = JSON.stringify(newMessages);
-      return newMessages;
-    });
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 100);
-  }, []);
+    safeUpdateMessages(prev =>
+      prev.map((msg, i) => i === index ? { ...msg, pinned: !msg.pinned } : msg)
+    );
+  }, [safeUpdateMessages]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     sendMessage(suggestion);

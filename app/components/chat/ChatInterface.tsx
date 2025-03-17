@@ -157,7 +157,14 @@ export default function ChatInterface({
         }
     }, [messages, isThinking]);
 
-    // Function to clear all document analysis related state
+    /**
+     * Clears all document analysis related state
+     * This includes:
+     * - Uploaded files
+     * - File dropzone visibility
+     * - Document analysis prompt
+     * - Pending user input
+     */
     const clearDocumentAnalysisState = useCallback(() => {
         // Clear any uploaded files
         if (uploadedFiles.length > 0) {
@@ -176,7 +183,13 @@ export default function ChatInterface({
         setPendingInput('');
     }, [uploadedFiles.length, clearUploadedFiles, showDocumentAnalysisPrompt, clearDocumentAnalysisPrompt]);
 
-    // Effect to check for triggerTicket flag in the latest bot message
+    /**
+     * Monitors messages for ticket creation triggers
+     * When a bot message contains the triggerTicket flag:
+     * 1. Opens the ticket form
+     * 2. Pre-populates ticket details with context
+     * 3. Removes the flag to prevent reopening
+     */
     useEffect(() => {
         if (messages.length > 0) {
             const latestMessage = messages[messages.length - 1];
@@ -212,7 +225,12 @@ export default function ChatInterface({
         }
     }, [messages]);
 
-    // Effect to handle document analysis prompt
+    /**
+     * Manages document analysis prompt visibility and file dropzone state
+     * - Shows file dropzone when document analysis prompt is active
+     * - Clears existing files when document analysis prompt is shown
+     * - Hides dropzone when prompt is cleared and no files are present
+     */
     useEffect(() => {
         if (showDocumentAnalysisPrompt) {
             // Clear any existing uploaded files when document analysis prompt is shown
@@ -234,7 +252,11 @@ export default function ChatInterface({
         }
     }, [triggerMessage, clearDocumentAnalysisState]);
 
-    // Automatically hide file dropzone after sending a message
+    /**
+     * Automatically hides file dropzone after message processing completes
+     * - Checks if message processing is complete and no files are present
+     * - Uses a small delay for smooth transition
+     */
     useEffect(() => {
         // If we're not thinking (processing a message) and there are no files, hide the dropzone
         if (!isThinking && uploadedFiles.length === 0) {
@@ -297,7 +319,13 @@ export default function ChatInterface({
         }
     };
 
-    // Create a custom suggestion handler that can open the ticket form when needed
+    /**
+     * Custom suggestion handler with ticket creation capability
+     * - Opens ticket form when suggestion contains "ticket"
+     * - Otherwise delegates to the standard suggestion handler
+     *
+     * @param suggestion - The suggestion text clicked by the user
+     */
     const handleCustomSuggestionClick = (suggestion: string) => {
         // Check if the suggestion text indicates ticket creation
         if (suggestion.toLowerCase().includes('ticket')) {
@@ -309,7 +337,14 @@ export default function ChatInterface({
         }
     };
 
-    // Handle user input
+    /**
+     * Handles user input submission
+     * - Sends message with files if files are uploaded
+     * - Sends normal message otherwise
+     * - Cleans up UI state after sending
+     *
+     * @param input - The text input from the user
+     */
     const handleInputSubmit = (input: string) => {
         if (uploadedFiles.length > 0) {
             // Send message with files
@@ -329,7 +364,16 @@ export default function ChatInterface({
         setPendingInput('');
     };
 
-    // Handle file action selection from FileActionPrompt
+    /**
+     * Handles file action selection from FileActionPrompt
+     * Processes files based on the selected action:
+     * - bid-analysis: Sends files for bid document analysis
+     * - document-analysis: Sends files for general document analysis
+     * - send-message: Sends files with a chat message
+     * - cancel: Clears files without sending
+     *
+     * @param action - The selected action from FileActionPrompt
+     */
     const handleFileAction = (action: string) => {
         // Get input from textarea or pending input state
         const userInput = inputRef.current?.value || pendingInput || '';
@@ -341,6 +385,20 @@ export default function ChatInterface({
             console.warn('Some files are missing URLs and will be skipped');
         }
 
+        // Common cleanup function to avoid code duplication
+        const cleanupAfterAction = () => {
+            clearUploadedFiles();
+            setShowFileDropzone(false);
+
+            // Clear document analysis prompt if it was triggered from sidebar
+            if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
+                clearDocumentAnalysisPrompt();
+            }
+
+            // Clear any pending input
+            setPendingInput('');
+        };
+
         switch (action) {
             case 'bid-analysis':
                 // Send message for bid document analysis with attached files
@@ -350,13 +408,7 @@ export default function ChatInterface({
                 }));
 
                 sendMessage(userInput || "Perform bid document analysis", bidAnalysisFiles);
-                clearUploadedFiles();
-                setShowFileDropzone(false);
-
-                // Clear document analysis prompt if it was triggered from sidebar
-                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
-                    clearDocumentAnalysisPrompt();
-                }
+                cleanupAfterAction();
                 break;
 
             case 'document-analysis':
@@ -367,13 +419,7 @@ export default function ChatInterface({
                 }));
 
                 sendMessage(userInput || "Analyze this document", documentAnalysisFiles);
-                clearUploadedFiles();
-                setShowFileDropzone(false);
-
-                // Clear document analysis prompt if it was triggered from sidebar
-                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
-                    clearDocumentAnalysisPrompt();
-                }
+                cleanupAfterAction();
                 break;
 
             case 'send-message':
@@ -384,27 +430,17 @@ export default function ChatInterface({
                 }));
 
                 sendMessage(userInput || `Please analyze these files`, chatFiles);
-                clearUploadedFiles();
-                setShowFileDropzone(false);
+                cleanupAfterAction();
                 break;
 
             case 'cancel':
                 // Clear uploaded files without sending a message
-                clearUploadedFiles();
-                setShowFileDropzone(false);
-
-                // Also clear the document analysis prompt
-                if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
-                    clearDocumentAnalysisPrompt();
-                }
+                cleanupAfterAction();
                 break;
 
             default:
                 break;
         }
-
-        // Clear any pending input
-        setPendingInput('');
     };
 
     // Store input when user types while files are loaded

@@ -1,3 +1,5 @@
+import { handleApiError, ErrorResponse } from './utils/apiErrorHandler';
+
 /**
  * Interface for chat message history items
  */
@@ -36,6 +38,18 @@ export interface ApiResponse {
   data?: unknown;
   error?: string;
   message?: string;
+}
+
+/**
+ * Common error handler for API client functions
+ * @param error - The caught error
+ * @param operation - Description of the operation that failed
+ * @throws Error with a user-friendly message
+ */
+function handleClientError(error: unknown, operation: string): never {
+  const errorObj = error as Error;
+  console.error(`Error ${operation}:`, errorObj);
+  throw new Error(`Failed to ${operation}. Please try again.`);
 }
 
 /**
@@ -90,8 +104,7 @@ export async function processChatMessage(
 
     return await response.json();
   } catch (error) {
-    console.error('Error processing chat message:', error);
-    throw new Error('Failed to process chat message. Please try again.');
+    handleClientError(error, 'process chat message');
   }
 }
 
@@ -129,8 +142,7 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
 
     return await response.json();
   } catch (error) {
-    console.error('Error uploading file:', error);
-    throw new Error('Failed to upload file. Please try again.');
+    handleClientError(error, 'upload file');
   }
 }
 
@@ -162,8 +174,7 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating ticket:', error);
-    throw new Error('Failed to create support ticket. Please try again.');
+    handleClientError(error, 'create support ticket');
   }
 }
 
@@ -196,8 +207,7 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
 
     return await response.json();
   } catch (error) {
-    console.error('Error processing quick link action:', error);
-    throw new Error('Failed to process quick link action. Please try again.');
+    handleClientError(error, 'process quick link action');
   }
 }
 
@@ -223,7 +233,6 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error deleting file:', error);
-    throw new Error('Failed to delete file. Please try again.');
+    handleClientError(error, 'delete file');
   }
 }
