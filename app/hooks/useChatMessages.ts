@@ -5,7 +5,6 @@ import html2pdf from 'html2pdf.js';
 import { stripIndent } from 'common-tags';
 import { processChatMessage } from '../api/advancedApi';
 
-// Define multimedia data types
 export interface VideoData {
   url: string;
   title?: string;
@@ -52,7 +51,7 @@ interface UseChatMessagesProps {
   triggerMessage: string | null;
   onTriggerHandled: () => void;
   onMessagesUpdate?: (messages: MessageType[]) => void;
-  initialMessages?: MessageType[]; // New prop for initial messages
+  initialMessages?: MessageType[];
 }
 
 export default function useChatMessages({
@@ -62,7 +61,6 @@ export default function useChatMessages({
   initialMessages = []
 }: UseChatMessagesProps) {
   const [messages, setMessages] = useState<MessageType[]>(() => {
-    // Initialize with default welcome message only if no initial messages
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
     }
@@ -88,20 +86,17 @@ export default function useChatMessages({
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<string>('');
   const isUpdatingRef = useRef<boolean>(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Use this effect once to set initial messages
   useEffect(() => {
     if (initialMessages && initialMessages.length > 0) {
-      // Record current messages to avoid re-updating
       lastUpdateRef.current = JSON.stringify(initialMessages);
       setMessages(initialMessages);
     }
-  }, []); // Empty dependency array to run only once
+  }, []);
 
-  // This effect handles syncing messages with parent ONLY when they change internally
   useEffect(() => {
     if (onMessagesUpdate && !isUpdatingRef.current) {
-      // Only update if messages have actually changed and aren't initial messages
       const currentMessagesStr = JSON.stringify(messages);
       if (currentMessagesStr !== lastUpdateRef.current) {
         lastUpdateRef.current = currentMessagesStr;
@@ -110,7 +105,6 @@ export default function useChatMessages({
     }
   }, [messages, onMessagesUpdate]);
 
-  // Filter messages based on search query
   const filteredMessages = searchQuery
     ? messages.filter(msg =>
         msg.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,16 +113,42 @@ export default function useChatMessages({
       )
     : messages;
 
-  // Handle sending messages
-  const sendMessage = useCallback(async (text: string, attachments?: File[]) => {
+  const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
 
+    // Don't proceed if there's no text and no files
     if (!text.trim() && !isFileUpload) return;
+
+    // Create a proper user message that includes both file info and text
+    let userMessageText = text;
+
+    // If there are attachments, include their names in the message
+    if (isFileUpload) {
+      const fileNames = attachments.map(file => file.name).join(', ');
+      if (text.trim()) {
+        // If text is provided, combine it with file names
+        userMessageText = `${text} [Files: ${fileNames}]`;
+      } else {
+        // If no text, just show the file names
+        userMessageText = `Uploaded files: ${fileNames}`;
+      }
+    }
+
+    // Create attachments array for user message display
+    const userAttachments = isFileUpload
+      ? attachments.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: file.url || file.fileUrl || ''
+        }))
+      : undefined;
 
     const userMessage: MessageType = {
       sender: 'user',
-      text: isFileUpload ? `Uploaded file: ${attachments?.map(f => f.name).join(', ')}` : text,
-      timestamp: new Date().toISOString()
+      text: userMessageText,
+      timestamp: new Date().toISOString(),
+      attachments: userAttachments
     };
 
     // Add the user message to the messages array
@@ -162,11 +182,9 @@ export default function useChatMessages({
 
         // Check if this is a fallback response that should trigger a ticket
         if (response.triggerTicket) {
-          // Store the user's last message as context for the ticket
           const userLastMessage = messages.filter(msg => msg.sender === 'user').pop()?.text || '';
           setTicketTriggerContext(userLastMessage);
         } else {
-          // Reset ticket trigger context if not a fallback response
           setTicketTriggerContext(null);
         }
 
@@ -190,10 +208,10 @@ export default function useChatMessages({
         isUpdatingRef.current = true;
         setMessages(prev => {
           const newMessages = [...prev, botMessage];
-          // Update the lastUpdateRef to prevent unnecessary updates
           lastUpdateRef.current = JSON.stringify(newMessages);
           return newMessages;
         });
+
         // Reset updating flag after a short delay to allow state to settle
         setTimeout(() => {
           isUpdatingRef.current = false;
@@ -208,7 +226,6 @@ export default function useChatMessages({
       setIsThinking(false);
       setProgress(0);
 
-      // Define interface for API error response
       interface ApiErrorResponse {
         error: string;
         message: string;
@@ -220,14 +237,11 @@ export default function useChatMessages({
       let errorMsg = 'Sorry, I encountered an error processing your request. Please try again.';
       let errorSuggestions: string[] = [];
 
-      // Try to extract structured error information
       if (error instanceof Error) {
         console.error('Error sending message:', error);
 
-        // Check if this is a response error with JSON data
         if ('response' in error && error.response) {
           try {
-            // Try to parse the error response as JSON
             const errorResponse = error.response as ApiErrorResponse;
 
             if (errorResponse.error && errorResponse.message) {
@@ -239,15 +253,12 @@ export default function useChatMessages({
               }
             }
           } catch (parseError) {
-            // If parsing fails, fall back to the error message
             errorMsg = error.message || errorMsg;
           }
         } else {
-          // For non-response errors, use the error message if available
           errorMsg = error.message || errorMsg;
         }
       } else if (typeof error === 'object' && error !== null) {
-        // Handle case where error is an object but not an Error instance
         const errorObj = error as any;
 
         if (errorObj.error && errorObj.message) {
@@ -262,7 +273,6 @@ export default function useChatMessages({
         }
       }
 
-      // Create a more informative error message
       const formattedErrorMsg = `**${errorTitle}**: ${errorMsg}`;
 
       const errorMessage: MessageType = {
@@ -272,22 +282,18 @@ export default function useChatMessages({
         suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined
       };
 
-      // Mark as updating to prevent circular updates
       isUpdatingRef.current = true;
       setMessages(prev => {
         const newMessages = [...prev, errorMessage];
-        // Update the lastUpdateRef to prevent unnecessary updates
         lastUpdateRef.current = JSON.stringify(newMessages);
         return newMessages;
       });
-      // Reset updating flag after a short delay to allow state to settle
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
     }
   }, [messages]);
 
-  // Handle reactions to messages
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
     isUpdatingRef.current = true;
     setMessages(prev => {
@@ -302,7 +308,6 @@ export default function useChatMessages({
     }, 100);
   }, []);
 
-  // Handle pinning messages
   const handlePinMessage = useCallback((index: number) => {
     isUpdatingRef.current = true;
     setMessages(prev => {
@@ -317,17 +322,14 @@ export default function useChatMessages({
     }, 100);
   }, []);
 
-  // Handle suggestion clicks
   const handleSuggestionClick = useCallback((suggestion: string) => {
     sendMessage(suggestion);
   }, [sendMessage]);
 
-  // Open multimedia content
   const openMultimedia = useCallback((multimedia: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => {
     setSelectedMultimedia(multimedia);
   }, []);
 
-  // Export chat as PDF
   const exportChatAsPDF = useCallback(() => {
     const chatContent = messages.map(msg => {
       const sender = msg.sender === 'user' ? 'You' : 'AseekBot';
@@ -404,7 +406,6 @@ export default function useChatMessages({
     html2pdf().set(options).from(element).save();
   }, [messages]);
 
-  // Handle initial trigger message
   useEffect(() => {
     if (triggerMessage) {
       sendMessage(triggerMessage);
@@ -412,7 +413,6 @@ export default function useChatMessages({
     }
   }, [triggerMessage, sendMessage, onTriggerHandled]);
 
-  // Clean up interval on unmount
   useEffect(() => {
     return () => {
       if (progressInterval.current) {
@@ -437,6 +437,7 @@ export default function useChatMessages({
     searchQuery,
     setSearchQuery,
     exportChatAsPDF,
-    ticketTriggerContext
+    ticketTriggerContext,
+    messagesEndRef
   };
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, KeyboardEvent, ChangeEvent, FormEvent } from 'react';
+import { useState, KeyboardEvent, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { MdSend } from 'react-icons/md';
 import { FaPaperclip } from 'react-icons/fa';
 
@@ -9,16 +9,32 @@ interface ChatInputProps {
   isDarkMode: boolean;
   onFileUploadToggle?: () => void;
   showFileUpload?: boolean;
+  onInputChange?: (text: string) => void;
+  initialValue?: string;
 }
 
-export default function ChatInput({
+const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
   inputHandler,
   isThinking,
   isDarkMode,
   onFileUploadToggle,
-  showFileUpload = false
-}: ChatInputProps) {
-  const [inputText, setInputText] = useState<string>('');
+  showFileUpload = false,
+  onInputChange,
+  initialValue = ''
+}, ref) => {
+  const [inputText, setInputText] = useState<string>(initialValue);
+
+  // Update input text when initialValue changes (e.g., when component is remounted)
+  useEffect(() => {
+    setInputText(initialValue);
+  }, [initialValue]);
+
+  // Forward the textarea ref
+  const textareaRef = useImperativeHandle<HTMLTextAreaElement, any>(ref, () => ({
+    value: inputText,
+    focus: () => textareaRef.current?.focus(),
+    current: { value: inputText }
+  }));
 
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -36,7 +52,13 @@ export default function ChatInput({
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
+    const newValue = e.target.value;
+    setInputText(newValue);
+
+    // Notify parent component of text changes
+    if (onInputChange) {
+      onInputChange(newValue);
+    }
   };
 
   return (
@@ -90,4 +112,8 @@ export default function ChatInput({
       </form>
     </div>
   );
-}
+});
+
+ChatInput.displayName = 'ChatInput';
+
+export default ChatInput;

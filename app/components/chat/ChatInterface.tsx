@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useTheme } from '../../context/ThemeContext';
 import FileActionPrompt from './FileActionPrompt';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -17,9 +17,9 @@ import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
 import FileDropzone from './FileDropzone';
 
+// Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
 
-// Define a more specific type for multimedia data
 interface MultimediaData {
     url?: string;
     title?: string;
@@ -58,7 +58,7 @@ interface ChatInterfaceProps {
     clearDocumentAnalysisPrompt?: () => void;
     onMessagesUpdate?: (messages: MessageType[]) => void;
     onFilesUpdate?: (files: any[]) => void;
-    initialMessages?: MessageType[]; // New prop for loading initial messages
+    initialMessages?: MessageType[];
 }
 
 export default function ChatInterface({
@@ -71,9 +71,15 @@ export default function ChatInterface({
     initialMessages = []
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // State for tracking user input when files are uploaded
+    const [pendingInput, setPendingInput] = useState<string>('');
+
     const {
         messages,
-        setMessages, // Expose setMessages to load initial messages
+        setMessages,
         sendMessage,
         isThinking,
         progress,
@@ -87,13 +93,19 @@ export default function ChatInterface({
         selectedMultimedia,
         setSelectedMultimedia,
         exportChatAsPDF,
-        ticketTriggerContext
+        ticketTriggerContext,
+        messagesEndRef: hookMessagesEndRef
     } = useChatMessages({
         triggerMessage,
         onTriggerHandled,
         onMessagesUpdate,
-        initialMessages // Pass initial messages to hook
+        initialMessages
     });
+
+    // Connect the ref from the hook to our local ref
+    useEffect(() => {
+        hookMessagesEndRef.current = messagesEndRef.current;
+    }, [hookMessagesEndRef]);
 
     // Load initial messages when they change (when switching between chats)
     useEffect(() => {
@@ -123,14 +135,9 @@ export default function ChatInterface({
         uploadedFiles,
         removeFile,
         clearUploadedFiles
-    } = useFileUpload();
-
-    // Sync uploaded files with parent component
-    useEffect(() => {
-        if (onFilesUpdate) {
-            onFilesUpdate(uploadedFiles);
-        }
-    }, [uploadedFiles, onFilesUpdate]);
+    } = useFileUpload({
+        onFilesUpdate: onFilesUpdate // Pass the callback to sync files with parent
+    });
 
     const {
         showTicketForm,
@@ -143,18 +150,15 @@ export default function ChatInterface({
         openTicketForm
     } = useTicketSystem();
 
-    // Add debugging logs to track uploaded files
+    // Ensure scroll to bottom when messages change
     useEffect(() => {
-        console.log("Uploaded files changed:", uploadedFiles);
-
-        // Automatically show file dropzone when files are uploaded
-        if (uploadedFiles.length > 0) {
-            setShowFileDropzone(true);
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [uploadedFiles]);
+    }, [messages, isThinking]);
 
     // Function to clear all document analysis related state
-    const clearDocumentAnalysisState = () => {
+    const clearDocumentAnalysisState = useCallback(() => {
         // Clear any uploaded files
         if (uploadedFiles.length > 0) {
             clearUploadedFiles();
@@ -167,7 +171,10 @@ export default function ChatInterface({
         if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
             clearDocumentAnalysisPrompt();
         }
-    };
+
+        // Clear any pending input
+        setPendingInput('');
+    }, [uploadedFiles.length, clearUploadedFiles, showDocumentAnalysisPrompt, clearDocumentAnalysisPrompt]);
 
     // Effect to check for triggerTicket flag in the latest bot message
     useEffect(() => {
@@ -207,30 +214,38 @@ export default function ChatInterface({
 
     // Effect to handle document analysis prompt
     useEffect(() => {
-        console.log("Document analysis prompt changed:", showDocumentAnalysisPrompt);
-
         if (showDocumentAnalysisPrompt) {
             // Clear any existing uploaded files when document analysis prompt is shown
             if (uploadedFiles.length > 0) {
                 clearUploadedFiles();
             }
             setShowFileDropzone(true);
-        } else {
-            // When document analysis prompt is cleared and we don't have any uploaded files,
-            // also close the file dropzone
-            if (uploadedFiles.length === 0) {
-                setShowFileDropzone(false);
-            }
+        } else if (uploadedFiles.length === 0) {
+            // When document analysis prompt is cleared and we don't have any files, hide the dropzone
+            setShowFileDropzone(false);
         }
     }, [showDocumentAnalysisPrompt, uploadedFiles.length, clearUploadedFiles]);
 
-    // Effect that runs whenever triggerMessage changes (which happens when sidebar links are clicked)
+    // Effect that runs whenever triggerMessage changes (sidebar links)
     useEffect(() => {
         if (triggerMessage) {
             // If a new message is triggered from sidebar, clear document analysis state
             clearDocumentAnalysisState();
         }
-    }, [triggerMessage]);
+    }, [triggerMessage, clearDocumentAnalysisState]);
+
+    // Automatically hide file dropzone after sending a message
+    useEffect(() => {
+        // If we're not thinking (processing a message) and there are no files, hide the dropzone
+        if (!isThinking && uploadedFiles.length === 0) {
+            // Add a small delay to ensure smooth transition
+            const timer = setTimeout(() => {
+                setShowFileDropzone(false);
+            }, 300);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isThinking, uploadedFiles.length]);
 
     const {
         showFeedbackForm,
@@ -282,49 +297,68 @@ export default function ChatInterface({
         }
     };
 
-    const agentStyle = getAgentStyling();
-
     // Create a custom suggestion handler that can open the ticket form when needed
     const handleCustomSuggestionClick = (suggestion: string) => {
         // Check if the suggestion text indicates ticket creation
         if (suggestion.toLowerCase().includes('ticket')) {
-            // Open the ticket form using the hook's openTicketForm function
+            // Open the ticket form
             openTicketForm();
         } else {
-            // For other suggestions, use the original handleSuggestionClick from useChatMessages
+            // For other suggestions, use the original handler
             handleSuggestionClick(suggestion);
         }
     };
 
+    // Handle user input
+    const handleInputSubmit = (input: string) => {
+        if (uploadedFiles.length > 0) {
+            // Send message with files
+            sendMessage(input, uploadedFiles);
+
+            // Clear uploaded files and hide file dropzone after sending
+            setTimeout(() => {
+                clearUploadedFiles();
+                setShowFileDropzone(false);
+            }, 500);
+        } else {
+            // Normal message without files
+            sendMessage(input);
+        }
+
+        // Clear any pending input
+        setPendingInput('');
+    };
+
     // Handle file action selection from FileActionPrompt
     const handleFileAction = (action: string) => {
-        // Log the uploaded files for debugging
-        console.debug('Files to be processed:', JSON.stringify(uploadedFiles, null, 2));
+        // Get input from textarea or pending input state
+        const userInput = inputRef.current?.value || pendingInput || '';
 
-        // Ensure files have the required s3Url property
+        // Ensure files have the required URL property
         const validFiles = uploadedFiles.filter(file => file.url);
 
         if (validFiles.length !== uploadedFiles.length) {
-            console.warn('Some files are missing S3 URLs and will be skipped');
+            console.warn('Some files are missing URLs and will be skipped');
         }
 
         switch (action) {
             case 'bid-analysis':
                 // Send message for bid document analysis with attached files
-                // Set the useCase to 'bid-analysis' for the Bedrock agent
                 const bidAnalysisFiles = validFiles.map(file => ({
                     ...file,
-                    useCase: 'bid-analysis' // This will be used by the API to set the proper useCase
+                    useCase: 'bid-analysis'
                 }));
 
-                console.debug('Sending bid analysis files to agent:', JSON.stringify(bidAnalysisFiles, null, 2));
-                sendMessage("perform bid document analysis", bidAnalysisFiles);
+                sendMessage(userInput || "Perform bid document analysis", bidAnalysisFiles);
                 clearUploadedFiles();
+                setShowFileDropzone(false);
+
                 // Clear document analysis prompt if it was triggered from sidebar
                 if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
                     clearDocumentAnalysisPrompt();
                 }
                 break;
+
             case 'document-analysis':
                 // Send message for general document analysis with attached files
                 const documentAnalysisFiles = validFiles.map(file => ({
@@ -332,39 +366,50 @@ export default function ChatInterface({
                     useCase: 'document-analysis'
                 }));
 
-                console.debug('Sending document analysis files to agent:', JSON.stringify(documentAnalysisFiles, null, 2));
-                sendMessage("analyze this document", documentAnalysisFiles);
+                sendMessage(userInput || "Analyze this document", documentAnalysisFiles);
                 clearUploadedFiles();
+                setShowFileDropzone(false);
+
                 // Clear document analysis prompt if it was triggered from sidebar
                 if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
                     clearDocumentAnalysisPrompt();
                 }
                 break;
+
             case 'send-message':
                 // Send message with attached files
-                const fileNames = validFiles.map(file => file.name).join(', ');
-
-                // For general file uploads, use the default 'CHAT' useCase
                 const chatFiles = validFiles.map(file => ({
                     ...file,
-                    useCase: 'CHAT' // This will be used by the API to set the proper useCase
+                    useCase: 'CHAT'
                 }));
 
-                console.debug('Sending chat files to agent:', JSON.stringify(chatFiles, null, 2));
-                sendMessage(`Uploaded files: ${fileNames}`, chatFiles);
+                sendMessage(userInput || `Please analyze these files`, chatFiles);
                 clearUploadedFiles();
+                setShowFileDropzone(false);
                 break;
+
             case 'cancel':
                 // Clear uploaded files without sending a message
                 clearUploadedFiles();
+                setShowFileDropzone(false);
+
                 // Also clear the document analysis prompt
                 if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
                     clearDocumentAnalysisPrompt();
                 }
                 break;
+
             default:
                 break;
         }
+
+        // Clear any pending input
+        setPendingInput('');
+    };
+
+    // Store input when user types while files are loaded
+    const handleInputChange = (text: string) => {
+        setPendingInput(text);
     };
 
     return (
@@ -379,6 +424,7 @@ export default function ChatInterface({
                     setShowTicketForm={openTicketForm}
                     exportChat={exportChatAsPDF}
                 />
+
                 <div className={`flex-1 overflow-y-auto p-6 ${isDarkMode ? 'bg-gray-850' : 'bg-white'} rounded-lg shadow-inner mx-2 my-2`}>
                     <MessageList
                         messages={filteredMessages}
@@ -388,11 +434,13 @@ export default function ChatInterface({
                         openMultimedia={openMultimedia}
                         handleReaction={handleReaction}
                         handlePinMessage={handlePinMessage}
+                        messagesEndRef={messagesEndRef}
                     />
                 </div>
+
                 <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-opacity-90 backdrop-filter backdrop-blur-sm`}>
                     <div className="max-w-4xl mx-auto rounded-lg shadow-sm p-2">
-                        {/* Document Analysis Modal */}
+                        {/* Document Analysis Prompt */}
                         {showDocumentAnalysisPrompt && (
                             <div className={`mb-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
                                 <div className="flex justify-between items-center mb-3">
@@ -423,6 +471,8 @@ export default function ChatInterface({
                                 </p>
                             </div>
                         )}
+
+                        {/* Forms (Ticket, Feedback) */}
                         <AnimatePresence>
                             {showTicketForm && (
                                 <TicketForm
@@ -435,6 +485,7 @@ export default function ChatInterface({
                                     closeTicketForm={closeTicketForm}
                                 />
                             )}
+
                             {showFeedbackForm && (
                                 <FeedbackForm
                                     isDarkMode={isDarkMode}
@@ -445,12 +496,14 @@ export default function ChatInterface({
                                 />
                             )}
                         </AnimatePresence>
+
+                        {/* Suggestion Chips */}
                         <SuggestionChips
                             suggestions={messages[messages.length - 1]?.suggestions}
                             onSuggestionClick={handleCustomSuggestionClick}
                         />
 
-                        {/* Show file upload components when document analysis is triggered or files are being uploaded */}
+                        {/* File Upload Components */}
                         {(showDocumentAnalysisPrompt || showFileDropzone || uploadedFiles.length > 0) && (
                             <>
                                 <div className="mb-2">
@@ -477,29 +530,22 @@ export default function ChatInterface({
                             </>
                         )}
 
+                        {/* Chat Input */}
                         <ChatInput
-                            inputHandler={(input: string) => {
-                                // If there are uploaded files, log them for debugging
-                                if (uploadedFiles.length > 0) {
-                                    console.debug('Sending message with files:',
-                                        JSON.stringify(uploadedFiles.map(file => ({
-                                            name: file.name,
-                                            type: file.type,
-                                            size: file.size,
-                                            url: file.url
-                                        })), null, 2)
-                                    );
-                                }
-                                sendMessage(input, uploadedFiles.length > 0 ? uploadedFiles : undefined);
-                            }}
+                            inputHandler={handleInputSubmit}
                             isThinking={isThinking}
                             isDarkMode={isDarkMode}
                             onFileUploadToggle={() => setShowFileDropzone(!showFileDropzone)}
                             showFileUpload={showFileDropzone}
+                            ref={inputRef}
+                            onInputChange={handleInputChange}
+                            initialValue={pendingInput}
                         />
                     </div>
                 </div>
             </div>
+
+            {/* Multimedia Modal */}
             <MultimediaModal
                 isOpen={!!selectedMultimedia}
                 onClose={() => setSelectedMultimedia(null)}
