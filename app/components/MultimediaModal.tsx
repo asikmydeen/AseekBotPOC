@@ -94,14 +94,14 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
     };
 
     const getVideoUrl = (data: MultimediaData): string => {
-        if ('url' in data) {
+        if ('url' in data && typeof data.url === 'string') {
             return data.url;
         }
         return '';
     };
 
     const getImageUrl = (data: MultimediaData): string => {
-        if ('url' in data) {
+        if ('url' in data && typeof data.url === 'string') {
             return data.url;
         }
         return '';
