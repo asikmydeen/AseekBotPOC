@@ -1,5 +1,5 @@
 "use client";
-import { useState, KeyboardEvent, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useState, KeyboardEvent, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import { MdSend } from 'react-icons/md';
 import { FaPaperclip } from 'react-icons/fa';
 
@@ -24,21 +24,21 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
   showFileDropzone = false,
   onInputChange,
   initialValue = '',
-  inputRef,
   hasUploadedFiles,
   clearFiles
 }, ref) => {
   const [inputText, setInputText] = useState<string>(initialValue);
+  const internalRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update input text when initialValue changes (e.g., when component is remounted)
+  // Update input text when initialValue changes
   useEffect(() => {
     setInputText(initialValue);
   }, [initialValue]);
 
   // Forward the textarea ref
-  const textareaRef = useImperativeHandle<HTMLTextAreaElement, any>(ref, () => ({
+  useImperativeHandle<HTMLTextAreaElement | null, any>(ref, () => ({
     value: inputText,
-    focus: () => textareaRef.current?.focus(),
+    focus: () => internalRef.current?.focus(),
     current: { value: inputText }
   }));
 
@@ -71,6 +71,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
     <div className="flex flex-col">
       <form onSubmit={handleSubmit} className="relative">
         <textarea
+          ref={internalRef}
           className={`w-full p-4 pr-24 rounded-lg resize-none focus:outline-none focus:ring-2 ${isDarkMode
             ? 'bg-gray-800 text-white border-gray-700 focus:ring-blue-500'
             : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-600'
