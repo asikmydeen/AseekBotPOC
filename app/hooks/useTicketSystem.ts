@@ -99,7 +99,6 @@ const useTicketSystem = () => {
         isError: true,
       };
     }
-
   }, [ticketDetails]);
   return {
     showTicketForm,
