@@ -1,70 +1,16 @@
-import { handleApiError, ErrorResponse } from '../utils/apiErrorHandler';
+// Update app/api/advancedApi.ts
+import {
+  LAMBDA_ENDPOINTS,
+  ChatHistoryItem,
+  TicketDetails,
+  ApiResponse,
+  handleClientError
+} from '../utils/lambdaApi';
 
-/**
- * Interface for chat message history items
- */
-export interface ChatHistoryItem {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
+// Existing interfaces remain the same...
 
-/**
- * Interface for uploaded file references
- */
-export interface UploadedFile {
-  name: string;
-  mimeType: string;
-  s3Url: string;
-  fileUrl?: string;
-}
+// Update the API functions to use Lambda endpoints:
 
-/**
- * Interface for ticket details
- */
-export interface TicketDetails {
-  subject: string;
-  description: string;
-  priority?: 'low' | 'medium' | 'high';
-  category?: string;
-  email?: string;
-  [key: string]: unknown; // For any additional fields
-}
-
-/**
- * Interface for API responses
- */
-export interface ApiResponse {
-  subject: any;
-  createdAt: string;
-  ticketId: string;
-  status: string;
-  fileUrl: string;
-  fileId: string | undefined;
-  success: boolean;
-  data?: unknown;
-  error?: string;
-  message?: string;
-}
-
-/**
- * Common error handler for API client functions
- * @param error - The caught error
- * @param operation - Description of the operation that failed
- * @throws Error with a user-friendly message
- */
-function handleClientError(error: unknown, operation: string): never {
-  const errorObj = error as Error;
-  console.error(`Error ${operation}:`, errorObj);
-  throw new Error(`Failed to ${operation}. Please try again.`);
-}
-
-/**
- * Processes a chat message and returns a response
- * @param message The user's message
- * @param history Previous chat history
- * @param attachments Optional file attachments
- * @returns Promise with the response data
- */
 export async function processChatMessage(
   message: string,
   history: ChatHistoryItem[],
@@ -97,8 +43,8 @@ export async function processChatMessage(
       formData.append('s3Files', JSON.stringify(s3Files));
     }
 
-    // Call the API route
-    const response = await fetch('/api/processChatMessage', {
+    // Call the Lambda API endpoint
+    const response = await fetch(LAMBDA_ENDPOINTS.processChatMessage, {
       method: 'POST',
       body: formData,
     });
@@ -114,12 +60,6 @@ export async function processChatMessage(
   }
 }
 
-/**
- * Uploads a file to S3 or similar storage via API route
- * @param file The file to upload
- * @param sessionId Optional session identifier
- * @returns Promise with the upload result
- */
 export async function uploadFileApi(file: File, sessionId?: string): Promise<ApiResponse> {
   try {
     // Validate file
@@ -135,8 +75,8 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
       formData.append('sessionId', sessionId);
     }
 
-    // Call the API route
-    const response = await fetch('/api/uploadFile', {
+    // Call the Lambda API endpoint
+    const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
       method: 'POST',
       body: formData,
     });
@@ -152,11 +92,6 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
   }
 }
 
-/**
- * Creates a support ticket via API route
- * @param ticketDetails The details of the ticket to create
- * @returns Promise with the ticket information
- */
 export async function createTicketApi(ticketDetails: TicketDetails): Promise<ApiResponse> {
   try {
     // Validate ticket details
@@ -164,8 +99,8 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
       throw new Error('Invalid ticket details');
     }
 
-    // Call the API route
-    const response = await fetch('/api/createTicket', {
+    // Call the Lambda API endpoint
+    const response = await fetch(LAMBDA_ENDPOINTS.createTicket, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -184,12 +119,6 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
   }
 }
 
-/**
- * Handles sidebar quick link actions via API route
- * @param action The action to perform
- * @param parameter Additional parameter for the action
- * @returns Promise with the action result
- */
 export async function quickLinkApi(action: string, parameter: string): Promise<ApiResponse> {
   try {
     // Validate inputs
@@ -197,8 +126,8 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
       throw new Error('No action specified');
     }
 
-    // Call the API route
-    const response = await fetch('/api/quickLink', {
+    // Call the Lambda API endpoint
+    const response = await fetch(LAMBDA_ENDPOINTS.quickLink, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -217,26 +146,25 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
   }
 }
 
-/**
- * Deletes a file from S3 via API route
- * @param fileUrl The S3 URL of the file to delete
- * @returns Promise with the deletion result
- */
 export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   try {
     const s3Key = fileUrl.split('.amazonaws.com/')[1];
     if (!s3Key) {
       throw new Error('Invalid file URL');
     }
-    const response = await fetch('/api/deleteFile', {
+
+    // Call the Lambda API endpoint
+    const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ s3Key })
     });
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to delete file');
     }
+
     return await response.json();
   } catch (error) {
     handleClientError(error, 'delete file');

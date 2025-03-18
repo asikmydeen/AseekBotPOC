@@ -1,28 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Config for App Router API routes */
+  output: 'export',  // Add this line for static export
 
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   reactStrictMode: true,
-
-  // Environment variables
   env: {
     AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || 'aseek-bot-uploads',
     AWS_REGION: process.env.AWS_REGION || 'us-east-1',
     API_BASE_URL: process.env.API_BASE_URL || '/api',
     MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE || '10485760',
   },
-
-  // Ensure API requests are properly handled
   async headers() {
     return [
       {
-        // Apply these headers to all routes
         source: '/(.*)',
         headers: [
           {
@@ -62,8 +55,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
-  // Image optimization settings
   images: {
     domains: ['localhost'],
     remotePatterns: [
@@ -72,11 +63,11 @@ const nextConfig: NextConfig = {
         hostname: '**.amazonaws.com'
       },
     ],
+    unoptimized: true,  // Add this for static export
   },
-
-  // Enable experimental features for App Router
   experimental: {
     forceSwcTransforms: true,
   },
 };
+
 export default nextConfig;
