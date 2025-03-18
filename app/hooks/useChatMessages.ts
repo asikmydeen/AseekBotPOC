@@ -2,9 +2,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
-import { stripIndent } from 'common-tags';
+import { stripIndent } from '../utils/helpers';
 import { processChatMessage } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
+
+interface ChatHistoryItem {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 interface UseChatMessagesProps {
   triggerMessage: string | null;
@@ -43,26 +48,17 @@ export default function useChatMessages({
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
-  // Stores the last serialized state of messages to prevent redundant updates
   const lastUpdateRef = useRef<string>('');
-  // Flag to prevent circular updates when modifying messages
   const isUpdatingRef = useRef<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  /**
-   * Helper function to safely update messages while preventing circular updates
-   * @param updater Function that returns the new messages array
-   */
   const safeUpdateMessages = useCallback((updater: (prev: MessageType[]) => MessageType[]) => {
-    // Mark as updating to prevent circular updates
     isUpdatingRef.current = true;
     setMessages(prev => {
       const newMessages = updater(prev);
-      // Store serialized state for comparison
       lastUpdateRef.current = JSON.stringify(newMessages);
       return newMessages;
     });
-    // Reset updating flag after a short delay to allow state to settle
     setTimeout(() => {
       isUpdatingRef.current = false;
     }, 100);
@@ -75,8 +71,6 @@ export default function useChatMessages({
     }
   }, []);
 
-  // Synchronize messages with parent component when they change
-  // Uses the isUpdatingRef flag to prevent circular updates
   useEffect(() => {
     if (onMessagesUpdate && !isUpdatingRef.current) {
       const currentMessagesStr = JSON.stringify(messages);
@@ -95,28 +89,28 @@ export default function useChatMessages({
       )
     : messages;
 
+  // Convert MessageType to ChatHistoryItem for API
+  const convertToChatHistoryItem = (message: MessageType): ChatHistoryItem => {
+    return {
+      role: message.sender === 'user' ? 'user' : 'assistant',
+      content: message.text || ''
+    };
+  };
+
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
-
-    // Don't proceed if there's no text and no files
     if (!text.trim() && !isFileUpload) return;
 
-    // Create a proper user message that includes both file info and text
     let userMessageText = text;
-
-    // If there are attachments, include their names in the message
     if (isFileUpload) {
       const fileNames = attachments.map(file => file.name).join(', ');
       if (text.trim()) {
-        // If text is provided, combine it with file names
         userMessageText = `${text} [Files: ${fileNames}]`;
       } else {
-        // If no text, just show the file names
         userMessageText = `Uploaded files: ${fileNames}`;
       }
     }
 
-    // Create attachments array for user message display
     const userAttachments = isFileUpload
       ? attachments.map(file => ({
           name: file.name,
@@ -133,12 +127,10 @@ export default function useChatMessages({
       attachments: userAttachments
     };
 
-    // Add the user message to the messages array
     setMessages(prev => [...prev, userMessage]);
     setIsThinking(true);
     setProgress(0);
 
-    // Simulate progress
     progressInterval.current = setInterval(() => {
       setProgress(prev => {
         const increment = Math.random() * 15;
@@ -148,8 +140,11 @@ export default function useChatMessages({
     }, 300);
 
     try {
-      // Pass the updated messages array as history
-      const response = await processChatMessage(text, messages, attachments);
+      // Convert messages to ChatHistoryItem format
+      const chatHistory: ChatHistoryItem[] = messages.map(convertToChatHistoryItem);
+
+      // Call the actual API
+      const response = await processChatMessage(text, chatHistory, attachments);
 
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
@@ -162,8 +157,10 @@ export default function useChatMessages({
         setIsThinking(false);
         setProgress(0);
 
-        // Check if this is a fallback response that should trigger a ticket
-        if (response.triggerTicket) {
+        // Check for ticket trigger in response
+        const shouldTriggerTicket = 'triggerTicket' in response && (response as { triggerTicket: boolean }).triggerTicket === true;
+
+        if (shouldTriggerTicket) {
           const userLastMessage = messages.filter(msg => msg.sender === 'user').pop()?.text || '';
           setTicketTriggerContext(userLastMessage);
         } else {
@@ -173,22 +170,21 @@ export default function useChatMessages({
         // Create bot message from response
         const botMessage: MessageType = {
           sender: 'bot',
-          text: response.message,
-          timestamp: response.timestamp || new Date().toISOString(),
-          suggestions: response.suggestions || [],
-          multimedia: response.multimedia,
-          report: response.report,
-          triggerTicket: response.triggerTicket
+          text: (response as any).message || (response as any).data?.message || 'No response received',
+          timestamp: (response as any).timestamp || new Date().toISOString(),
+          suggestions: (response as any).suggestions || (response as any).data?.suggestions || [],
+          multimedia: (response as any).multimedia || (response as any).data?.multimedia,
+          report: (response as any).report || (response as any).data?.report,
+          triggerTicket: shouldTriggerTicket
         };
 
         // Add attachments if they exist in the response
-        if (response.attachments && response.attachments.length > 0) {
-          botMessage.attachments = response.attachments;
+        if ((response as any).attachments || (response as any).data?.attachments) {
+          botMessage.attachments = (response as any).attachments || (response as any).data?.attachments;
         }
 
         safeUpdateMessages(prev => [...prev, botMessage]);
-      }, 500);
-    } catch (error) {
+      }, 500);    } catch (error) {
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
@@ -197,45 +193,18 @@ export default function useChatMessages({
       setIsThinking(false);
       setProgress(0);
 
-      interface ApiErrorResponse {
-        error: string;
-        message: string;
-        details?: string;
-        suggestions?: string[];
-      }
-
       let errorTitle = 'Error';
       let errorMsg = 'Sorry, I encountered an error processing your request. Please try again.';
       let errorSuggestions: string[] = [];
 
       if (error instanceof Error) {
         console.error('Error sending message:', error);
-
-        if ('response' in error && error.response) {
-          try {
-            const errorResponse = error.response as ApiErrorResponse;
-
-            if (errorResponse.error && errorResponse.message) {
-              errorTitle = errorResponse.error;
-              errorMsg = errorResponse.message;
-
-              if (errorResponse.suggestions && errorResponse.suggestions.length > 0) {
-                errorSuggestions = errorResponse.suggestions;
-              }
-            }
-          } catch (parseError) {
-            errorMsg = error.message || errorMsg;
-          }
-        } else {
-          errorMsg = error.message || errorMsg;
-        }
+        errorMsg = error.message || errorMsg;
       } else if (typeof error === 'object' && error !== null) {
         const errorObj = error as any;
-
         if (errorObj.error && errorObj.message) {
           errorTitle = errorObj.error;
           errorMsg = errorObj.message;
-
           if (errorObj.suggestions && Array.isArray(errorObj.suggestions)) {
             errorSuggestions = errorObj.suggestions;
           }
@@ -281,7 +250,7 @@ export default function useChatMessages({
     const chatContent = messages.map(msg => {
       const sender = msg.sender === 'user' ? 'You' : 'AseekBot';
       const time = new Date(msg.timestamp).toLocaleTimeString();
-      const formattedText = marked.parse(msg.text);
+      const formattedText = marked.parse(msg.text || '');
 
       let reportContent = '';
       if (msg.report) {
@@ -299,7 +268,7 @@ export default function useChatMessages({
         `;
       }
 
-      return stripIndent`
+      return stripIndent(`
         <div class="message ${msg.sender}">
           <div class="message-header">
             <strong>${sender}</strong>
@@ -310,10 +279,10 @@ export default function useChatMessages({
             ${reportContent}
           </div>
         </div>
-      `;
+      `);
     }).join('');
 
-    const html = stripIndent`
+    const html = stripIndent(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -337,7 +306,7 @@ export default function useChatMessages({
         </div>
       </body>
       </html>
-    `;
+    `);
 
     const element = document.createElement('div');
     element.innerHTML = html;

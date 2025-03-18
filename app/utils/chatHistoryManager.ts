@@ -1,5 +1,5 @@
 // app/utils/chatHistoryManager.ts
-import { MessageType } from "../components/chat/ChatInterface";
+import { MessageType } from "../types/shared";
 
 export interface ChatHistoryEntry {
   id: string;

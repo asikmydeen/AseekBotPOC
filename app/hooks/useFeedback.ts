@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FeedbackData } from '../../types/index';
+import { FeedbackData } from '../types/index';
 
 /**
  * Custom hook to manage user feedback functionality
