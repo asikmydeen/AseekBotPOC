@@ -3,11 +3,9 @@
 import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useTheme } from '../../context/ThemeContext';
-import FileActionPrompt from './FileActionPrompt';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
-import ChatInput from './ChatInput';
 import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
@@ -15,7 +13,12 @@ import useChatMessages from '../../hooks/useChatMessages';
 import useFileUpload from '../../hooks/useFileUpload';
 import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
-import FileDropzone from './FileDropzone';
+import { ChatProvider, useChatContext } from '../../context/ChatContext';
+import DocumentAnalysisPrompt from './DocumentAnalysisPrompt';
+import FileUploadSection from './FileUploadSection';
+import ChatFooter from './ChatFooter';
+import useAgentStyling from '../../hooks/useAgentStyling';
+import useFileActions from '../../hooks/useFileActions';
 
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
@@ -28,6 +31,15 @@ interface MultimediaData {
     chartData?: Record<string, unknown>;
     videoUrl?: string;
     [key: string]: unknown;
+}
+
+// Wrap the component with the ChatProvider
+export default function ChatInterface(props: ChatInterfaceProps) {
+    return (
+        <ChatProvider>
+            <ChatInterfaceComponent {...props} />
+        </ChatProvider>
+    );
 }
 
 export interface MessageType {
@@ -61,7 +73,11 @@ interface ChatInterfaceProps {
     initialMessages?: MessageType[];
 }
 
-export default function ChatInterface({
+// This is just a comment to indicate that the ChatFooterProps interface
+// in ChatFooter.tsx should be updated to include:
+// toggleFileDropzone: () => void;
+
+function ChatInterfaceComponent({
     triggerMessage,
     onTriggerHandled,
     showDocumentAnalysisPrompt = false,
@@ -278,46 +294,8 @@ export default function ChatInterface({
         openFeedbackForm
     } = useFeedback();
 
-    // Get agent-specific styling
-    const getAgentStyling = () => {
-        switch (activeAgent) {
-            case 'bid-analysis':
-                return {
-                    headerClass: 'bg-purple-700',
-                    bubbleClass: 'bg-purple-100 border-purple-300',
-                    iconClass: 'text-purple-500',
-                    label: 'Bid Analysis Agent'
-                };
-            case 'supplier-search':
-                return {
-                    headerClass: 'bg-green-700',
-                    bubbleClass: 'bg-green-100 border-green-300',
-                    iconClass: 'text-green-500',
-                    label: 'Supplier Search Agent'
-                };
-            case 'product-comparison':
-                return {
-                    headerClass: 'bg-orange-700',
-                    bubbleClass: 'bg-orange-100 border-orange-300',
-                    iconClass: 'text-orange-500',
-                    label: 'Product Comparison Agent'
-                };
-            case 'technical-support':
-                return {
-                    headerClass: 'bg-red-700',
-                    bubbleClass: 'bg-red-100 border-red-300',
-                    iconClass: 'text-red-500',
-                    label: 'Technical Support Agent'
-                };
-            default:
-                return {
-                    headerClass: isDarkMode ? 'bg-gray-800' : 'bg-blue-600',
-                    bubbleClass: isDarkMode ? 'bg-gray-700' : 'bg-blue-100 border-blue-300',
-                    iconClass: isDarkMode ? 'text-gray-300' : 'text-blue-500',
-                    label: 'AseekBot Assistant'
-                };
-        }
-    };
+    // Use the custom hook for agent styling
+    const agentStyling = useAgentStyling(activeAgent, isDarkMode);
 
     /**
      * Custom suggestion handler with ticket creation capability
@@ -364,84 +342,23 @@ export default function ChatInterface({
         setPendingInput('');
     };
 
-    /**
-     * Handles file action selection from FileActionPrompt
-     * Processes files based on the selected action:
-     * - bid-analysis: Sends files for bid document analysis
-     * - document-analysis: Sends files for general document analysis
-     * - send-message: Sends files with a chat message
-     * - cancel: Clears files without sending
-     *
-     * @param action - The selected action from FileActionPrompt
-     */
-    const handleFileAction = (action: string) => {
-        // Get input from textarea or pending input state
-        const userInput = inputRef.current?.value || pendingInput || '';
+    // Use the custom hook for file actions
+    const { handleFileAction } = useFileActions({
+        inputRef,
+        pendingInput,
+        uploadedFiles,
+        clearUploadedFiles,
+        setShowFileDropzone,
+        showDocumentAnalysisPrompt,
+        clearDocumentAnalysisPrompt,
+        setPendingInput,
+        sendMessage
+    });
 
-        // Ensure files have the required URL property
-        const validFiles = uploadedFiles.filter(file => file.url);
-
-        if (validFiles.length !== uploadedFiles.length) {
-            console.warn('Some files are missing URLs and will be skipped');
-        }
-
-        // Common cleanup function to avoid code duplication
-        const cleanupAfterAction = () => {
-            clearUploadedFiles();
-            setShowFileDropzone(false);
-
-            // Clear document analysis prompt if it was triggered from sidebar
-            if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
-                clearDocumentAnalysisPrompt();
-            }
-
-            // Clear any pending input
-            setPendingInput('');
-        };
-
-        switch (action) {
-            case 'bid-analysis':
-                // Send message for bid document analysis with attached files
-                const bidAnalysisFiles = validFiles.map(file => ({
-                    ...file,
-                    useCase: 'bid-analysis'
-                }));
-
-                sendMessage(userInput || "Perform bid document analysis", bidAnalysisFiles);
-                cleanupAfterAction();
-                break;
-
-            case 'document-analysis':
-                // Send message for general document analysis with attached files
-                const documentAnalysisFiles = validFiles.map(file => ({
-                    ...file,
-                    useCase: 'document-analysis'
-                }));
-
-                sendMessage(userInput || "Analyze this document", documentAnalysisFiles);
-                cleanupAfterAction();
-                break;
-
-            case 'send-message':
-                // Send message with attached files
-                const chatFiles = validFiles.map(file => ({
-                    ...file,
-                    useCase: 'CHAT'
-                }));
-
-                sendMessage(userInput || `Please analyze these files`, chatFiles);
-                cleanupAfterAction();
-                break;
-
-            case 'cancel':
-                // Clear uploaded files without sending a message
-                cleanupAfterAction();
-                break;
-
-            default:
-                break;
-        }
-    };
+    // Toggle file dropzone visibility
+    const toggleFileDropzone = useCallback(() => {
+        setShowFileDropzone(prev => !prev);
+    }, []);
 
     // Store input when user types while files are loaded
     const handleInputChange = (text: string) => {
@@ -474,111 +391,42 @@ export default function ChatInterface({
                     />
                 </div>
 
-                <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-opacity-90 backdrop-filter backdrop-blur-sm`}>
-                    <div className="max-w-4xl mx-auto rounded-lg shadow-sm p-2">
-                        {/* Document Analysis Prompt */}
-                        {showDocumentAnalysisPrompt && (
-                            <div className={`mb-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className={`font-medium text-lg ${isDarkMode ? 'text-white' : 'text-blue-700'}`}>
-                                        Document Analysis
-                                    </h3>
-                                    <button
-                                        onClick={() => {
-                                            if (clearDocumentAnalysisPrompt) {
-                                                clearDocumentAnalysisPrompt();
-                                                setShowFileDropzone(false);
-                                                clearUploadedFiles();
-                                            }
-                                        }}
-                                        className={`p-1 rounded-full ${isDarkMode
-                                            ? 'text-gray-300 hover:bg-gray-600'
-                                            : 'text-gray-500 hover:bg-gray-200'
-                                            }`}
-                                        aria-label="Close"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <p className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                    Upload a document for analysis. I can extract information, summarize content, and answer questions about your document.
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Forms (Ticket, Feedback) */}
-                        <AnimatePresence>
-                            {showTicketForm && (
-                                <TicketForm
-                                    isDarkMode={isDarkMode}
-                                    ticketDetails={ticketDetails}
-                                    ticketStep={ticketStep}
-                                    setTicketStep={setTicketStep}
-                                    setTicketDetails={setTicketDetails}
-                                    createTicket={createTicket}
-                                    closeTicketForm={closeTicketForm}
-                                />
-                            )}
-
-                            {showFeedbackForm && (
-                                <FeedbackForm
-                                    isDarkMode={isDarkMode}
-                                    feedback={feedback}
-                                    setFeedback={setFeedback}
-                                    submitFeedback={submitFeedback}
-                                    closeFeedbackForm={closeFeedbackForm}
-                                />
-                            )}
-                        </AnimatePresence>
-
-                        {/* Suggestion Chips */}
-                        <SuggestionChips
-                            suggestions={messages[messages.length - 1]?.suggestions}
-                            onSuggestionClick={handleCustomSuggestionClick}
-                        />
-
-                        {/* File Upload Components */}
-                        {(showDocumentAnalysisPrompt || showFileDropzone || uploadedFiles.length > 0) && (
-                            <>
-                                <div className="mb-2">
-                                    <FileDropzone
-                                        getRootProps={getRootProps}
-                                        getInputProps={getInputProps}
-                                        isUploading={isUploading}
-                                        isDragActive={isDragActive}
-                                        isDarkMode={isDarkMode}
-                                        uploadProgress={progress}
-                                        fileSizeLimit={10}
-                                        uploadedFiles={uploadedFiles}
-                                        onRemoveFile={removeFile}
-                                        initiallyExpanded={true}
-                                    />
-                                </div>
-
-                                {uploadedFiles.length > 0 && (
-                                    <FileActionPrompt
-                                        onAction={handleFileAction}
-                                        showDocumentAnalysisOption={showDocumentAnalysisPrompt}
-                                    />
-                                )}
-                            </>
-                        )}
-
-                        {/* Chat Input */}
-                        <ChatInput
-                            inputHandler={handleInputSubmit}
-                            isThinking={isThinking}
-                            isDarkMode={isDarkMode}
-                            onFileUploadToggle={() => setShowFileDropzone(!showFileDropzone)}
-                            showFileUpload={showFileDropzone}
-                            ref={inputRef}
-                            onInputChange={handleInputChange}
-                            initialValue={pendingInput}
-                        />
-                    </div>
-                </div>
+                <ChatFooter
+                    isDarkMode={isDarkMode}
+                    showDocumentAnalysisPrompt={showDocumentAnalysisPrompt}
+                    clearDocumentAnalysisPrompt={clearDocumentAnalysisPrompt}
+                    setShowFileDropzone={setShowFileDropzone}
+                    toggleFileDropzone={toggleFileDropzone}
+                    clearUploadedFiles={clearUploadedFiles}
+                    showTicketForm={showTicketForm}
+                    ticketDetails={ticketDetails}
+                    ticketStep={ticketStep}
+                    setTicketStep={setTicketStep}
+                    setTicketDetails={setTicketDetails}
+                    createTicket={createTicket}
+                    closeTicketForm={closeTicketForm}
+                    showFeedbackForm={showFeedbackForm}
+                    feedback={feedback}
+                    setFeedback={setFeedback}
+                    submitFeedback={submitFeedback}
+                    closeFeedbackForm={closeFeedbackForm}
+                    messages={messages}
+                    handleCustomSuggestionClick={handleCustomSuggestionClick}
+                    showFileDropzone={showFileDropzone}
+                    uploadedFiles={uploadedFiles}
+                    getRootProps={getRootProps}
+                    getInputProps={getInputProps}
+                    isUploading={isUploading}
+                    isDragActive={isDragActive}
+                    progress={progress}
+                    removeFile={removeFile}
+                    handleFileAction={handleFileAction}
+                    handleInputSubmit={handleInputSubmit}
+                    isThinking={isThinking}
+                    inputRef={inputRef}
+                    handleInputChange={handleInputChange}
+                    pendingInput={pendingInput}
+                />
             </div>
 
             {/* Multimedia Modal */}

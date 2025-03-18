@@ -4,23 +4,29 @@ import { MdSend } from 'react-icons/md';
 import { FaPaperclip } from 'react-icons/fa';
 
 interface ChatInputProps {
-  inputHandler: (message: string) => void;
+  onSubmit: (message: string) => void;
   isThinking: boolean;
   isDarkMode: boolean;
-  onFileUploadToggle?: () => void;
-  showFileUpload?: boolean;
+  onFileUploadClick?: () => void;
+  showFileDropzone?: boolean;
   onInputChange?: (text: string) => void;
   initialValue?: string;
+  inputRef?: React.RefObject<HTMLTextAreaElement>;
+  hasUploadedFiles?: boolean;
+  clearFiles?: () => void;
 }
 
 const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
-  inputHandler,
+  onSubmit,
   isThinking,
   isDarkMode,
-  onFileUploadToggle,
-  showFileUpload = false,
+  onFileUploadClick,
+  showFileDropzone = false,
   onInputChange,
-  initialValue = ''
+  initialValue = '',
+  inputRef,
+  hasUploadedFiles,
+  clearFiles
 }, ref) => {
   const [inputText, setInputText] = useState<string>(initialValue);
 
@@ -39,7 +45,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
     if (inputText.trim() && !isThinking) {
-      inputHandler(inputText);
+      onSubmit(inputText);
       setInputText('');
     }
   };
@@ -80,11 +86,11 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
         <div className="absolute right-3 bottom-3 flex items-center space-x-2">
           <button
             type="button"
-            onClick={onFileUploadToggle}
+            onClick={onFileUploadClick}
             className={`p-2 rounded-full transition-colors ${isDarkMode
               ? 'text-gray-400 hover:text-gray-200 bg-gray-700 hover:bg-gray-600'
               : 'text-gray-500 hover:text-gray-700 bg-gray-200 hover:bg-gray-300'
-              } ${showFileUpload ? (isDarkMode ? 'bg-gray-600 text-blue-300' : 'bg-gray-300 text-blue-500') : ''}`}
+              } ${showFileDropzone ? (isDarkMode ? 'bg-gray-600 text-blue-300' : 'bg-gray-300 text-blue-500') : ''}`}
             aria-label="Attach files"
           >
             <FaPaperclip size={18} />
