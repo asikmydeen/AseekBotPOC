@@ -1,7 +1,7 @@
 // app/context/ChatHistoryContext.tsx
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { MessageType } from '../components/chat/ChatInterface';
+import { MessageType } from '../types/shared';
 import {
     ChatHistoryEntry,
     createNewChat,
