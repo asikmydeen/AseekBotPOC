@@ -77,9 +77,6 @@ const nextConfig: NextConfig = {
   // Enable experimental features for App Router
   experimental: {
     forceSwcTransforms: true,
-    // Ensure proper handling of server components
-    serverExternalPackages: [],
   },
 };
-
 export default nextConfig;

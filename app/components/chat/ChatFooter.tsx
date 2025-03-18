@@ -1,6 +1,6 @@
 // app/components/chat/ChatFooter.tsx
 "use client";
-import { useRef } from 'react';
+import { useRef, Dispatch, SetStateAction } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
@@ -9,12 +9,14 @@ import FileUploadSection from './FileUploadSection';
 import DocumentAnalysisPrompt from './DocumentAnalysisPrompt';
 import ChatInput from './ChatInput';
 import { MessageType } from './ChatInterface';
+import { FeedbackData, FeedbackRating, TicketStep } from '../../types/index';
 
 interface ChatFooterProps {
   isDarkMode: boolean;
   showDocumentAnalysisPrompt?: boolean;
   clearDocumentAnalysisPrompt?: () => void;
   setShowFileDropzone: (show: boolean) => void;
+  toggleFileDropzone: () => void;
   clearUploadedFiles: () => void;
   showTicketForm: boolean;
   ticketDetails: {
@@ -22,18 +24,14 @@ interface ChatFooterProps {
     description: string;
     priority: string;
     category: string;
-    email: string;
   };
-  ticketStep: number;
-  setTicketStep: (step: number) => void;
+  ticketStep: TicketStep;
+  setTicketStep: Dispatch<SetStateAction<TicketStep>>;
   setTicketDetails: (details: any) => void;
   createTicket: () => void;
   closeTicketForm: () => void;
   showFeedbackForm: boolean;
-  feedback: {
-    rating: number;
-    comment: string;
-  };
+  feedback: FeedbackData;
   setFeedback: (feedback: any) => void;
   submitFeedback: () => void;
   closeFeedbackForm: () => void;
@@ -65,6 +63,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   showDocumentAnalysisPrompt,
   clearDocumentAnalysisPrompt,
   setShowFileDropzone,
+  toggleFileDropzone,
   clearUploadedFiles,
   showTicketForm,
   ticketDetails,
@@ -104,8 +103,10 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
       {/* Document Analysis Prompt */}
       {showDocumentAnalysisPrompt && (
         <DocumentAnalysisPrompt
-          onClose={clearDocumentAnalysisPrompt}
           isDarkMode={isDarkMode}
+          onClose={clearDocumentAnalysisPrompt}
+          setShowFileDropzone={setShowFileDropzone}
+          clearUploadedFiles={clearUploadedFiles}
         />
       )}
 
@@ -115,8 +116,8 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
           <TicketForm
             isDarkMode={isDarkMode}
             ticketDetails={ticketDetails}
-            step={ticketStep}
-            setStep={setTicketStep}
+            ticketStep={ticketStep}
+            setTicketStep={setTicketStep}
             setTicketDetails={setTicketDetails}
             createTicket={createTicket}
             closeTicketForm={closeTicketForm}
@@ -142,7 +143,6 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
         <SuggestionChips
           suggestions={suggestions}
           onSuggestionClick={handleCustomSuggestionClick}
-          isDarkMode={isDarkMode}
         />
       )}
 
@@ -150,7 +150,6 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
       {showFileDropzone && (
         <FileUploadSection
           showFileDropzone={showFileDropzone}
-          isDarkMode={isDarkMode}
           uploadedFiles={uploadedFiles}
           getRootProps={getRootProps}
           getInputProps={getInputProps}
@@ -159,6 +158,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
           progress={progress}
           removeFile={removeFile}
           handleFileAction={handleFileAction}
+          showDocumentAnalysisPrompt={showDocumentAnalysisPrompt}
         />
       )}
 
@@ -171,7 +171,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
           inputRef={inputRef}
           onInputChange={handleInputChange}
           initialValue={pendingInput}
-          onFileUploadClick={() => setShowFileDropzone(prev => !prev)}
+          onFileUploadClick={toggleFileDropzone}
           hasUploadedFiles={uploadedFiles.length > 0}
           clearFiles={clearUploadedFiles}
         />
