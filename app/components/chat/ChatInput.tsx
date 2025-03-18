@@ -11,7 +11,7 @@ interface ChatInputProps {
   showFileDropzone?: boolean;
   onInputChange?: (text: string) => void;
   initialValue?: string;
-  inputRef?: React.RefObject<HTMLTextAreaElement>;
+  inputRef?: React.RefObject<HTMLTextAreaElement | null> | React.MutableRefObject<HTMLTextAreaElement | null>;
   hasUploadedFiles?: boolean;
   clearFiles?: () => void;
 }

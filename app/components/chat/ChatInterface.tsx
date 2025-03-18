@@ -19,19 +19,10 @@ import FileUploadSection from './FileUploadSection';
 import ChatFooter from './ChatFooter';
 import useAgentStyling from '../../hooks/useAgentStyling';
 import useFileActions from '../../hooks/useFileActions';
+import { MessageType, TicketDetails } from '../../types/shared';
 
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
-
-interface MultimediaData {
-    url?: string;
-    title?: string;
-    description?: string;
-    imageUrl?: string;
-    chartData?: Record<string, unknown>;
-    videoUrl?: string;
-    [key: string]: unknown;
-}
 
 // Wrap the component with the ChatProvider
 export default function ChatInterface(props: ChatInterfaceProps) {
@@ -40,27 +31,6 @@ export default function ChatInterface(props: ChatInterfaceProps) {
             <ChatInterfaceComponent {...props} />
         </ChatProvider>
     );
-}
-
-export interface MessageType {
-    sender: 'user' | 'bot';
-    text: string;
-    multimedia?: { type: 'video' | 'graph' | 'image'; data: MultimediaData };
-    suggestions?: string[];
-    report?: { title: string; content: string; citations?: string[] };
-    reaction?: 'thumbs-up' | 'thumbs-down';
-    timestamp: string;
-    ticket?: { id: string; status: string };
-    pinned?: boolean;
-    triggerTicket?: boolean;
-    attachments?: Array<{
-        name: string;
-        size: number;
-        type: string;
-        url: string;
-    }>;
-    id?: string;
-    agentType?: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support';
 }
 
 interface ChatInterfaceProps {
@@ -72,10 +42,6 @@ interface ChatInterfaceProps {
     onFilesUpdate?: (files: any[]) => void;
     initialMessages?: MessageType[];
 }
-
-// This is just a comment to indicate that the ChatFooterProps interface
-// in ChatFooter.tsx should be updated to include:
-// toggleFileDropzone: () => void;
 
 function ChatInterfaceComponent({
     triggerMessage,
@@ -155,9 +121,10 @@ function ChatInterfaceComponent({
         onFilesUpdate: onFilesUpdate // Pass the callback to sync files with parent
     });
 
+    // Get ticket system functionality
     const {
         showTicketForm,
-        ticketDetails,
+        ticketDetails: originalTicketDetails,
         ticketStep,
         setTicketStep,
         setTicketDetails,
@@ -165,6 +132,14 @@ function ChatInterfaceComponent({
         closeTicketForm,
         openTicketForm
     } = useTicketSystem();
+
+    // Ensure ticketDetails conforms to the shared TicketDetails type
+    const ticketDetails: TicketDetails = {
+        title: originalTicketDetails.title || '',
+        description: originalTicketDetails.description || '',
+        priority: originalTicketDetails.priority || 'medium',
+        category: originalTicketDetails.category || 'general'
+    };
 
     // Ensure scroll to bottom when messages change
     useEffect(() => {

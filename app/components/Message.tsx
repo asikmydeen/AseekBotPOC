@@ -9,35 +9,11 @@ import {
     FaFile, FaFilePdf, FaFileWord, FaFileExcel, FaFileCsv, FaFileImage
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface MultimediaData {
-    type: 'video' | 'graph' | 'image';
-    data: string | Record<string, unknown>;
-}
-
-interface FileAttachment {
-    name: string;
-    size: number;
-    type: string;
-    url: string;
-}
-
-interface MessageType {
-    sender: 'user' | 'bot';
-    text?: string;
-    message?: string;
-    multimedia?: MultimediaData;
-    report?: { title: string; content: string; citations?: string[] };
-    reaction?: 'thumbs-up' | 'thumbs-down';
-    timestamp: string;
-    ticket?: { id: string; status: string };
-    pinned?: boolean;
-    attachments?: FileAttachment[];
-}
+import { MessageType, MultimediaData } from '../types/shared';
 
 interface Props {
     message: MessageType;
-    onMultimediaClick: (content: MultimediaData) => void;
+    onMultimediaClick: (content: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => void;
     onReact: (reaction: 'thumbs-up' | 'thumbs-down') => void;
     onPin: () => void;
     onDownload: () => void;
@@ -72,7 +48,7 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
     // Function to confirm and view full image
     const confirmViewImage = (): void => {
         if (currentImage) {
-            onMultimediaClick({ type: 'image', data: currentImage });
+            onMultimediaClick({ type: 'image', data: { url: currentImage } });
         }
         setShowImageConfirmation(false);
     };
@@ -417,8 +393,8 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
                 {/* Avatar for bot or user */}
                 <div className={`flex-shrink-0 ${message.sender === 'user' ? 'ml-2' : 'mr-2'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${message.sender === 'user'
-                            ? isDarkMode ? 'bg-gray-700' : 'bg-gray-300'
-                            : isDarkMode ? 'bg-[#1E40AF]' : 'bg-[#60A5FA]'
+                        ? isDarkMode ? 'bg-gray-700' : 'bg-gray-300'
+                        : isDarkMode ? 'bg-[#1E40AF]' : 'bg-[#60A5FA]'
                         }`}>
                         {message.sender === 'user'
                             ? <FaUser className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />

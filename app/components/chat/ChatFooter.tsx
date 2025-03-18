@@ -8,8 +8,7 @@ import SuggestionChips from './SuggestionChips';
 import FileUploadSection from './FileUploadSection';
 import DocumentAnalysisPrompt from './DocumentAnalysisPrompt';
 import ChatInput from './ChatInput';
-import { MessageType } from './ChatInterface';
-import { FeedbackData, FeedbackRating, TicketStep } from '../../types/index';
+import { FeedbackData, TicketStep, MessageType, TicketDetails, UploadedFile } from '../../types/shared';
 
 interface ChatFooterProps {
   isDarkMode: boolean;
@@ -19,12 +18,7 @@ interface ChatFooterProps {
   toggleFileDropzone: () => void;
   clearUploadedFiles: () => void;
   showTicketForm: boolean;
-  ticketDetails: {
-    title: string;
-    description: string;
-    priority: string;
-    category: string;
-  };
+  ticketDetails: TicketDetails;
   ticketStep: TicketStep;
   setTicketStep: Dispatch<SetStateAction<TicketStep>>;
   setTicketDetails: (details: any) => void;
@@ -38,12 +32,7 @@ interface ChatFooterProps {
   messages: MessageType[];
   handleCustomSuggestionClick: (suggestion: string) => void;
   showFileDropzone: boolean;
-  uploadedFiles: Array<{
-    name: string;
-    size: number;
-    type: string;
-    url: string;
-  }>;
+  uploadedFiles: UploadedFile[];
   getRootProps: any;
   getInputProps: any;
   isUploading: boolean;
@@ -53,7 +42,7 @@ interface ChatFooterProps {
   handleFileAction: (action: string) => void;
   handleInputSubmit: (input: string) => void;
   isThinking: boolean;
-  inputRef: React.RefObject<HTMLTextAreaElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null> | React.MutableRefObject<HTMLTextAreaElement | null>;
   handleInputChange: (text: string) => void;
   pendingInput: string;
 }

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
 import Graph from './Graph';
+import { MultimediaData } from '../types/shared';
 
 // Import these exact types from Graph.tsx
 interface ComparisonGraphData {
@@ -23,7 +24,7 @@ type GraphData = ComparisonGraphData | StandardGraphData;
 
 interface MultimediaContent {
     type: 'video' | 'graph' | 'image';
-    data: string | Record<string, unknown>;
+    data: MultimediaData;
 }
 
 interface Props {
@@ -92,6 +93,20 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
         return [];
     };
 
+    const getVideoUrl = (data: MultimediaData): string => {
+        if ('url' in data) {
+            return data.url;
+        }
+        return '';
+    };
+
+    const getImageUrl = (data: MultimediaData): string => {
+        if ('url' in data) {
+            return data.url;
+        }
+        return '';
+    };
+
     return (
         <Transition appear show={isOpen} as={Fragment}>
             <Dialog
@@ -147,10 +162,10 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                         onClick={onClose}
                                         className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition"
                                         aria-label={`Close ${content?.type === 'video'
-                                                ? 'video player'
-                                                : content?.type === 'image'
-                                                    ? 'image viewer'
-                                                    : 'graph visualization'
+                                            ? 'video player'
+                                            : content?.type === 'image'
+                                                ? 'image viewer'
+                                                : 'graph visualization'
                                             } modal`}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -185,12 +200,16 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                     )}
 
                                     <div aria-live="polite" className={isLoading ? 'sr-only' : ''}>
-                                        {content?.type === 'video' && <VideoPlayer url={typeof content.data === 'string' ? content.data : ''} />}
-                                        {content?.type === 'graph' && <Graph data={getGraphData(content.data)} />}
-                                        {content?.type === 'image' && (
+                                        {content?.type === 'video' && content.data && (
+                                            <VideoPlayer url={getVideoUrl(content.data)} />
+                                        )}
+                                        {content?.type === 'graph' && content.data && (
+                                            <Graph data={getGraphData(content.data)} />
+                                        )}
+                                        {content?.type === 'image' && content.data && (
                                             <div className='flex justify-center'>
                                                 <Image
-                                                    src={typeof content.data === 'string' ? content.data : ''}
+                                                    src={getImageUrl(content.data)}
                                                     alt='Image content'
                                                     width={800}
                                                     height={600}
@@ -207,10 +226,10 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                             onClick={onClose}
                                             className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                                             aria-label={`Close ${content?.type === 'video'
-                                                    ? 'video player'
-                                                    : content?.type === 'image'
-                                                        ? 'image viewer'
-                                                        : 'graph visualization'
+                                                ? 'video player'
+                                                : content?.type === 'image'
+                                                    ? 'image viewer'
+                                                    : 'graph visualization'
                                                 } modal`}
                                         >
                                             Close

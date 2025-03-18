@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { MessageType } from '../components/chat/ChatInterface';
-import { TicketStep, TicketDetails } from '../types';
+import { TicketStep, TicketDetails } from '../types/shared';
 import { createTicketApi } from '../api/advancedApi';
 
 /**
@@ -11,7 +10,7 @@ const useTicketSystem = () => {
   // State for controlling ticket form visibility
   const [showTicketForm, setShowTicketForm] = useState<boolean>(false);
 
-  // State for storing ticket details
+  // State for storing ticket details with required fields
   const [ticketDetails, setTicketDetails] = useState<TicketDetails>({
     title: '',
     description: '',
@@ -69,18 +68,18 @@ const useTicketSystem = () => {
       const response = await createTicketApi({
         subject: ticketDetails.title,
         description: ticketDetails.description,
-        priority: ticketDetails.priority,
+        priority: ticketDetails.priority as 'low' | 'medium' | 'high',
         category: ticketDetails.category
       });
 
       // Create the ticket message using the API response
-      const ticketMessage: MessageType = {
+      const ticketMessage = {
         sender: 'bot',
         text: `Ticket created: ${response.subject}`,
-        timestamp: response.createdAt,
+        timestamp: response.createdAt ?? new Date().toISOString(),
         ticket: {
-          id: response.ticketId,
-          status: response.status,
+          id: response.ticketId ?? 'TEMP-ID',
+          status: response.status ?? 'pending',
         },
       };
 
@@ -98,10 +97,10 @@ const useTicketSystem = () => {
         text: 'Failed to create ticket. Please try again.',
         timestamp: new Date().toISOString(),
         isError: true,
-      } as MessageType;
+      };
     }
-  }, [ticketDetails]);
 
+  }, [ticketDetails]);
   return {
     showTicketForm,
     ticketDetails,

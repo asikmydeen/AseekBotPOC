@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageType } from './ChatInterface';
 import Message from '../Message';
+import { MessageType, MultimediaData } from '../../types/shared';
 
 const TypingIndicator = ({ isDarkMode }: { isDarkMode: boolean }) => {
   return (
@@ -47,10 +47,10 @@ interface MessageListProps {
   isThinking: boolean;
   progress: number;
   isDarkMode: boolean;
-  openMultimedia: (multimedia: { type: 'video' | 'graph' | 'image'; data: unknown }) => void;
+  openMultimedia: (multimedia: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => void;
   handleReaction: (index: number, reaction: 'thumbs-up' | 'thumbs-down') => void;
   handlePinMessage: (index: number) => void;
-  messagesEndRef?: React.RefObject<HTMLDivElement>;
+  messagesEndRef?: React.RefObject<HTMLDivElement | null> | React.MutableRefObject<HTMLDivElement | null>;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -58,9 +58,9 @@ const MessageList: React.FC<MessageListProps> = ({
   isThinking,
   progress,
   isDarkMode,
-  openMultimedia, // This prop will be passed as onMultimediaClick
-  handleReaction, // This prop will be passed as onReact
-  handlePinMessage, // This prop will be passed as onPin
+  openMultimedia,
+  handleReaction,
+  handlePinMessage,
   messagesEndRef
 }) => {
   // Scroll to bottom when messages change or when isThinking changes
@@ -87,7 +87,7 @@ const MessageList: React.FC<MessageListProps> = ({
               onMultimediaClick={openMultimedia}
               onReact={(reaction) => handleReaction(index, reaction)}
               onPin={() => handlePinMessage(index)}
-              onDownload={() => {/* No-op download handler */}}
+              onDownload={() => {/* No-op download handler */ }}
               showCitations={true}
             />
           </div>

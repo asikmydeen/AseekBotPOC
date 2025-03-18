@@ -1,15 +1,11 @@
 // app/hooks/useFileActions.ts
 import { useCallback, RefObject } from 'react';
+import { UploadedFile } from '../types/shared';
 
 interface UseFileActionsProps {
-  inputRef: RefObject<HTMLTextAreaElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null> | React.MutableRefObject<HTMLTextAreaElement | null>;
   pendingInput: string;
-  uploadedFiles: Array<{
-    name: string;
-    size: number;
-    type: string;
-    url: string;
-  }>;
+  uploadedFiles: UploadedFile[];
   clearUploadedFiles: () => void;
   setShowFileDropzone: (show: boolean) => void;
   showDocumentAnalysisPrompt?: boolean;
@@ -34,65 +30,65 @@ const useFileActions = ({
   setPendingInput,
   sendMessage
 }: UseFileActionsProps) => {
-  
+
   /**
    * Handles file-related actions in the chat interface
    * @param action - The action to perform ('cancel', 'analyze', 'send')
    */
-  const handleFileAction = useCallback((action: 'cancel' | 'analyze' | 'send') => {
+  const handleFileAction = useCallback((action: string) => {
     switch (action) {
       case 'cancel':
         // Clear uploaded files and hide dropzone
         clearUploadedFiles();
         setShowFileDropzone(false);
-        
+
         // Clear document analysis prompt if it's active
         if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
           clearDocumentAnalysisPrompt();
         }
-        
+
         // Restore any pending input that was typed before file upload
         if (inputRef.current && pendingInput) {
           inputRef.current.value = pendingInput;
           inputRef.current.focus();
         }
         break;
-        
+
       case 'analyze':
         // Send message with files for analysis
         const analysisText = pendingInput || 'Please analyze these documents';
         sendMessage(analysisText, uploadedFiles);
-        
+
         // Clear pending input after sending
         setPendingInput('');
-        
+
         // Clear document analysis prompt if it's active
         if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
           clearDocumentAnalysisPrompt();
         }
-        
+
         // Clear uploaded files and hide dropzone after a short delay
         setTimeout(() => {
           clearUploadedFiles();
           setShowFileDropzone(false);
         }, 500);
         break;
-        
+
       case 'send':
         // Send message with files
         const messageText = pendingInput || 'I am sending you these files';
         sendMessage(messageText, uploadedFiles);
-        
+
         // Clear pending input after sending
         setPendingInput('');
-        
+
         // Clear uploaded files and hide dropzone after a short delay
         setTimeout(() => {
           clearUploadedFiles();
           setShowFileDropzone(false);
         }, 500);
         break;
-        
+
       default:
         console.error('Unknown file action:', action);
     }

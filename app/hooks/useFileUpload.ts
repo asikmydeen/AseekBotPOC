@@ -1,26 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { uploadFileApi, deleteFileApi } from '../api/advancedApi';
-
-interface UploadResult {
-  fileUrl: string;
-  fileId: string;
-}
-
-export interface UploadedFile {
-  name: string;
-  size: number;
-  type: string;
-  file: File;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  progress?: number;
-  url?: string;
-  fileId?: string;
-  error?: string;
-}
+import { UploadedFile } from '../types/shared';
 
 interface UseFileUploadProps {
-  onFilesUpdate?: (files: UploadedFile[]) => void; // New callback prop
+  onFilesUpdate?: (files: UploadedFile[]) => void;
 }
 
 /**
@@ -30,7 +14,7 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (onFilesUpdate) {
       onFilesUpdate(uploadedFiles);
     }
@@ -57,7 +41,8 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
           type: file.type,
           file: file,
           status: 'pending',
-          progress: 0
+          progress: 0,
+          url: '' // Temporary empty URL that will be populated after upload
         }));
 
         console.log("New files to add:", newFiles);
@@ -92,7 +77,7 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
             });
 
             // Call the upload API
-            const uploadResult = await uploadFileApi(file, sessionId) as UploadResult;
+            const uploadResult = await uploadFileApi(file, sessionId);
 
             console.log(`File ${file.name} uploaded:`, uploadResult);
 
@@ -106,7 +91,7 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
                   ...updatedFiles[fileIndex],
                   status: 'success',
                   progress: 100,
-                  url: uploadResult.fileUrl,
+                  url: uploadResult.fileUrl || '',
                   fileId: uploadResult.fileId
                 };
               }
@@ -125,7 +110,8 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
                 updatedFiles[fileIndex] = {
                   ...updatedFiles[fileIndex],
                   status: 'error',
-                  error: error instanceof Error ? error.message : 'Upload failed'
+                  error: error instanceof Error ? error.message : 'Upload failed',
+                  url: '' // Ensure URL is set to avoid undefined
                 };
               }
 
@@ -150,20 +136,25 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
     [uploadedFiles.length]
   );
 
-  const removeFile = useCallback((fileName: string) => {
-    console.log("Removing file:", fileName);
-    const fileToRemove = uploadedFiles.find(file => file.name === fileName);
+  const removeFile = useCallback((index: number) => {
+    if (index < 0 || index >= uploadedFiles.length) return;
+
+    const fileToRemove = uploadedFiles[index];
+    console.log("Removing file:", fileToRemove.name);
+
     if (fileToRemove && fileToRemove.url) {
       // Call the API to delete file from S3
       deleteFileApi(fileToRemove.url)
         .then(() => {
-          setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+          setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
         })
         .catch(error => {
           console.error("Failed to delete file from S3:", error);
+          // Remove from state anyway
+          setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
         });
     } else {
-      setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+      setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     }
   }, [uploadedFiles]);
 

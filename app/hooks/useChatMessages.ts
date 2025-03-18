@@ -4,48 +4,7 @@ import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from 'common-tags';
 import { processChatMessage } from '../api/advancedApi';
-
-export interface VideoData {
-  url: string;
-  title?: string;
-  duration?: number;
-}
-
-export interface GraphData {
-  data: Record<string, unknown>;
-  config?: Record<string, unknown>;
-  type?: string;
-}
-
-export interface ImageData {
-  url: string;
-  alt?: string;
-  width?: number;
-  height?: number;
-}
-
-export type MultimediaData = VideoData | GraphData | ImageData;
-
-export interface MessageType {
-  agentType?: string;
-  sender: 'user' | 'bot';
-  text: string;
-  multimedia?: { type: 'video' | 'graph' | 'image'; data: MultimediaData };
-  suggestions?: string[];
-  report?: { title: string; content: string; citations?: string[] };
-  reaction?: 'thumbs-up' | 'thumbs-down';
-  timestamp: string;
-  ticket?: { id: string; status: string };
-  pinned?: boolean;
-  triggerTicket?: boolean;
-  attachments?: Array<{
-    name: string;
-    size: number;
-    type: string;
-    url: string;
-  }>;
-  id?: string;
-}
+import { MessageType, MultimediaData } from '../types/shared';
 
 interface UseChatMessagesProps {
   triggerMessage: string | null;
@@ -296,7 +255,7 @@ export default function useChatMessages({
 
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages]);
+  }, [messages, safeUpdateMessages]);
 
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
     safeUpdateMessages(prev =>

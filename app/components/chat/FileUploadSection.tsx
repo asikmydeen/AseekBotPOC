@@ -4,15 +4,11 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiFile, FiUploadCloud } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
+import { UploadedFile } from '../../types/shared';
 
 interface FileUploadSectionProps {
   showFileDropzone: boolean;
-  uploadedFiles: Array<{
-    name: string;
-    size: number;
-    type: string;
-    url?: string;
-  }>;
+  uploadedFiles: UploadedFile[];
   getRootProps: any;
   getInputProps: any;
   isUploading: boolean;
@@ -36,7 +32,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   showDocumentAnalysisPrompt
 }) => {
   const { isDarkMode } = useTheme();
-  
+
   // Format file size to human-readable format
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -61,8 +57,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 mb-4 text-center cursor-pointer transition-colors
-                ${isDarkMode 
-                  ? (isDragActive ? 'border-blue-400 bg-blue-900/20' : 'border-gray-600 hover:border-gray-500') 
+                ${isDarkMode
+                  ? (isDragActive ? 'border-blue-400 bg-blue-900/20' : 'border-gray-600 hover:border-gray-500')
                   : (isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400')
                 }`}
             >
@@ -85,23 +81,23 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                   <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                     {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} ready
                   </h3>
-                  
+
                   {/* Progress bar for uploading */}
                   {isUploading && (
                     <div className="w-full h-1 bg-gray-300 rounded-full mt-2">
-                      <div 
-                        className="h-1 bg-blue-500 rounded-full" 
+                      <div
+                        className="h-1 bg-blue-500 rounded-full"
                         style={{ width: `${progress}%` }}
                       ></div>
                     </div>
                   )}
                 </div>
-                
+
                 {/* File list */}
                 <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
                   {uploadedFiles.map((file, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`flex items-center justify-between p-2 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}
                     >
                       <div className="flex items-center">
@@ -115,7 +111,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                           </p>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => removeFile(index)}
                         className={`p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
                         aria-label="Remove file"
@@ -125,25 +121,25 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Action buttons */}
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleFileAction('analyze')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium 
-                      ${isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium
+                      ${isDarkMode
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                       }`}
                     disabled={isUploading}
                   >
-                    {showDocumentAnalysisPrompt ? 'Analyze Document' : 'Send with Files'}
+                    {showDocumentAnalysisPrompt ? 'Analyze Document' : 'Analyze the File/s'}
                   </button>
                   <button
                     onClick={() => handleFileAction('cancel')}
-                    className={`py-2 px-4 rounded-md text-sm font-medium 
-                      ${isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                    className={`py-2 px-4 rounded-md text-sm font-medium
+                      ${isDarkMode
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                       }`}
                     disabled={isUploading}

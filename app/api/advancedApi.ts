@@ -34,6 +34,12 @@ export interface TicketDetails {
  * Interface for API responses
  */
 export interface ApiResponse {
+  subject: any;
+  createdAt: string;
+  ticketId: string;
+  status: string;
+  fileUrl: string;
+  fileId: string | undefined;
   success: boolean;
   data?: unknown;
   error?: string;
