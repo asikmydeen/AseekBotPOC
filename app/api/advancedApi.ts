@@ -1,4 +1,4 @@
-import { handleApiError, ErrorResponse } from './utils/apiErrorHandler';
+import { handleApiError, ErrorResponse } from '../utils/apiErrorHandler';
 
 /**
  * Interface for chat message history items

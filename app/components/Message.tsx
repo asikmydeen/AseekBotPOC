@@ -1,6 +1,6 @@
 // app/components/Message.tsx
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, JSX } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import {
@@ -50,7 +50,7 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const [showCitationPanel, setShowCitationPanel] = useState<boolean>(false);
     const [displayedText, setDisplayedText] = useState<string>('');
-    const [isFileCollapsed, setIsFileCollapsed] = useState<boolean>(message.attachments && message.attachments.length > 3);
+    const [isFileCollapsed, setIsFileCollapsed] = useState<boolean>(Boolean(message.attachments && message.attachments.length > 3));
     const [isTyping, setIsTyping] = useState<boolean>(message.sender === 'bot');
     const [showImageConfirmation, setShowImageConfirmation] = useState<boolean>(false);
     const [currentImage, setCurrentImage] = useState<string | null>(null);
@@ -126,16 +126,16 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
                     }
                     setIsTyping(false);
 
-                    // Parse markdown after typing is complete
                     const renderer = new marked.Renderer();
 
                     // Customize image rendering to show thumbnails
-                    renderer.image = (href: string, title: string, text: string): string => {
+                    renderer.image = ({ href, title, text }: { href: string, title: string | null, text: string }): string => {
                         return `<div class="image-thumbnail">
-                <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-                <div class="image-overlay">Click to view</div>
-              </div>`;
+        <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
+        <div class="image-overlay">Click to view</div>
+    </div>`;
                     };
+
 
                     const options = {
                         gfm: true,
@@ -168,11 +168,11 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
 
             // Parse markdown immediately for user messages
             const renderer = new marked.Renderer();
-            renderer.image = (href: string, title: string, text: string): string => {
+            renderer.image = ({ href, title, text }: { href: string, title: string | null, text: string }): string => {
                 return `<div class="image-thumbnail">
-            <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-            <div class="image-overlay">Click to view</div>
-          </div>`;
+        <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
+        <div class="image-overlay">Click to view</div>
+    </div>`;
             };
 
             const options = {
