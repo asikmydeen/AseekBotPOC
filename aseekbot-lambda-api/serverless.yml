@@ -1,0 +1,84 @@
+service: aseekbot-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    AWS_S3_BUCKET_NAME: ${env:AWS_S3_BUCKET_NAME}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:PutObject
+        - s3:DeleteObject
+      Resource: "arn:aws:s3:::${env:AWS_S3_BUCKET_NAME}/*"
+    - Effect: Allow
+      Action:
+        - bedrock:*
+      Resource: "*"
+
+functions:
+  processChatMessage:
+    handler: lambdas/processChatMessage.handler
+    events:
+      - http:
+          path: processChatMessage
+          method: post
+          cors: true  # Enable CORS
+  
+  uploadFile:
+    handler: lambdas/uploadFile.handler
+    events:
+      - http:
+          path: uploadFile
+          method: post
+          cors: true  # Enable CORS
+
+  deleteFile:
+    handler: lambdas/deleteFile.handler
+    events:
+      - http:
+          path: deleteFile
+          method: post
+          cors: true  # Enable CORS
+
+  createTicket:
+    handler: lambdas/createTicket.handler
+    events:
+      - http:
+          path: createTicket
+          method: post
+          cors: true  # Enable CORS
+
+  quickLink:
+    handler: lambdas/quickLink.handler
+    events:
+      - http:
+          path: quickLink
+          method: post
+          cors: true  # Enable CORS
+
+  processMessage:
+    handler: lambdas/processMessage.handler
+    events:
+      - http:
+          path: processMessage
+          method: post
+          cors: true  # Enable CORS
+
+# Add custom section for more detailed CORS configuration
+custom:
+  cors:
+    allowOrigin: '*'
+    allowHeaders:
+      - Content-Type
+      - X-Amz-Date
+      - Authorization
+      - X-Api-Key
+      - X-Amz-Security-Token
+      - X-Amz-User-Agent
+    allowMethods:
+      - OPTIONS
+      - POST
+      - GET

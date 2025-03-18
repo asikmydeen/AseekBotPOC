@@ -518,3 +518,21 @@ NEXT_PUBLIC_API_BASE_URL=https://your-api-gateway-url.execute-api.us-east-1.amaz
 ### Updating API Functions
 1. Make changes to Lambda function code
 2. Deploy updates: `serverless deploy` or `serverless deploy function -f functionName`
+
+
+## Making Changes and Redeployment
+
+AseekBot uses a streamlined deployment process with a single script that handles both frontend and backend deployments. Follow these steps when making changes to the application.
+
+### Using the Deployment Script
+
+We provide a comprehensive deployment script (`deploy.sh`) in the root directory that simplifies the update process.
+
+#### Basic Usage
+
+```bash
+# Make the script executable (first time only)
+chmod +x deploy.sh
+
+# Run the deployment script
+./deploy.sh
