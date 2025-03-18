@@ -7,6 +7,20 @@ import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
 import Graph from './Graph';
 
+// Import these exact types from Graph.tsx
+interface ComparisonGraphData {
+    name: string;
+    price: number;
+    leadTime: number;
+}
+
+interface StandardGraphData {
+    name: string;
+    value: number;
+}
+
+type GraphData = ComparisonGraphData | StandardGraphData;
+
 interface MultimediaContent {
     type: 'video' | 'graph' | 'image';
     data: string | Record<string, unknown>;
@@ -31,6 +45,52 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
             return () => clearTimeout(timer);
         }
     }, [content]);
+
+    // Helper function to safely extract and convert to GraphData[]
+    const getGraphData = (data: unknown): GraphData[] => {
+        if (!data) return [];
+
+        // Handle case where data contains an 'items' property with the actual graph data
+        if (typeof data === 'object' && data !== null && 'items' in data && Array.isArray((data as Record<string, unknown>).items)) {
+            return ((data as Record<string, unknown>).items as Record<string, unknown>[]).map((item: Record<string, unknown>) => {
+                // Convert to correct GraphData format
+                if ('price' in item && 'leadTime' in item) {
+                    return {
+                        name: String(item.name || ''),
+                        price: Number(item.price) || 0,
+                        leadTime: Number(item.leadTime) || 0
+                    } as ComparisonGraphData;
+                } else {
+                    return {
+                        name: String(item.name || ''),
+                        value: Number(item.value) || 0
+                    } as StandardGraphData;
+                }
+            });
+        }
+
+        // Handle case where data is directly an array
+        if (Array.isArray(data)) {
+            return data.map((item: Record<string, unknown>) => {
+                // Convert to correct GraphData format
+                if ('price' in item && 'leadTime' in item) {
+                    return {
+                        name: String(item.name || ''),
+                        price: Number(item.price) || 0,
+                        leadTime: Number(item.leadTime) || 0
+                    } as ComparisonGraphData;
+                } else {
+                    return {
+                        name: String(item.name || ''),
+                        value: Number(item.value) || 0
+                    } as StandardGraphData;
+                }
+            });
+        }
+
+        // Fallback to empty array
+        return [];
+    };
 
     return (
         <Transition appear show={isOpen} as={Fragment}>
@@ -76,23 +136,22 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                     <Dialog.Title
                                         id="multimedia-modal-title"
                                         className="text-xl font-semibold text-white"
-                                >
-                                    {content?.type === 'video'
-                                        ? 'Video Player'
-                                        : content?.type === 'image'
-                                            ? 'Image Viewer'
-                                            : 'Graph Visualization'}
-                                </Dialog.Title>
+                                    >
+                                        {content?.type === 'video'
+                                            ? 'Video Player'
+                                            : content?.type === 'image'
+                                                ? 'Image Viewer'
+                                                : 'Graph Visualization'}
+                                    </Dialog.Title>
                                     <button
                                         onClick={onClose}
                                         className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition"
-                                        aria-label={`Close ${
-                                            content?.type === 'video'
+                                        aria-label={`Close ${content?.type === 'video'
                                                 ? 'video player'
                                                 : content?.type === 'image'
                                                     ? 'image viewer'
                                                     : 'graph visualization'
-                                        } modal`}
+                                            } modal`}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -126,12 +185,12 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                     )}
 
                                     <div aria-live="polite" className={isLoading ? 'sr-only' : ''}>
-                                        {content?.type === 'video' && <VideoPlayer url={content.data} />}
-                                        {content?.type === 'graph' && <Graph data={content.data} />}
+                                        {content?.type === 'video' && <VideoPlayer url={typeof content.data === 'string' ? content.data : ''} />}
+                                        {content?.type === 'graph' && <Graph data={getGraphData(content.data)} />}
                                         {content?.type === 'image' && (
                                             <div className='flex justify-center'>
                                                 <Image
-                                                    src={content.data as string}
+                                                    src={typeof content.data === 'string' ? content.data : ''}
                                                     alt='Image content'
                                                     width={800}
                                                     height={600}
@@ -147,13 +206,12 @@ export default function MultimediaModal({ isOpen, onClose, content }: Props) {
                                             ref={closeButtonRef}
                                             onClick={onClose}
                                             className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                                            aria-label={`Close ${
-                                                content?.type === 'video'
+                                            aria-label={`Close ${content?.type === 'video'
                                                     ? 'video player'
                                                     : content?.type === 'image'
                                                         ? 'image viewer'
                                                         : 'graph visualization'
-                                            } modal`}
+                                                } modal`}
                                         >
                                             Close
                                         </button>
