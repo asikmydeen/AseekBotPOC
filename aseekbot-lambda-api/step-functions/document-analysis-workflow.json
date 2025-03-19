@@ -1,0 +1,561 @@
+{
+    "Comment": "Document Analysis Workflow for Procurement Chatbot",
+    "StartAt": "InitializeProcess",
+    "States": {
+        "InitializeProcess": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${InitProcessLambdaArn}",
+                "Payload": {
+                    "input.$": "$",
+                    "timestamp.$": "$$.Execution.StartTime"
+                }
+            },
+            "ResultPath": "$.processData",
+            "Next": "UpdateStatusStarted"
+        },
+        "UpdateStatusStarted": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "STARTED",
+                    "message": "Document analysis process has started."
+                }
+            },
+            "Next": "ValidateFileAndScan"
+        },
+        "ValidateFileAndScan": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${FileValidationLambdaArn}",
+                "Payload": {
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "fileType.$": "$.fileType",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 120,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2.0
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleValidationError"
+                }
+            ],
+            "Next": "UpdateStatusValidated"
+        },
+        "UpdateStatusValidated": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "VALIDATED",
+                    "message": "Document validated and scanned successfully."
+                }
+            },
+            "Next": "DetermineFileType"
+        },
+        "HandleValidationError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "ValidationError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "DetermineFileType": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "pdf",
+                    "Next": "ExtractPdfText"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "docx",
+                    "Next": "ExtractDocxText"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "xlsx",
+                    "Next": "ExtractXlsxData"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "csv",
+                    "Next": "ExtractCsvData"
+                }
+            ],
+            "Default": "HandleUnsupportedFileType"
+        },
+        "ExtractPdfText": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${TextractPdfLambdaArn}",
+                "Payload": {
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 300,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleExtractionError"
+                }
+            ],
+            "Next": "UpdateStatusExtracted"
+        },
+        "ExtractDocxText": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${DocxParserLambdaArn}",
+                "Payload": {
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 180,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleExtractionError"
+                }
+            ],
+            "Next": "UpdateStatusExtracted"
+        },
+        "ExtractXlsxData": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ExcelParserLambdaArn}",
+                "Payload": {
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 180,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleExtractionError"
+                }
+            ],
+            "Next": "UpdateStatusExtracted"
+        },
+        "ExtractCsvData": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${CsvParserLambdaArn}",
+                "Payload": {
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 120,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleExtractionError"
+                }
+            ],
+            "Next": "UpdateStatusExtracted"
+        },
+        "UpdateStatusExtracted": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "TEXT_EXTRACTED",
+                    "message": "Document text successfully extracted."
+                }
+            },
+            "Next": "AnalyzeContent"
+        },
+        "HandleExtractionError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "ExtractionError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "HandleUnsupportedFileType": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "fileType.$": "$.fileType",
+                    "documentId.$": "$.documentId",
+                    "errorType": "UnsupportedFileType"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "AnalyzeContent": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ContentAnalyzerLambdaArn}",
+                "Payload": {
+                    "extractedText.$": "$.extractedText",
+                    "documentId.$": "$.documentId",
+                    "fileType.$": "$.fileType",
+                    "modelType": "BEDROCK_CLAUDE"
+                }
+            },
+            "TimeoutSeconds": 300,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleAnalysisError"
+                }
+            ],
+            "Next": "UpdateStatusAnalyzed"
+        },
+        "UpdateStatusAnalyzed": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "CONTENT_ANALYZED",
+                    "message": "Document content successfully analyzed."
+                }
+            },
+            "Next": "CheckMultipleDocuments"
+        },
+        "HandleAnalysisError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "AnalysisError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "CheckMultipleDocuments": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.isMultipleDocuments",
+                    "BooleanEquals": true,
+                    "Next": "CompareDocuments"
+                }
+            ],
+            "Default": "GenerateInsights"
+        },
+        "CompareDocuments": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${DocumentComparerLambdaArn}",
+                "Payload": {
+                    "documents.$": "$.documents",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 300,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleComparisonError"
+                }
+            ],
+            "Next": "UpdateStatusCompared"
+        },
+        "UpdateStatusCompared": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "DOCUMENTS_COMPARED",
+                    "message": "Documents successfully compared."
+                }
+            },
+            "Next": "GenerateInsights"
+        },
+        "HandleComparisonError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "ComparisonError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "GenerateInsights": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${InsightGeneratorLambdaArn}",
+                "Payload": {
+                    "analysisResults.$": "$.analysisResults",
+                    "comparisonResults.$": "$.comparisonResults",
+                    "documentId.$": "$.documentId"
+                }
+            },
+            "TimeoutSeconds": 180,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleInsightError"
+                }
+            ],
+            "Next": "UpdateStatusInsightsGenerated"
+        },
+        "UpdateStatusInsightsGenerated": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "INSIGHTS_GENERATED",
+                    "message": "Document insights successfully generated."
+                }
+            },
+            "Next": "StoreResults"
+        },
+        "HandleInsightError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "InsightError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "StoreResults": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ResultStorageLambdaArn}",
+                "Payload": {
+                    "insights.$": "$.insights",
+                    "analysisResults.$": "$.analysisResults",
+                    "comparisonResults.$": "$.comparisonResults",
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId"
+                }
+            },
+            "TimeoutSeconds": 120,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "ResultPath": "$.error",
+                    "Next": "HandleStorageError"
+                }
+            ],
+            "Next": "UpdateStatusCompleted"
+        },
+        "HandleStorageError": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${ErrorHandlerLambdaArn}",
+                "Payload": {
+                    "error.$": "$.error",
+                    "documentId.$": "$.documentId",
+                    "errorType": "StorageError"
+                }
+            },
+            "Next": "UpdateStatusFailed"
+        },
+        "UpdateStatusCompleted": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "COMPLETED",
+                    "message": "Document analysis workflow completed successfully.",
+                    "resultLocation.$": "$.resultLocation"
+                }
+            },
+            "End": true
+        },
+        "UpdateStatusFailed": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${StatusUpdaterLambdaArn}",
+                "Payload": {
+                    "documentId.$": "$.documentId",
+                    "userId.$": "$.userId",
+                    "status": "FAILED",
+                    "error.$": "$.error",
+                    "message": "Document analysis workflow failed."
+                }
+            },
+            "End": true
+        }
+    }
+}

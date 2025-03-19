@@ -6,6 +6,8 @@ provider:
   region: us-east-1
   environment:
     AWS_S3_BUCKET_NAME: ${env:AWS_S3_BUCKET_NAME}
+    DOCUMENT_ANALYSIS_STATE_MACHINE_ARN: ${env:DOCUMENT_ANALYSIS_STATE_MACHINE_ARN, ''}
+    DOCUMENT_ANALYSIS_STATUS_TABLE: ${env:DOCUMENT_ANALYSIS_STATUS_TABLE, 'DocumentAnalysisStatus'}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -17,6 +19,18 @@ provider:
       Action:
         - bedrock:*
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - states:StartExecution
+        - states:DescribeExecution
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:Query
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/DocumentAnalysisStatus"
 
 functions:
   processChatMessage:
@@ -25,47 +39,49 @@ functions:
       - http:
           path: processChatMessage
           method: post
-          cors: true  # Enable CORS
-  
+          cors: true # Enable CORS
   uploadFile:
     handler: lambdas/uploadFile.handler
     events:
       - http:
           path: uploadFile
           method: post
-          cors: true  # Enable CORS
-
+          cors: true # Enable CORS
   deleteFile:
     handler: lambdas/deleteFile.handler
     events:
       - http:
           path: deleteFile
           method: post
-          cors: true  # Enable CORS
-
+          cors: true # Enable CORS
   createTicket:
     handler: lambdas/createTicket.handler
     events:
       - http:
           path: createTicket
           method: post
-          cors: true  # Enable CORS
-
+          cors: true # Enable CORS
   quickLink:
     handler: lambdas/quickLink.handler
     events:
       - http:
           path: quickLink
           method: post
-          cors: true  # Enable CORS
-
+          cors: true # Enable CORS
   processMessage:
     handler: lambdas/processMessage.handler
     events:
       - http:
           path: processMessage
           method: post
-          cors: true  # Enable CORS
+          cors: true # Enable CORS
+  documentAnalysis:
+    handler: lambdas/startDocumentAnalysis.handler
+    events:
+      - http:
+          path: document-analysis/{proxy+}
+          method: any
+          cors: true # Enable CORS
 
 # Add custom section for more detailed CORS configuration
 custom:

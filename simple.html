@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AseekBot - Data Center Procurement Companion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --light-bg: #f3f4f6;
+            --light-sidebar: #ffffff;
+            --light-text: #1f2937;
+            --light-accent: #3b82f6;
+            --light-hover: #e5e7eb;
+            --light-border: #e5e7eb;
+            --light-message-user: #f3f4f6;
+            --light-message-bot: #ebf5ff;
+
+            --dark-bg: #111827;
+            --dark-sidebar: #1f2937;
+            --dark-text: #f3f4f6;
+            --dark-accent: #3b82f6;
+            --dark-hover: #374151;
+            --dark-border: #374151;
+            --dark-message-user: #1f2937;
+            --dark-message-bot: #1e3a8a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        body.light {
+            background-color: var(--light-bg);
+            color: var(--light-text);
+        }
+
+        body.dark {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 300px;
+            transition: all 0.3s ease;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .light .sidebar {
+            background-color: var(--light-sidebar);
+            border-right: 1px solid var(--light-border);
+        }
+
+        .dark .sidebar {
+            background-color: var(--dark-sidebar);
+            border-right: 1px solid var(--dark-border);
+        }
+
+        .sidebar-header {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid;
+        }
+
+        .light .sidebar-header {
+            border-color: var(--light-border);
+        }
+
+        .dark .sidebar-header {
+            border-color: var(--dark-border);
+        }
+
+        .sidebar-title {
+            font-weight: bold;
+            font-size: 1.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-toggle {
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: inherit;
+        }
+
+        .light .sidebar-toggle:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .sidebar-toggle:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .sidebar-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 4px;
+        }
+
+        .light .sidebar-tabs {
+            background-color: var(--light-hover);
+        }
+
+        .dark .sidebar-tabs {
+            background-color: var(--dark-hover);
+        }
+
+        .sidebar-tab {
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-tab.active {
+            background-color: var(--light-sidebar);
+        }
+
+        .dark .sidebar-tab.active {
+            background-color: var(--dark-sidebar);
+        }
+
+        .sidebar-content {
+            height: calc(100vh - 112px);
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* Chat area */
+        .chat-container {
+            margin-left: 300px;
+            height: 100vh;
+            transition: margin-left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container.expanded {
+            margin-left: 60px;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid;
+            height: 64px;
+            box-sizing: border-box;
+        }
+
+        .light .chat-header {
+            background-color: var(--light-sidebar);
+            border-color: var(--light-border);
+        }
+
+        .dark .chat-header {
+            background-color: var(--dark-sidebar);
+            border-color: var(--dark-border);
+        }
+
+        .chat-title {
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 24px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 16px 8px 40px;
+            border-radius: 6px;
+            border: 1px solid;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .light .search-bar input {
+            background-color: var(--light-hover);
+            border-color: var(--light-border);
+            color: var(--light-text);
+        }
+
+        .dark .search-bar input {
+            background-color: var(--dark-hover);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .action-button {
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            background: transparent;
+            color: inherit;
+        }
+
+        .light .action-button:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .action-button:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .messages-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .light .messages-container {
+            background-color: var(--light-sidebar);
+        }
+
+        .dark .messages-container {
+            background-color: var(--dark-bg);
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 24px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            margin-right: 0;
+            margin-left: 12px;
+            order: 2;
+        }
+
+        .light .message-avatar.bot {
+            background-color: var(--light-accent);
+            color: white;
+        }
+
+        .dark .message-avatar.bot {
+            background-color: var(--dark-accent);
+            color: white;
+        }
+
+        .light .message-avatar.user {
+            background-color: var(--light-hover);
+        }
+
+        .dark .message-avatar.user {
+            background-color: var(--dark-hover);
+        }
+
+        .message-content {
+            max-width: 80%;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .message-content {
+            order: 1;
+        }
+
+        .light .message.bot .message-content {
+            background-color: var(--light-message-bot);
+            border: 1px solid #dbeafe;
+        }
+
+        .dark .message.bot .message-content {
+            background-color: var(--dark-message-bot);
+            border: 1px solid #1e40af;
+        }
+
+        .light .message.user .message-content {
+            background-color: var(--light-message-user);
+            border: 1px solid #e5e7eb;
+        }
+
+        .dark .message.user .message-content {
+            background-color: var(--dark-message-user);
+            border: 1px solid #374151;
+        }
+
+        .message-text {
+            line-height: 1.5;
+        }
+
+        .message-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+            gap: 12px;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .message-action {
+            cursor: pointer;
+            font-size: 0.875rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .light .message-action:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .message-action:hover {
+            background-color: var(--dark-hover);
+        }
+
+        /* Suggestion chips */
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .suggestion-chip {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .dark .suggestion-chip {
+            background-color: #1e3a8a;
+            color: #dbeafe;
+        }
+
+        .suggestion-chip:hover {
+            filter: brightness(0.95);
+            transform: scale(1.02);
+        }
+
+        .suggestion-chip:active {
+            transform: scale(0.98);
+        }
+
+        /* Chat input */
+        .chat-footer {
+            padding: 16px;
+            border-top: 1px solid;
+        }
+
+        .light .chat-footer {
+            background-color: var(--light-sidebar);
+            border-color: var(--light-border);
+        }
+
+        .dark .chat-footer {
+            background-color: var(--dark-sidebar);
+            border-color: var(--dark-border);
+        }
+
+        .chat-input-container {
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 16px 80px 16px 16px;
+            border-radius: 8px;
+            border: 1px solid;
+            resize: none;
+            min-height: 60px;
+            max-height: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .light .chat-input {
+            background-color: white;
+            border-color: var(--light-border);
+            color: var(--light-text);
+        }
+
+        .dark .chat-input {
+            background-color: var(--dark-sidebar);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .chat-input:focus {
+            border-color: var(--light-accent);
+        }
+
+        .dark .chat-input:focus {
+            border-color: var(--dark-accent);
+        }
+
+        .input-actions {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .input-action.upload {
+            background-color: var(--light-hover);
+            color: var(--light-text);
+        }
+
+        .dark .input-action.upload {
+            background-color: var(--dark-hover);
+            color: var(--dark-text);
+        }
+
+        .input-action.send {
+            background-color: var(--light-accent);
+            color: white;
+        }
+
+        .dark .input-action.send {
+            background-color: var(--dark-accent);
+            color: white;
+        }
+
+        .input-action.send:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* File upload */
+        .file-upload {
+            border: 2px dashed;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .light .file-upload {
+            border-color: var(--light-border);
+            background-color: rgba(249, 250, 251, 0.5);
+        }
+
+        .dark .file-upload {
+            border-color: var(--dark-border);
+            background-color: rgba(31, 41, 55, 0.5);
+        }
+
+        .light .file-upload:hover {
+            border-color: var(--light-accent);
+        }
+
+        .dark .file-upload:hover {
+            border-color: var(--dark-accent);
+        }
+
+        .file-upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            margin-bottom: 8px;
+        }
+
+        .upload-help {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+
+        .typing-text {
+            margin-right: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 2px;
+            background-color: var(--light-accent);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .dark .typing-dot {
+            background-color: var(--dark-accent);
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* Dark mode toggle */
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+
+        /* Chat history list */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-left: 12px;
+        }
+
+        .light .history-section-title {
+            color: #6b7280;
+        }
+
+        .dark .history-section-title {
+            color: #9ca3af;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .light .history-item:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .history-item:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .history-item.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--light-accent);
+        }
+
+        .dark .history-item.active {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-left: 4px solid var(--dark-accent);
+        }
+
+        .history-icon {
+            margin-right: 12px;
+        }
+
+        .history-text {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .history-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-date {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        /* Files tab */
+        .files-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .light .file-item:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .file-item:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .file-icon {
+            margin-right: 12px;
+            font-size: 1.5rem;
+        }
+
+        .file-details {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        /* Prompts tab */
+        .prompts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .prompt-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .light .prompt-item:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .prompt-item:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .prompt-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .prompt-text {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Settings tab */
+        .settings-section {
+            background-color: rgba(249, 250, 251, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .settings-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .theme-button {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            color: inherit;
+        }
+
+        .light .theme-button {
+            background-color: white;
+            border: 1px solid var(--light-border);
+        }
+
+        .dark .theme-button {
+            background-color: var(--dark-hover);
+            border: 1px solid var(--dark-border);
+        }
+
+        .theme-icon {
+            margin-right: 8px;
+        }
+
+        .account-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .account-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .light .account-avatar {
+            background-color: white;
+            border: 1px solid var(--light-border);
+        }
+
+        .dark .account-avatar {
+            background-color: var(--dark-hover);
+            border: 1px solid var(--dark-border);
+        }
+
+        .account-details {
+            font-size: 0.875rem;
+        }
+
+        .account-email {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .help-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .light .help-link {
+            background-color: white;
+            border: 1px solid var(--light-border);
+        }
+
+        .dark .help-link {
+            background-color: var(--dark-hover);
+            border: 1px solid var(--dark-border);
+        }
+
+        .help-icon {
+            margin-right: 8px;
+        }
+
+        .app-info {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        /* For collapsed sidebar buttons */
+        .sidebar-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 16px;
+            gap: 24px;
+        }
+
+        .sidebar-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            background: transparent;
+            color: inherit;
+        }
+
+        .light .sidebar-button:hover {
+            background-color: var(--light-hover);
+        }
+
+        .dark .sidebar-button:hover {
+            background-color: var(--dark-hover);
+        }
+
+        .sidebar-button.active {
+            background-color: var(--light-hover);
+        }
+
+        .dark .sidebar-button.active {
+            background-color: var(--dark-hover);
+        }
+
+        /* Document analysis prompt */
+        .doc-analysis-prompt {
+            background-color: #dbeafe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .dark .doc-analysis-prompt {
+            background-color: #1e3a8a;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .prompt-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .dark .prompt-title {
+            color: #dbeafe;
+        }
+
+        .prompt-close {
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .dark .prompt-close {
+            color: #9ca3af;
+        }
+
+        .prompt-body {
+            margin-bottom: 16px;
+            color: #4b5563;
+        }
+
+        .dark .prompt-body {
+            color: #e5e7eb;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .prompt-button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .prompt-button.primary {
+            background-color: #1e40af;
+            color: white;
+        }
+
+        .prompt-button.primary:hover {
+            background-color: #1e3a8a;
+        }
+
+        .prompt-button.secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .prompt-button.secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        .dark .prompt-button.secondary {
+            background-color: #4b5563;
+            color: #e5e7eb;
+        }
+
+        .dark .prompt-button.secondary:hover {
+            background-color: #6b7280;
+        }
+
+        /* For mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .chat-container {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle-mobile {
+                display: block;
+            }
+        }
+
+        /* Upload file list */
+        .uploaded-files {
+            margin-bottom: 16px;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .light .uploaded-file {
+            background-color: var(--light-hover);
+        }
+
+        .dark .uploaded-file {
+            background-color: var(--dark-hover);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .remove-file {
+            cursor: pointer;
+            color: #9ca3af;
+            transition: color 0.2s;
+        }
+
+        .remove-file:hover {
+            color: #ef4444;
+        }
+
+        /* Welcome message */
+        .welcome-message {
+            text-align: center;
+            padding: 32px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .welcome-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .welcome-text {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .dark .welcome-text {
+            color: #9ca3af;
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Utility classes */
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .grow {
+            flex-grow: 1;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .mr-2 {
+            margin-right: 8px;
+        }
+
+        .font-medium {
+            font-weight: 500;
+        }
+
+        .text-gray-500 {
+            color: #6b7280;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="dark">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-title" id="sidebar-title">AseekBot</h1>
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar tabs (visible when expanded) -->
+        <div class="sidebar-tabs" id="sidebar-tabs">
+            <div class="sidebar-tab active" data-tab="history">
+                <i class="fas fa-history"></i>
+            </div>
+            <div class="sidebar-tab" data-tab="files">
+                <i class="fas fa-paperclip"></i>
+            </div>
+            <div class="sidebar-tab" data-tab="prompts">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="sidebar-tab" data-tab="settings">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+
+        <!-- Sidebar content -->
+        <div class="sidebar-content" id="sidebar-content">
+            <!-- History tab content (default active) -->
+            <div class="tab-content active" id="history-tab">
+                <div class="history-list">
+                    <h3 class="history-section-title">PINNED CHATS</h3>
+                    <div class="history-item active">
+                        <div class="history-icon">
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-title">Data Center RFP Analysis</div>
+                            <div class="history-date">Today, 10:30 AM</div>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-title">Server Rack Comparison</div>
+                            <div class="history-date">Yesterday, 3:45 PM</div>
+                        </div>
+                    </div>
+
+                    <h3 class="history-section-title mt-4">RECENT CHATS</h3>
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-title">Supplier Research</div>
+                            <div class="history-date">Mar 16, 2025</div>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-title">Hardware Specifications</div>
+                            <div class="history-date">Mar 15, 2025</div>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-title">Budget Planning 2025</div>
+                            <div class="history-date">Mar 14, 2025</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Files tab content -->
+            <div class="tab-content" id="files-tab">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-paperclip mr-2"></i>
+                    <h3 class="font-medium">Uploaded Files</h3>
+                </div>
+                <div class="files-list">
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                        </div>
+                        <div class="file-details">
+                            <div class="file-name">Supplier_Bid_Document.pdf</div>
+                            <div class="file-size">2.4 MB</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file-excel text-green-500"></i>
+                        </div>
+                        <div class="file-details">
+                            <div class="file-name">Data_Center_Equipment_Quote.xlsx</div>
+                            <div class="file-size">1.8 MB</div>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file-word text-blue-500"></i>
+                        </div>
+                        <div class="file-details">
+                            <div class="file-name">Technical_Specifications.docx</div>
+                            <div class="file-size">950 KB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompts tab content -->
+            <div class="tab-content" id="prompts-tab">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    <h3 class="font-medium">Saved Prompts</h3>
+                </div>
+                <div class="prompts-list">
+                    <div class="prompt-item">
+                        <div class="prompt-title">Bid Document Analysis</div>
+                        <div class="prompt-text">Perform bid document analysis for Project Alpha</div>
+                    </div>
+                    <div class="prompt-item">
+                        <div class="prompt-title">Compare Suppliers</div>
+                        <div class="prompt-text">Compare suppliers for server racks</div>
+                    </div>
+                    <div class="prompt-item">
+                        <div class="prompt-title">Procurement Process</div>
+                        <div class="prompt-text">Explain the data center procurement process</div>
+                    </div>
+                    <div class="prompt-item">
+                        <div class="prompt-title">Query Database</div>
+                        <div class="prompt-text">Query the database for Q1 2025 spending</div>
+                    </div>
+                    <div class="prompt-item">
+                        <div class="prompt-title">Create Ticket</div>
+                        <div class="prompt-text">Create a ticket for network equipment issue</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings tab content -->
+            <div class="tab-content" id="settings-tab">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-cog mr-2"></i>
+                    <h3 class="font-medium">Settings</h3>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Theme</div>
+                    <button class="theme-button" id="theme-toggle">
+                        <i class="fas fa-moon theme-icon"></i>
+                        <span id="theme-text">Dark Mode</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Account</div>
+                    <div class="account-info">
+                        <div class="account-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="account-name">User Account</div>
+                            <div class="account-email">user@example.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Help</div>
+                    <a href="#" class="help-link" id="user-guide-link">
+                        <i class="fas fa-question-circle help-icon"></i>
+                        <span>User Guide</span>
+                    </a>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">About</div>
+                    <div class="app-info">
+                        <p class="mb-1">AseekBot v1.0.0</p>
+                        <p>Data Center Procurement Assistant</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsed sidebar buttons -->
+        <div class="sidebar-buttons hidden" id="sidebar-buttons">
+            <button class="sidebar-button" id="new-chat-button-collapsed">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="sidebar-button active" data-tab="history">
+                <i class="fas fa-history"></i>
+            </button>
+            <button class="sidebar-button" data-tab="files">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <button class="sidebar-button" data-tab="prompts">
+                <i class="fas fa-lightbulb"></i>
+            </button>
+            <button class="sidebar-button" data-tab="settings">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="sidebar-button" id="user-guide-button-collapsed">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="grow"></div>
+            <button class="sidebar-button" id="theme-toggle-collapsed">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main chat container -->
+    <main class="chat-container" id="chat-container">
+        <header class="chat-header">
+            <div class="chat-title">
+                AseekBot
+                <span class="text-sm text-gray-500 ml-4">Data Center RFP Analysis</span>
+            </div>
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Search conversations..." id="search-input">
+            </div>
+            <div class="action-buttons">
+                <button class="action-button" id="new-chat-button" aria-label="New chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="action-button" id="theme-toggle-header" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="action-button" id="help-button" aria-label="Help">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="action-button" id="export-button" aria-label="Export conversation">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="action-button" id="feedback-button" aria-label="Provide feedback">
+                    <i class="fas fa-comment-dots"></i>
+                </button>
+                <button class="action-button" id="ticket-button" aria-label="Create ticket">
+                    <i class="fas fa-ticket-alt"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="messages-container" id="messages-container">
+            <!-- Welcome message (shown when no messages) -->
+            <div class="welcome-message" id="welcome-message">
+                <h2 class="welcome-title">Welcome to AseekBot!</h2>
+                <p class="welcome-text">Start a conversation or ask a question to get started.</p>
+            </div>
+
+            <!-- Messages will be added here dynamically -->
+            <div class="message bot">
+                <div class="message-avatar bot">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        Hello! I'm AseekBot, your AI assistant for data center procurement. How can I help you today?
+                    </div>
+                    <div class="message-footer">
+                        <div class="message-time">10:30 AM</div>
+                        <div class="message-action"><i class="fas fa-thumbs-up"></i></div>
+                        <div class="message-action"><i class="fas fa-thumbs-down"></i></div>
+                        <div class="message-action"><i class="fas fa-thumbtack"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message user">
+                <div class="message-content">
+                    <div class="message-text">
+                        I need to analyze bids from three different vendors for our new data center. Can you help me compare them?
+                    </div>
+                    <div class="message-footer">
+                        <div class="message-time">10:31 AM</div>
+                    </div>
+                </div>
+                <div class="message-avatar user">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+
+            <div class="message bot">
+                <div class="message-avatar bot">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        I'd be happy to help you analyze and compare vendor bids for your data center. To get started, I'll need the bid documents from each vendor. Would you like to upload them now?
+                    </div>
+                    <div class="message-footer">
+                        <div class="message-time">10:32 AM</div>
+                        <div class="message-action"><i class="fas fa-thumbs-up"></i></div>
+                        <div class="message-action"><i class="fas fa-thumbs-down"></i></div>
+                        <div class="message-action"><i class="fas fa-thumbtack"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestion chips -->
+            <div class="suggestion-chips">
+                <button class="suggestion-chip">Upload vendor bids</button>
+                <button class="suggestion-chip">What information can you extract?</button>
+                <button class="suggestion-chip">Key factors for comparison</button>
+            </div>
+
+            <!-- Document analysis prompt -->
+            <div class="doc-analysis-prompt">
+                <div class="prompt-header">
+                    <h3 class="prompt-title">Document Analysis</h3>
+                    <div class="prompt-close"><i class="fas fa-times"></i></div>
+                </div>
+                <div class="prompt-body">
+                    Upload documents for analysis. I can extract information, summarize content, and answer questions about your documents.
+                </div>
+                <div class="prompt-actions">
+                    <button class="prompt-button primary">
+                        <i class="fas fa-file-upload mr-2"></i>Upload Files
+                    </button>
+                    <button class="prompt-button secondary">Not Now</button>
+                </div>
+            </div>
+
+            <!-- File upload area (hidden by default) -->
+            <div class="file-upload hidden" id="file-upload-area">
+                <div class="file-upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">Drag and drop files here, or click to select files</div>
+                <div class="upload-help">Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG</div>
+            </div>
+
+            <!-- Uploaded files list (hidden by default) -->
+            <div class="uploaded-files hidden" id="uploaded-files">
+                <div class="uploaded-file">
+                    <div class="file-info">
+                        <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                        <div>
+                            <div class="file-name">VendorA_Proposal.pdf</div>
+                            <div class="file-size">3.2 MB</div>
+                        </div>
+                    </div>
+                    <div class="remove-file"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+
+            <!-- Typing indicator (hidden by default) -->
+            <div class="message bot hidden" id="typing-indicator">
+                <div class="message-avatar bot">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-text">AseekBot is thinking</div>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="chat-footer">
+            <form class="chat-input-container" id="chat-form">
+                <textarea class="chat-input" id="chat-input" placeholder="Type your message here..." rows="1"></textarea>
+                <div class="input-actions">
+                    <button type="button" class="input-action upload" id="upload-button">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button type="submit" class="input-action send" id="send-button" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        </footer>
+    </main>
+
+    <script>
+        // DOM Elements
+        const body = document.body;
+        const sidebar = document.getElementById('sidebar');
+        const sidebarTitle = document.getElementById('sidebar-title');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarTabs = document.getElementById('sidebar-tabs');
+        const sidebarContent = document.getElementById('sidebar-content');
+        const sidebarButtons = document.getElementById('sidebar-buttons');
+        const chatContainer = document.getElementById('chat-container');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeToggleHeader = document.getElementById('theme-toggle-header');
+        const themeToggleCollapsed = document.getElementById('theme-toggle-collapsed');
+        const themeText = document.getElementById('theme-text');
+        const tabButtons = document.querySelectorAll('[data-tab]');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const newChatButton = document.getElementById('new-chat-button');
+        const newChatButtonCollapsed = document.getElementById('new-chat-button-collapsed');
+        const userGuideLink = document.getElementById('user-guide-link');
+        const userGuideButtonCollapsed = document.getElementById('user-guide-button-collapsed');
+        const helpButton = document.getElementById('help-button');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const uploadButton = document.getElementById('upload-button');
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const uploadedFiles = document.getElementById('uploaded-files');
+        const messagesContainer = document.getElementById('messages-container');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const searchInput = document.getElementById('search-input');
+        const exportButton = document.getElementById('export-button');
+        const feedbackButton = document.getElementById('feedback-button');
+        const ticketButton = document.getElementById('ticket-button');
+        const promptButtons = document.querySelectorAll('.suggestion-chip');
+        const docAnalysisPrompt = document.querySelector('.doc-analysis-prompt');
+        const docAnalysisClose = document.querySelector('.prompt-close');
+        const docAnalysisUpload = document.querySelector('.prompt-button.primary');
+        const docAnalysisCancel = document.querySelector('.prompt-button.secondary');
+
+        // State
+        let isDarkMode = true;
+        let isSidebarCollapsed = false;
+        let activeTab = 'history';
+        let isTyping = false;
+        let messages = [];
+
+        // Initialize
+        function init() {
+            // Set initial theme
+            updateTheme();
+
+            // Set active tab
+            updateActiveTab('history');
+
+            // Hide welcome message if there are messages
+            if (messagesContainer.querySelectorAll('.message').length > 0) {
+                welcomeMessage.classList.add('hidden');
+            }
+
+            // Enable send button if input has text
+            chatInput.addEventListener('input', function() {
+                sendButton.disabled = chatInput.value.trim() === '';
+
+                // Auto-resize textarea
+                chatInput.style.height = 'auto';
+                chatInput.style.height = (chatInput.scrollHeight) + 'px';
+            });
+
+            // Event listeners
+            setupEventListeners();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Sidebar toggle
+            sidebarToggle.addEventListener('click', toggleSidebar);
+
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            themeToggleHeader.addEventListener('click', toggleTheme);
+            themeToggleCollapsed.addEventListener('click', toggleTheme);
+
+            // Tab navigation
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tab = this.getAttribute('data-tab');
+                    updateActiveTab(tab);
+
+                    // If sidebar is collapsed, expand it
+                    if (isSidebarCollapsed) {
+                        toggleSidebar();
+                    }
+                });
+            });
+
+            // New chat button
+            newChatButton.addEventListener('click', createNewChat);
+            newChatButtonCollapsed.addEventListener('click', createNewChat);
+
+            // User guide
+            userGuideLink.addEventListener('click', openUserGuide);
+            userGuideButtonCollapsed.addEventListener('click', openUserGuide);
+            helpButton.addEventListener('click', openUserGuide);
+
+            // Chat form submission
+            chatForm.addEventListener('submit', handleMessageSubmit);
+
+            // Upload button
+            uploadButton.addEventListener('click', toggleFileUpload);
+
+            // File upload area
+            fileUploadArea.addEventListener('click', triggerFileUpload);
+
+            // Search input
+            searchInput.addEventListener('input', handleSearch);
+
+            // Export button
+            exportButton.addEventListener('click', exportChat);
+
+            // Feedback button
+            feedbackButton.addEventListener('click', openFeedbackForm);
+
+            // Ticket button
+            ticketButton.addEventListener('click', openTicketForm);
+
+            // Suggestion chips
+            promptButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const text = this.textContent;
+                    chatInput.value = text;
+                    sendButton.disabled = false;
+
+                    // Auto-resize textarea
+                    chatInput.style.height = 'auto';
+                    chatInput.style.height = (chatInput.scrollHeight) + 'px';
+
+                    // Focus on input
+                    chatInput.focus();
+                });
+            });
+
+            // Document analysis prompt
+            docAnalysisClose.addEventListener('click', closeDocAnalysisPrompt);
+            docAnalysisCancel.addEventListener('click', closeDocAnalysisPrompt);
+            docAnalysisUpload.addEventListener('click', function() {
+                closeDocAnalysisPrompt();
+                toggleFileUpload();
+            });
+        }
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            isSidebarCollapsed = !isSidebarCollapsed;
+
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                chatContainer.classList.add('expanded');
+                sidebarToggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                sidebarTitle.classList.add('hidden');
+                sidebarTabs.classList.add('hidden');
+                sidebarContent.classList.add('hidden');
+                sidebarButtons.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('collapsed');
+                chatContainer.classList.remove('expanded');
+                sidebarToggle.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                sidebarTitle.classList.remove('hidden');
+                sidebarTabs.classList.remove('hidden');
+                sidebarContent.classList.remove('hidden');
+                sidebarButtons.classList.add('hidden');
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            updateTheme();
+        }
+
+        // Update theme
+        function updateTheme() {
+            if (isDarkMode) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun theme-icon"></i>';
+                themeToggleHeader.innerHTML = '<i class="fas fa-sun"></i>';
+                themeToggleCollapsed.innerHTML = '<i class="fas fa-sun"></i>';
+                if (themeText) themeText.textContent = 'Light Mode';
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeToggle.innerHTML = '<i class="fas fa-moon theme-icon"></i>';
+                themeToggleHeader.innerHTML = '<i class="fas fa-moon"></i>';
+                themeToggleCollapsed.innerHTML = '<i class="fas fa-moon"></i>';
+                if (themeText) themeText.textContent = 'Dark Mode';
+            }
+        }
+
+        // Update active tab
+        function updateActiveTab(tab) {
+            activeTab = tab;
+
+            // Update tab buttons
+            tabButtons.forEach(button => {
+                if (button.getAttribute('data-tab') === tab) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+
+            // Update tab contents
+            tabContents.forEach(content => {
+                if (content.id === `${tab}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        // Create new chat
+        function createNewChat() {
+            // Clear messages
+            const messageElements = messagesContainer.querySelectorAll('.message');
+            messageElements.forEach(message => {
+                if (!message.id || message.id !== 'typing-indicator') {
+                    message.remove();
+                }
+            });
+
+            // Hide suggestions
+            const suggestionChips = document.querySelector('.suggestion-chips');
+            if (suggestionChips) suggestionChips.remove();
+
+            // Hide document analysis prompt
+            if (docAnalysisPrompt) docAnalysisPrompt.classList.add('hidden');
+
+            // Hide file upload area
+            fileUploadArea.classList.add('hidden');
+
+            // Hide uploaded files
+            uploadedFiles.classList.add('hidden');
+
+            // Clear input
+            chatInput.value = '';
+            sendButton.disabled = true;
+
+            // Show welcome message
+            welcomeMessage.classList.remove('hidden');
+
+            // Add initial bot message
+            setTimeout(() => {
+                addMessage('bot', "Hello! I'm AseekBot, your AI assistant for data center procurement. How can I help you today?");
+
+                // Add suggestion chips
+                addSuggestionChips([
+                    "Tell me about procurement processes",
+                    "Help me analyze vendor bids",
+                    "Compare pricing data"
+                ]);
+
+                // Hide welcome message
+                welcomeMessage.classList.add('hidden');
+            }, 500);
+        }
+
+        // Open user guide
+        function openUserGuide() {
+            // In a real app, this would navigate to the user guide page
+            alert('User guide would open here.');
+        }
+
+        // Handle message submission
+        function handleMessageSubmit(e) {
+            e.preventDefault();
+
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+
+            // Clear input
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            sendButton.disabled = true;
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Hide file upload if visible
+            fileUploadArea.classList.add('hidden');
+            uploadedFiles.classList.add('hidden');
+
+            // Simulate bot response
+            setTimeout(() => {
+                hideTypingIndicator();
+
+                // Add bot response based on user message
+                let botResponse = "I'm processing your request. How can I assist you further?";
+
+                if (message.toLowerCase().includes('bid') || message.toLowerCase().includes('vendor')) {
+                    botResponse = "I can help you analyze vendor bids for your data center. Would you like to upload the bid documents now?";
+
+                    // Add suggestion chips
+                    addSuggestionChips([
+                        "Upload bid documents",
+                        "What should I look for in bids?",
+                        "Compare vendors manually"
+                    ]);
+
+                    // Show document analysis prompt
+                    if (docAnalysisPrompt) docAnalysisPrompt.classList.remove('hidden');
+                } else if (message.toLowerCase().includes('procurement') || message.toLowerCase().includes('process')) {
+                    botResponse = "The data center procurement process typically involves several stages: requirements gathering, vendor selection, bid analysis, negotiation, and contract management. Would you like me to elaborate on any specific stage?";
+
+                    // Add suggestion chips
+                    addSuggestionChips([
+                        "Requirements gathering",
+                        "Vendor selection",
+                        "Bid analysis",
+                        "Negotiation strategies"
+                    ]);
+                } else if (message.toLowerCase().includes('compare') || message.toLowerCase().includes('pricing')) {
+                    botResponse = "I can help you compare pricing data across different vendors. Would you like to upload your pricing sheets for analysis?";
+
+                    // Add suggestion chips
+                    addSuggestionChips([
+                        "Upload pricing sheets",
+                        "Pricing benchmarks",
+                        "TCO calculation"
+                    ]);
+                }
+
+                addMessage('bot', botResponse);
+            }, 2000);
+        }
+
+        // Add message to the chat
+        function addMessage(sender, text) {
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            // Create avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = `message-avatar ${sender}`;
+            avatarDiv.innerHTML = sender === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+
+            // Create content
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // Create text
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = text;
+
+            // Create footer
+            const footerDiv = document.createElement('div');
+            footerDiv.className = 'message-footer';
+
+            // Add time
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            const now = new Date();
+            timeDiv.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            footerDiv.appendChild(timeDiv);
+
+            // Add actions for bot messages
+            if (sender === 'bot') {
+                const actionsHTML = `
+                    <div class="message-action"><i class="fas fa-thumbs-up"></i></div>
+                    <div class="message-action"><i class="fas fa-thumbs-down"></i></div>
+                    <div class="message-action"><i class="fas fa-thumbtack"></i></div>
+                `;
+                footerDiv.insertAdjacentHTML('beforeend', actionsHTML);
+            }
+
+            // Assemble message
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(footerDiv);
+
+            if (sender === 'user') {
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(avatarDiv);
+            } else {
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+            }
+
+            // Add to messages container
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Hide welcome message
+            welcomeMessage.classList.add('hidden');
+
+            // Store message
+            messages.push({ sender, text, time: timeDiv.textContent });
+        }
+
+        // Add suggestion chips
+        function addSuggestionChips(suggestions) {
+            // Remove existing suggestion chips
+            const existingChips = document.querySelector('.suggestion-chips');
+            if (existingChips) existingChips.remove();
+
+            // Create suggestion chips container
+            const chipsDiv = document.createElement('div');
+            chipsDiv.className = 'suggestion-chips';
+
+            // Add suggestion chips
+            suggestions.forEach(suggestion => {
+                const chipButton = document.createElement('button');
+                chipButton.className = 'suggestion-chip';
+                chipButton.textContent = suggestion;
+
+                // Add click event
+                chipButton.addEventListener('click', function() {
+                    chatInput.value = suggestion;
+                    sendButton.disabled = false;
+
+                    // Auto-resize textarea
+                    chatInput.style.height = 'auto';
+                    chatInput.style.height = (chatInput.scrollHeight) + 'px';
+
+                    // Focus on input
+                    chatInput.focus();
+                });
+
+                chipsDiv.appendChild(chipButton);
+            });
+
+            // Add to messages container
+            messagesContainer.appendChild(chipsDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            isTyping = true;
+            typingIndicator.classList.remove('hidden');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            isTyping = false;
+            typingIndicator.classList.add('hidden');
+        }
+
+        // Toggle file upload
+        function toggleFileUpload() {
+            if (fileUploadArea.classList.contains('hidden')) {
+                fileUploadArea.classList.remove('hidden');
+            } else {
+                fileUploadArea.classList.add('hidden');
+            }
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Trigger file upload
+        function triggerFileUpload() {
+            // In a real app, this would open a file picker
+            // For demo purposes, let's just show the uploaded files list
+            fileUploadArea.classList.add('hidden');
+            uploadedFiles.classList.remove('hidden');
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle search
+        function handleSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+
+            if (query === '') {
+                // Show all messages
+                document.querySelectorAll('.message').forEach(message => {
+                    message.style.display = 'flex';
+                });
+                return;
+            }
+
+            // Filter messages
+            document.querySelectorAll('.message').forEach(message => {
+                const messageText = message.querySelector('.message-text').textContent.toLowerCase();
+
+                if (messageText.includes(query)) {
+                    message.style.display = 'flex';
+                } else {
+                    message.style.display = 'none';
+                }
+            });
+        }
+
+        // Export chat
+        function exportChat() {
+            // In a real app, this would export the chat as PDF or text
+            alert('Chat export functionality would be implemented here.');
+        }
+
+        // Open feedback form
+        function openFeedbackForm() {
+            // In a real app, this would open a feedback form
+            alert('Feedback form would open here.');
+        }
+
+        // Open ticket form
+        function openTicketForm() {
+            // In a real app, this would open a ticket form
+            alert('Ticket form would open here.');
+        }
+
+        // Close document analysis prompt
+        function closeDocAnalysisPrompt() {
+            if (docAnalysisPrompt) docAnalysisPrompt.classList.add('hidden');
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>

@@ -33,7 +33,8 @@ export async function processChatMessage(
           name: file.name,
           mimeType: file.type,
           // Use s3Url from the file or fall back to url/fileUrl properties
-          s3Url: uploadedFile.s3Url || uploadedFile.url || uploadedFile.fileUrl
+          s3Url: uploadedFile.s3Url || uploadedFile.url || uploadedFile.fileUrl,
+          useCase: "CHAT"
         };
       });
 
