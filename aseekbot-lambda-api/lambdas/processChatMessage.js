@@ -77,7 +77,7 @@ app.post('*', upload.array('files'), async (req, res) => {
     const response = await invokeBedrockAgent(prompt, sessionId, {
       s3Files: s3FileInfos.length > 0 ? s3FileInfos : undefined,
       agentId: '7FDALECWCL',
-      agentAliasId: 'CHKUTAAPUZ',
+      agentAliasId: 'NMGKRJLDQQ',
       region: 'us-east-1'
     });
 
