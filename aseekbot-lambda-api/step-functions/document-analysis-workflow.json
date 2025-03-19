@@ -23,10 +23,14 @@
                 "Payload": {
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "fileType.$": "$.fileType",
                     "status": "STARTED",
                     "message": "Document analysis process has started."
                 }
             },
+            "ResultPath": "$.statusUpdate",
             "Next": "ValidateFileAndScan"
         },
         "ValidateFileAndScan": {

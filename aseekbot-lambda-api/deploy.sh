@@ -110,7 +110,7 @@ deploy_step_functions() {
     echo -e "${GREEN}Step Function deployed with ARN: ${BOLD}$STATE_MACHINE_ARN${NC}"
     echo -e "${GREEN}DynamoDB Status Table: ${BOLD}$STATUS_TABLE_NAME${NC}"
 
-    # Update Lambda environment variables if startDocumentAnalysis exists
+    # Update Lambda environment variables if documentAnalysis exists
     if grep -q "documentAnalysis" serverless.yml; then
         echo -e "${YELLOW}Updating Lambda environment variables for documentAnalysis...${NC}"
 
