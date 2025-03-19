@@ -9,7 +9,7 @@ import {
 
 // Existing interfaces remain the same...
 
-// Update the API functions to use Lambda endpoints:
+// API functions using AWS Lambda endpoints:
 
 export async function processChatMessage(
   message: string,
@@ -169,4 +169,4 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   } catch (error) {
     handleClientError(error, 'delete file');
   }
-}
+}// AWS Lambda API integration for frontend components

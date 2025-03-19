@@ -223,8 +223,8 @@ export function handleClientError(error: unknown, operation: string): never {
 }
 ```
 
-#### 3. Update API Integration in Your Code
-Modify `app/api/advancedApi.ts` to use Lambda endpoints:
+#### 3. API Integration
+The application now uses Lambda endpoints for all API functionality:
 
 ```typescript
 import {
@@ -523,6 +523,10 @@ NEXT_PUBLIC_API_BASE_URL=https://your-api-gateway-url.execute-api.us-east-1.amaz
 ## Making Changes and Redeployment
 
 AseekBot uses a streamlined deployment process with a single script that handles both frontend and backend deployments. Follow these steps when making changes to the application.
+
+### Architecture Note
+
+The application has been fully migrated to use AWS Lambda functions and API Gateway endpoints. All API functionality previously handled by Next.js API routes under the `app/api` directory has been moved to Lambda functions. The frontend components now directly call these Lambda endpoints through the API Gateway.
 
 ### Using the Deployment Script
 
