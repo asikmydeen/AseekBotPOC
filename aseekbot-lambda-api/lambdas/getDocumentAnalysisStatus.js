@@ -1,4 +1,3 @@
-// aseekbot-lambda-api/lambdas/startDocumentAnalysis.js
 const serverless = require('serverless-http');
 const express = require('express');
 const { handleApiError } = require('../utils/apiErrorHandler');

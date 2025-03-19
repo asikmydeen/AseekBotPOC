@@ -1,33 +1,24 @@
-exports.handler = async (event) => {
-  console.log('Updating document status', event);
-
-  const { documentId, userId, status, message } = event;
-
-  // Add your code to update status in DynamoDB
-  // const AWS = require('aws-sdk');
-  // const dynamoDB = new AWS.DynamoDB.DocumentClient();
-  // await dynamoDB.put({
-  //   TableName: process.env.STATUS_TABLE,
-  //   Item: {
-  //     documentId,
-  //     userId,
-  //     status,
-  //     message,
-  //     timestamp: new Date().toISOString()
-  //   }
-  // }).promise();
-
-  return event;
-};// functions/document-analysis/status-updater.js
 const AWS = require('aws-sdk');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-  console.log('Updating document status', JSON.stringify(event, null, 2));
-
-  const { documentId, userId, status, message, resultLocation } = event;
+  // Log the full input event with detailed formatting
+  console.log('Updating document status:', JSON.stringify(event, null, 2));
 
   try {
+    // Extract all relevant information from the event
+    const {
+      documentId,
+      userId,
+      status,
+      message,
+      resultLocation,
+      s3Bucket,
+      s3Key,
+      fileType
+    } = event;
+
+    // TODO: Update status in DynamoDB
     await dynamoDB.put({
       TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
       Item: {
@@ -36,14 +27,21 @@ exports.handler = async (event) => {
         status,
         message,
         resultLocation,
+        s3Bucket,
+        s3Key,
+        fileType,
         timestamp: new Date().toISOString()
       }
     }).promise();
 
     console.log(`Status updated for document ${documentId}: ${status}`);
+
+    // Return the entire original event to preserve all context
     return event;
   } catch (error) {
     console.error('Error updating status:', error);
+
+    // Rethrow the error to allow Step Functions to handle it
     throw error;
   }
 };

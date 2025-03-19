@@ -76,7 +76,7 @@ functions:
           method: post
           cors: true # Enable CORS
   documentAnalysis:
-    handler: lambdas/startDocumentAnalysis.handler
+    handler: lambdas/getDocumentAnalysisStatus.handler
     events:
       - http:
           path: document-analysis/{proxy+}
