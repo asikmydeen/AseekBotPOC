@@ -60,64 +60,29 @@ deploy_step_functions() {
         REGION="us-east-1"
     fi
 
-    echo -e "${YELLOW}Creating CloudFormation template for Step Functions workflow...${NC}"
-    # Create CloudFormation template for Step Functions
-    cat > step-functions-template.yaml << EOF
-AWSTemplateFormatVersion: '2010-09-09'
-Resources:
-  DocumentAnalysisStateMachine:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      StateMachineName: DocumentAnalysisWorkflow
-      RoleArn: !GetAtt DocumentAnalysisStepFunctionsRole.Arn
-      DefinitionString: !Sub |
-        $(cat step-functions/document-analysis-workflow.json)
-
-  DocumentAnalysisStepFunctionsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: states.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
-      Policies:
-        - PolicyName: InvokeLambdaPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:InvokeFunction
-                Resource: "*"
-
-  DocumentAnalysisStatusTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: DocumentAnalysisStatus
-      AttributeDefinitions:
-        - AttributeName: documentId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: documentId
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
-Outputs:
-  StateMachineArn:
-    Value: !Ref DocumentAnalysisStateMachine
-  StatusTableName:
-    Value: !Ref DocumentAnalysisStatusTable
-EOF
-
     echo -e "${YELLOW}Deploying Step Functions workflow using CloudFormation...${NC}"
+
+    # Get Lambda ARNs for the state machine definition
+    ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+
+    # Deploy using pre-created template
+    sed -e "s/\${InitProcessLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-init-process/g" \
+        -e "s/\${StatusUpdaterLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-status-updater/g" \
+        -e "s/\${FileValidationLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-file-validation/g" \
+        -e "s/\${TextractPdfLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-textract-pdf/g" \
+        -e "s/\${DocxParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-docx-parser/g" \
+        -e "s/\${ExcelParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-excel-parser/g" \
+        -e "s/\${CsvParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-csv-parser/g" \
+        -e "s/\${ContentAnalyzerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-content-analyzer/g" \
+        -e "s/\${DocumentComparerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-document-comparer/g" \
+        -e "s/\${InsightGeneratorLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-insight-generator/g" \
+        -e "s/\${ResultStorageLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-result-storage/g" \
+        -e "s/\${ErrorHandlerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-error-handler/g" \
+        step-functions-template.yaml > step-functions-deployment.yaml
+
     # Deploy the CloudFormation stack
     aws cloudformation deploy \
-      --template-file step-functions-template.yaml \
+      --template-file step-functions-deployment.yaml \
       --stack-name $STACK_NAME \
       --region $REGION \
       --capabilities CAPABILITY_IAM
@@ -146,8 +111,8 @@ EOF
     echo -e "${GREEN}DynamoDB Status Table: ${BOLD}$STATUS_TABLE_NAME${NC}"
 
     # Update Lambda environment variables if startDocumentAnalysis exists
-    if grep -q "startDocumentAnalysis" serverless.yml; then
-        echo -e "${YELLOW}Updating Lambda environment variables for startDocumentAnalysis...${NC}"
+    if grep -q "documentAnalysis" serverless.yml; then
+        echo -e "${YELLOW}Updating Lambda environment variables for documentAnalysis...${NC}"
 
         # Add Step Functions ARN to serverless.yml environment section
         if ! grep -q "DOCUMENT_ANALYSIS_STATE_MACHINE_ARN" serverless.yml; then
@@ -167,7 +132,7 @@ EOF
             echo -e "${YELLOW}Environment variables already exist in serverless.yml${NC}"
         fi
     else
-        echo -e "${YELLOW}Warning: startDocumentAnalysis function not found in serverless.yml. You may need to add it.${NC}"
+        echo -e "${YELLOW}Warning: documentAnalysis function not found in serverless.yml. You may need to add it.${NC}"
     fi
 
     # Return to root directory
