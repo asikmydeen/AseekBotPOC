@@ -1,6 +1,8 @@
+// app/components/chat/ChatHeader.tsx
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import {
   MdDarkMode,
   MdLightMode,
@@ -10,6 +12,7 @@ import {
   MdAdd,
   MdOutlineMoreVert
 } from 'react-icons/md';
+import { FiHelpCircle } from 'react-icons/fi';
 import { TicketIcon } from '@heroicons/react/24/outline';
 import { useChatHistory } from '../../context/ChatHistoryContext';
 
@@ -92,10 +95,22 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           {isDarkMode ? <MdLightMode className="h-5 w-5" /> : <MdDarkMode className="h-5 w-5" />}
         </button>
 
+        {/* Help Button */}
+        <Link
+          href="/userguide"
+          className={`p-2 rounded-full ${isDarkMode
+              ? 'hover:bg-gray-700 text-gray-300'
+              : 'hover:bg-gray-200 text-gray-700'
+            } transition-colors`}
+          aria-label="User Guide"
+        >
+          <FiHelpCircle className="h-5 w-5" />
+        </Link>
+
         {/* Export Chat */}
         {exportChat && (
           <button
-            onClick={() => exportChat()}
+            onClick={exportChat}
             className={`p-2 rounded-full ${isDarkMode
                 ? 'hover:bg-gray-700 text-gray-300'
                 : 'hover:bg-gray-200 text-gray-700'
@@ -109,7 +124,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Feedback */}
         {setShowFeedbackForm && (
           <button
-            onClick={() => setShowFeedbackForm()}
+            onClick={setShowFeedbackForm}
             className={`p-2 rounded-full ${isDarkMode
                 ? 'hover:bg-gray-700 text-gray-300'
                 : 'hover:bg-gray-200 text-gray-700'
@@ -123,7 +138,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Ticket */}
         {setShowTicketForm && (
           <button
-            onClick={() => setShowTicketForm()}
+            onClick={setShowTicketForm}
             className={`p-2 rounded-full ${isDarkMode
                 ? 'hover:bg-gray-700 text-gray-300'
                 : 'hover:bg-gray-200 text-gray-700'

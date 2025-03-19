@@ -2,6 +2,7 @@
 "use client";
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
     MdPushPin,
     MdHistory,
@@ -16,6 +17,7 @@ import {
     MdLightbulb,
     MdAdd
 } from 'react-icons/md';
+import { FiHelpCircle } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
@@ -276,6 +278,20 @@ export default function AppSidebar({
                             </div>
 
                             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                                <p className="text-sm font-medium mb-2">Help</p>
+                                <Link
+                                    href="/userguide"
+                                    className={`flex items-center p-2 rounded-md ${isDarkMode
+                                            ? 'bg-gray-700 hover:bg-gray-600'
+                                            : 'bg-white hover:bg-gray-200 border border-gray-300'
+                                        }`}
+                                >
+                                    <FiHelpCircle className="mr-2" />
+                                    <span>User Guide</span>
+                                </Link>
+                            </div>
+
+                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">About</p>
                                 <div className="text-xs text-gray-500">
                                     <p className="mb-1">AseekBot v1.0.0</p>
@@ -330,6 +346,14 @@ export default function AppSidebar({
                     >
                         <MdSettings size={24} />
                     </button>
+                    <Link
+                        href="/userguide"
+                        className={`p-2 rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200'}`}
+                        aria-label="User Guide"
+                        title="User Guide"
+                    >
+                        <FiHelpCircle size={24} />
+                    </Link>
                     <div className="grow"></div>
                     <button
                         onClick={toggleTheme}

@@ -126,6 +126,19 @@ deploy_frontend() {
         return 1
     fi
 
+    # *** IMPORTANT FIX: Add _redirects file for client-side routing ***
+    echo -e "${YELLOW}Adding SPA routing fix for client-side navigation...${NC}"
+    echo "/* /index.html 200" > out/_redirects
+
+    # *** IMPORTANT FIX: Copy index.html to userguide/index.html ***
+    echo -e "${YELLOW}Creating userguide route static file...${NC}"
+    mkdir -p out/userguide
+    cp out/index.html out/userguide/index.html
+
+    # *** IMPORTANT FIX: Create a 404.html file that redirects to index ***
+    echo -e "${YELLOW}Creating 404 error handler...${NC}"
+    cp out/index.html out/404.html
+
     # Upload to S3
     echo -e "${YELLOW}Uploading build files to S3...${NC}"
     aws s3 sync out/ "s3://$FRONTEND_S3_BUCKET/" --delete
@@ -142,6 +155,21 @@ deploy_frontend() {
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error: CloudFront invalidation failed. Check distribution ID.${NC}"
         return 1
+    fi
+
+    echo -e "${YELLOW}Checking CloudFront error page configuration...${NC}"
+    # Get current error configuration
+    HAS_404_CONFIG=$(aws cloudfront get-distribution-config --id "$CLOUDFRONT_DISTRIBUTION_ID" --query 'DistributionConfig.CustomErrorResponses' --output text)
+
+    if [[ -z "$HAS_404_CONFIG" || "$HAS_404_CONFIG" == "None" ]]; then
+        echo -e "${YELLOW}No custom error responses found. Please configure CloudFront custom error pages:${NC}"
+        echo -e "${BOLD}1. Go to CloudFront console: https://console.aws.amazon.com/cloudfront/${NC}"
+        echo -e "${BOLD}2. Select your distribution: $CLOUDFRONT_DISTRIBUTION_ID${NC}"
+        echo -e "${BOLD}3. Go to Error Pages tab and add:${NC}"
+        echo -e "   - HTTP Error Code: 403, Response Page Path: /index.html, HTTP Response Code: 200"
+        echo -e "   - HTTP Error Code: 404, Response Page Path: /index.html, HTTP Response Code: 200"
+    else
+        echo -e "${GREEN}Custom error responses are configured.${NC}"
     fi
 
     echo -e "${GREEN}Frontend deployment completed.${NC}"

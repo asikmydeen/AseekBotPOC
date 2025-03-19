@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   description: 'An AI-powered chatbot for data center procurement tasks.',
 };
 
+// Keeping the original structure with Providers
 export default function RootLayout({
   children,
 }: {

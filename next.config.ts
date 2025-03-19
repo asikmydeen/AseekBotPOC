@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',  // Add this line for static export
-
+  output: 'export',
+  trailingSlash: true, // Add this for better static hosting compatibility
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -13,48 +13,7 @@ const nextConfig: NextConfig = {
     API_BASE_URL: process.env.API_BASE_URL || '/api',
     MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE || '10485760',
   },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'x-content-type-options',
-            value: 'nosniff',
-          },
-          {
-            key: 'x-frame-options',
-            value: 'DENY',
-          },
-          {
-            key: 'x-xss-protection',
-            value: '1; mode=block',
-          },
-        ],
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true'
-          },
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-          },
-        ],
-      },
-    ];
-  },
+  // Removing the headers function since it doesn't work with static export
   images: {
     domains: ['localhost'],
     remotePatterns: [
@@ -63,7 +22,7 @@ const nextConfig: NextConfig = {
         hostname: '**.amazonaws.com'
       },
     ],
-    unoptimized: true,  // Add this for static export
+    unoptimized: true,
   },
   experimental: {
     forceSwcTransforms: true,
