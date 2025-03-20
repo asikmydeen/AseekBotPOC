@@ -2,9 +2,10 @@ service: aseekbot-api
 
 package:
   individually: true
+  excludeDevDependencies: false  # This ensures all dependencies are included
   patterns:
-    - '!node_modules/**'
-    - '!.serverless/**'
+    - '!**/.serverless/**'
+    - '!**/node_modules/**/.git'
 
 provider:
   name: aws
