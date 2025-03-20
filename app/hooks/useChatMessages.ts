@@ -3,8 +3,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
-import { processChatMessage } from '../api/advancedApi';
+import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis, checkRequestStatus } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
+import { useAsyncProcessing } from './useAsyncProcessing';
 
 interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
@@ -47,10 +48,75 @@ export default function useChatMessages({
   } | null>(null);
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
+  // New state for async processing
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [isAsyncProcessing, setIsAsyncProcessing] = useState(false);
+
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<string>('');
   const isUpdatingRef = useRef<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Set up the async processing hook for status monitoring
+  const {
+    result: asyncResult,
+    status: asyncStatus,
+    progress: asyncProgress,
+    error: asyncError,
+    refreshStatus
+  } = useAsyncProcessing(currentRequestId, {
+    pollingInterval: 2000,
+    onStatusChange: (status) => {
+      // Update progress based on async status
+      if (status.progress) {
+        setProgress(status.progress);
+      }
+
+      // When processing completes, add the bot message
+      if (status.status === 'COMPLETED' && status.result) {
+        setIsThinking(false);
+        setProgress(0);
+
+        // Clear request ID after processing
+        setCurrentRequestId(null);
+        setIsAsyncProcessing(false);
+
+        // Create bot message from response
+        const botMessage: MessageType = {
+          sender: 'bot',
+          text: status.result.message || 'Processing complete',
+          timestamp: status.result.timestamp || new Date().toISOString(),
+          suggestions: status.result.suggestions || [],
+          multimedia: status.result.multimedia,
+          report: status.result.report
+        };
+
+        // Add attachments if they exist
+        if (status.result.attachments) {
+          botMessage.attachments = status.result.attachments;
+        }
+
+        safeUpdateMessages(prev => [...prev, botMessage]);
+      }
+
+      // Handle errors
+      if (status.status === 'FAILED') {
+        setIsThinking(false);
+        setProgress(0);
+        setCurrentRequestId(null);
+        setIsAsyncProcessing(false);
+
+        const errorMessage: MessageType = {
+          sender: 'bot',
+          text: `**Error**: ${status.error?.message || 'An error occurred during processing.'}`,
+          timestamp: new Date().toISOString(),
+          isError: true
+        };
+
+        safeUpdateMessages(prev => [...prev, errorMessage]);
+      }
+    }
+  });
 
   const safeUpdateMessages = useCallback((updater: (prev: MessageType[]) => MessageType[]) => {
     isUpdatingRef.current = true;
@@ -97,6 +163,7 @@ export default function useChatMessages({
     };
   };
 
+  // Enhanced sendMessage that supports async processing
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
     if (!text.trim() && !isFileUpload) return;
@@ -127,64 +194,107 @@ export default function useChatMessages({
       attachments: userAttachments
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    safeUpdateMessages(prev => [...prev, userMessage]);
     setIsThinking(true);
     setProgress(0);
 
-    progressInterval.current = setInterval(() => {
-      setProgress(prev => {
-        const increment = Math.random() * 15;
-        const newProgress = prev + increment;
-        return newProgress >= 100 ? 99 : newProgress;
-      });
-    }, 300);
+    // Determine if we should use async processing
+    const isComplexRequest = text.length > 500 || isFileUpload;
+    const isDocumentAnalysis = isFileUpload && (
+      text.toLowerCase().includes('analyze') ||
+      text.toLowerCase().includes('document') ||
+      text.toLowerCase().includes('extract') ||
+      text.toLowerCase().includes('summarize')
+    );
 
     try {
       // Convert messages to ChatHistoryItem format
       const chatHistory: ChatHistoryItem[] = messages.map(convertToChatHistoryItem);
 
-      // Call the actual API
-      const response = await processChatMessage(text, chatHistory, attachments);
+      if (isComplexRequest) {
+        // Use async processing
+        let response;
 
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-        progressInterval.current = null;
-      }
-
-      setProgress(100);
-
-      setTimeout(() => {
-        setIsThinking(false);
-        setProgress(0);
-
-        // Check for ticket trigger in response
-        const shouldTriggerTicket = 'triggerTicket' in response && (response as { triggerTicket: boolean }).triggerTicket === true;
-
-        if (shouldTriggerTicket) {
-          const userLastMessage = messages.filter(msg => msg.sender === 'user').pop()?.text || '';
-          setTicketTriggerContext(userLastMessage);
+        if (isDocumentAnalysis && isFileUpload) {
+          // Start document analysis workflow
+          response = await startAsyncDocumentAnalysis(attachments!, text);
         } else {
-          setTicketTriggerContext(null);
+          // Start async chat processing
+          response = await startAsyncChatProcessing(text, chatHistory, attachments);
         }
 
-        // Create bot message from response
-        const botMessage: MessageType = {
-          sender: 'bot',
-          text: (response as any).message || (response as any).data?.message || 'No response received',
-          timestamp: (response as any).timestamp || new Date().toISOString(),
-          suggestions: (response as any).suggestions || (response as any).data?.suggestions || [],
-          multimedia: (response as any).multimedia || (response as any).data?.multimedia,
-          report: (response as any).report || (response as any).data?.report,
-          triggerTicket: shouldTriggerTicket
-        };
+        if (response.requestId) {
+          // Set up for async monitoring
+          setCurrentRequestId(response.requestId);
+          setIsAsyncProcessing(true);
 
-        // Add attachments if they exist in the response
-        if ((response as any).attachments || (response as any).data?.attachments) {
-          botMessage.attachments = (response as any).attachments || (response as any).data?.attachments;
+          // Initial progress setup
+          setProgress(10);
+
+          // Start the progress animation
+          progressInterval.current = setInterval(() => {
+            setProgress(prev => {
+              // Don't exceed 95% for async operations until completion
+              return prev < 95 ? prev + (Math.random() * 1) : 95;
+            });
+          }, 1000);
+        } else {
+          throw new Error('No request ID received for async processing');
+        }
+      } else {
+        // Use standard processing for simple requests
+        progressInterval.current = setInterval(() => {
+          setProgress(prev => {
+            const increment = Math.random() * 15;
+            const newProgress = prev + increment;
+            return newProgress >= 100 ? 99 : newProgress;
+          });
+        }, 300);
+
+        // Call the API
+        const response = await processChatMessage(text, chatHistory, attachments);
+
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
         }
 
-        safeUpdateMessages(prev => [...prev, botMessage]);
-      }, 500);    } catch (error) {
+        setProgress(100);
+
+        setTimeout(() => {
+          setIsThinking(false);
+          setProgress(0);
+
+          // Check for ticket trigger in response
+          const shouldTriggerTicket = 'triggerTicket' in response && (response as { triggerTicket: boolean }).triggerTicket === true;
+
+          if (shouldTriggerTicket) {
+            const userLastMessage = messages.filter(msg => msg.sender === 'user').pop()?.text || '';
+            setTicketTriggerContext(userLastMessage);
+          } else {
+            setTicketTriggerContext(null);
+          }
+
+          // Create bot message from response
+          const botMessage: MessageType = {
+            sender: 'bot',
+            text: (response as any).message || (response as any).data?.message || 'No response received',
+            timestamp: (response as any).timestamp || new Date().toISOString(),
+            suggestions: (response as any).suggestions || (response as any).data?.suggestions || [],
+            multimedia: (response as any).multimedia || (response as any).data?.multimedia,
+            report: (response as any).report || (response as any).data?.report,
+            triggerTicket: shouldTriggerTicket
+          };
+
+          // Add attachments if they exist in the response
+          if ((response as any).attachments || (response as any).data?.attachments) {
+            botMessage.attachments = (response as any).attachments || (response as any).data?.attachments;
+          }
+
+          safeUpdateMessages(prev => [...prev, botMessage]);
+        }, 500);
+      }
+    } catch (error) {
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
@@ -192,6 +302,8 @@ export default function useChatMessages({
 
       setIsThinking(false);
       setProgress(0);
+      setCurrentRequestId(null);
+      setIsAsyncProcessing(false);
 
       let errorTitle = 'Error';
       let errorMsg = 'Sorry, I encountered an error processing your request. Please try again.';
@@ -219,13 +331,26 @@ export default function useChatMessages({
         sender: 'bot',
         text: formattedErrorMsg,
         timestamp: new Date().toISOString(),
-        suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined
+        suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined,
+        isError: true
       };
 
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
   }, [messages, safeUpdateMessages]);
 
+  // Add cleanup for async processing
+  useEffect(() => {
+    // Cleanup when component unmounts or when async processing is done
+    return () => {
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+      }
+    };
+  }, []);
+
+  // Other handlers (handleReaction, handlePinMessage, etc.) remain unchanged
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
     safeUpdateMessages(prev =>
       prev.map((msg, i) => i === index ? { ...msg, reaction } : msg)
@@ -329,14 +454,6 @@ export default function useChatMessages({
     }
   }, [triggerMessage, sendMessage, onTriggerHandled]);
 
-  useEffect(() => {
-    return () => {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-      }
-    };
-  }, []);
-
   return {
     messages,
     setMessages,
@@ -354,6 +471,12 @@ export default function useChatMessages({
     setSearchQuery,
     exportChatAsPDF,
     ticketTriggerContext,
-    messagesEndRef
+    messagesEndRef,
+    // New properties for async processing
+    isAsyncProcessing,
+    currentRequestId,
+    asyncProgress,
+    asyncStatus,
+    refreshAsyncStatus: refreshStatus
   };
 }

@@ -82,6 +82,7 @@ export interface MessageType {
   id?: string;
   agentType?: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support';
   message?: string; // For backward compatibility
+  isError?: boolean;
 }
 
 // Helper type for sharing setState functions

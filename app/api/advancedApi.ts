@@ -1,4 +1,4 @@
-// Update app/api/advancedApi.ts
+// app/api/advancedApi.ts
 import {
   LAMBDA_ENDPOINTS,
   ChatHistoryItem,
@@ -7,17 +7,19 @@ import {
   handleClientError
 } from '../utils/lambdaApi';
 
-// Existing interfaces remain the same...
-
-// API functions using AWS Lambda endpoints:
-
+// Original API functions
 export async function processChatMessage(
   message: string,
   history: ChatHistoryItem[],
   attachments?: any[]
 ): Promise<ApiResponse> {
   try {
-    // Prepare request payload
+    // Check if we should use the new async API for better handling
+    if (message.length > 500 || (attachments && attachments.length > 0)) {
+      return await startAsyncChatProcessing(message, history, attachments);
+    }
+
+    // Original implementation for simpler requests
     const payload: any = {
       message: message,
       history: history,
@@ -26,7 +28,6 @@ export async function processChatMessage(
 
     // Add S3 file references if attachments are present
     if (attachments && attachments.length > 0) {
-      // Map file objects to the format expected by the API
       const s3Files = attachments.map(file => ({
         name: file.name,
         s3Url: file.url || file.fileUrl,
@@ -37,12 +38,9 @@ export async function processChatMessage(
       payload.s3Files = s3Files;
     }
 
-    // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.processChatMessage, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
@@ -58,14 +56,130 @@ export async function processChatMessage(
   }
 }
 
+// New async processing functions
+export async function startAsyncChatProcessing(
+  message: string,
+  history: ChatHistoryItem[] = [],
+  attachments?: any[]
+): Promise<ApiResponse> {
+  try {
+    const sessionId = `session-${Date.now()}`;
+
+    // Create the request payload
+    const payload: any = {
+      message,
+      sessionId,
+      history
+    };
+
+    // Add S3 file references if attachments are present
+    if (attachments && attachments.length > 0) {
+      const s3Files = attachments.map(file => ({
+        name: file.name,
+        s3Url: file.url || file.fileUrl,
+        mimeType: file.type || 'application/octet-stream',
+        useCase: "CHAT"
+      }));
+
+      payload.s3Files = s3Files;
+    }
+
+    const response = await fetch(LAMBDA_ENDPOINTS.startProcessing, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to start processing');
+    }
+
+    const result = await response.json();
+
+    // Add a flag to indicate this is an async request
+    return {
+      ...result,
+      isAsync: true
+    };
+  } catch (error) {
+    console.error('Error starting async chat processing:', error);
+    throw error;
+  }
+}
+
+export async function startAsyncDocumentAnalysis(
+  files: any[],
+  message: string = 'Please analyze these documents'
+): Promise<ApiResponse> {
+  try {
+    if (!files || !files.length) {
+      throw new Error('No files provided for analysis');
+    }
+
+    const sessionId = `session-${Date.now()}`;
+
+    // Create the request payload
+    const payload: any = {
+      message,
+      sessionId,
+      s3Files: files.map(file => ({
+        name: file.name,
+        s3Url: file.url || file.fileUrl,
+        mimeType: file.type || 'application/octet-stream',
+        useCase: "DOCUMENT_ANALYSIS"
+      })),
+      requestType: 'DOCUMENT_ANALYSIS'
+    };
+
+    const response = await fetch(LAMBDA_ENDPOINTS.startProcessing, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to start document analysis');
+    }
+
+    const result = await response.json();
+
+    // Add a flag to indicate this is an async request
+    return {
+      ...result,
+      isAsync: true,
+      isDocumentAnalysis: true
+    };
+  } catch (error) {
+    console.error('Error starting async document analysis:', error);
+    throw error;
+  }
+}
+
+export async function checkRequestStatus(requestId: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/status/${requestId}`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to check request status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error checking status for request ${requestId}:`, error);
+    throw error;
+  }
+}
+
+// Existing API functions with minimal changes
 export async function uploadFileApi(file: File, sessionId?: string): Promise<ApiResponse> {
   try {
-    // Validate file
     if (!file) {
       throw new Error('No file provided');
     }
 
-    // Create form data to send file and sessionId
     const formData = new FormData();
     formData.append('file', file);
 
@@ -73,7 +187,6 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
       formData.append('sessionId', sessionId);
     }
 
-    // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
       method: 'POST',
       body: formData,
@@ -92,17 +205,13 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
 
 export async function createTicketApi(ticketDetails: TicketDetails): Promise<ApiResponse> {
   try {
-    // Validate ticket details
     if (!ticketDetails || !ticketDetails.subject) {
       throw new Error('Invalid ticket details');
     }
 
-    // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.createTicket, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(ticketDetails),
     });
 
@@ -119,17 +228,13 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
 
 export async function quickLinkApi(action: string, parameter: string): Promise<ApiResponse> {
   try {
-    // Validate inputs
     if (!action) {
       throw new Error('No action specified');
     }
 
-    // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.quickLink, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, parameter }),
     });
 
@@ -151,7 +256,6 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
       throw new Error('Invalid file URL');
     }
 
-    // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -167,4 +271,4 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   } catch (error) {
     handleClientError(error, 'delete file');
   }
-}// AWS Lambda API integration for frontend components
+}

@@ -2,7 +2,7 @@ service: aseekbot-api
 
 package:
   individually: true
-  excludeDevDependencies: false  # This ensures all dependencies are included
+  excludeDevDependencies: false
   patterns:
     - '!**/.serverless/**'
     - '!**/node_modules/**/.git'
@@ -15,6 +15,10 @@ provider:
     AWS_S3_BUCKET_NAME: ${env:AWS_S3_BUCKET_NAME}
     DOCUMENT_ANALYSIS_STATE_MACHINE_ARN: ${env:DOCUMENT_ANALYSIS_STATE_MACHINE_ARN, 'arn:aws:states:us-east-1:361769603480:stateMachine:DocumentAnalysisWorkflow'}
     DOCUMENT_ANALYSIS_STATUS_TABLE: ${env:DOCUMENT_ANALYSIS_STATUS_TABLE, 'DocumentAnalysisStatus'}
+    REQUEST_STATUS_TABLE: 'RequestStatus'
+    SQS_QUEUE_URL: !Ref ProcessingQueue
+    BEDROCK_AGENT_ID: '7FDALECWCL'
+    BEDROCK_AGENT_ALIAS_ID: '11OBDAVIQQ'
   apiGateway:
     binaryMediaTypes:
       - 'multipart/form-data'
@@ -42,7 +46,9 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:Query
-      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/DocumentAnalysisStatus"
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/DocumentAnalysisStatus"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/RequestStatus"
     - Effect: Allow
       Action:
         - textract:DetectDocumentText
@@ -51,6 +57,13 @@ provider:
         - textract:StartDocumentAnalysis
         - textract:GetDocumentAnalysis
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+      Resource: !GetAtt ProcessingQueue.Arn
 
 layers:
   awsSdkLayer:
@@ -61,6 +74,7 @@ layers:
       - nodejs18.x
 
 functions:
+  # Original functions
   processChatMessage:
     handler: lambdas/processChatMessage.handler
     layers:
@@ -69,7 +83,7 @@ functions:
       - http:
           path: processChatMessage
           method: post
-          cors: true # Use simplified CORS config
+          cors: true
     memorySize: 256
     timeout: 29
   uploadFile:
@@ -126,6 +140,52 @@ functions:
           path: document-analysis/{proxy+}
           method: any
           cors: true
+
+  # New async processing functions
+  startProcessing:
+    handler: lambdas/startProcessing.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - http:
+          path: startProcessing
+          method: post
+          cors: true
+    memorySize: 256
+    timeout: 29
+    environment:
+      SQS_QUEUE_URL: !Ref ProcessingQueue
+      REQUEST_STATUS_TABLE: !Ref RequestStatusTable
+
+  workerProcessor:
+    handler: lambdas/workerProcessor.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - sqs:
+          arn: !GetAtt ProcessingQueue.Arn
+          batchSize: 1
+    memorySize: 1024
+    timeout: 900 # 15 minutes, maximum Lambda timeout
+    environment:
+      REQUEST_STATUS_TABLE: !Ref RequestStatusTable
+      DOCUMENT_ANALYSIS_STATE_MACHINE_ARN: ${env:DOCUMENT_ANALYSIS_STATE_MACHINE_ARN, 'arn:aws:states:us-east-1:361769603480:stateMachine:DocumentAnalysisWorkflow'}
+
+  checkStatus:
+    handler: lambdas/checkStatus.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - http:
+          path: checkStatus/{proxy+}
+          method: any
+          cors: true
+    memorySize: 256
+    timeout: 29
+    environment:
+      REQUEST_STATUS_TABLE: !Ref RequestStatusTable
+
+  # Existing document analysis functions
   initProcess:
     handler: functions/document-analysis/init-process.handler
     name: aseekbot-api-dev-init-process
@@ -187,6 +247,50 @@ functions:
     name: aseekbot-api-dev-status-updater
     layers:
       - {Ref: AwsSdkLayerLambdaLayer}
+
+resources:
+  Resources:
+    # SQS Queue for processing requests
+    ProcessingQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: aseekbot-processing-queue
+        VisibilityTimeout: 900  # Match with Lambda timeout (15 minutes)
+        MessageRetentionPeriod: 1209600  # 14 days (maximum)
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt ProcessingDeadLetterQueue.Arn
+          maxReceiveCount: 3  # Retry failed messages 3 times
+
+    # Dead Letter Queue for failed processing
+    ProcessingDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: aseekbot-processing-dlq
+        MessageRetentionPeriod: 1209600  # 14 days
+
+    # DynamoDB Table for request status tracking
+    RequestStatusTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: RequestStatus
+        AttributeDefinitions:
+          - AttributeName: requestId
+            AttributeType: S
+          - AttributeName: sessionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: requestId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: SessionIdIndex
+            KeySchema:
+              - AttributeName: sessionId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
 
 custom:
   cors:
