@@ -14,6 +14,11 @@ provider:
     AWS_S3_BUCKET_NAME: ${env:AWS_S3_BUCKET_NAME}
     DOCUMENT_ANALYSIS_STATE_MACHINE_ARN: ${env:DOCUMENT_ANALYSIS_STATE_MACHINE_ARN, 'arn:aws:states:us-east-1:361769603480:stateMachine:DocumentAnalysisWorkflow'}
     DOCUMENT_ANALYSIS_STATUS_TABLE: ${env:DOCUMENT_ANALYSIS_STATUS_TABLE, 'DocumentAnalysisStatus'}
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+      - 'application/json'
+      - '*/*'
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -63,16 +68,9 @@ functions:
       - http:
           path: processChatMessage
           method: post
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Requested-With
-            allowCredentials: false
+          cors: true # Use simplified CORS config
+    memorySize: 256
+    timeout: 29
   uploadFile:
     handler: lambdas/uploadFile.handler
     layers:
