@@ -108,9 +108,9 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.fileType",
-                  "StringEquals": "pdf",
-                  "Next": "ExtractPdfText"
+                  "Variable": "$.validationResult.isTextractSupported",
+                  "BooleanEquals": true,
+                  "Next": "ExtractWithTextract"
                 },
                 {
                   "Variable": "$.fileType",
@@ -130,15 +130,16 @@ Resources:
               ],
               "Default": "HandleUnsupportedFileType"
             },
-            "ExtractPdfText": {
+            "ExtractWithTextract": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Parameters": {
-                "FunctionName": "arn:aws:lambda:us-east-1:361769603480:function:aseekbot-api-dev-textract-pdf",
+                "FunctionName": "${TextractHandlerLambdaArn}",
                 "Payload": {
                   "s3Bucket.$": "$.s3Bucket",
                   "s3Key.$": "$.s3Key",
-                  "documentId.$": "$.documentId"
+                  "documentId.$": "$.documentId",
+                  "fileType.$": "$.fileType"
                 }
               },
               "TimeoutSeconds": 300,

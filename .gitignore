@@ -63,3 +63,4 @@ amplifytools.xcconfig
 #amplify-do-not-edit-end
 
 /aseekbot-lambda-api/.serverless/
+aseekbot-lambda-api/step-functions-deployment.yaml
