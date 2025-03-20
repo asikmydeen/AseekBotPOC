@@ -1,4 +1,4 @@
-// app/components/chat/ChatInterface.tsx
+// app/components/chat/ChatInterface.tsx (fixed)
 "use client";
 import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -53,8 +53,8 @@ function ChatInterfaceComponent({
     initialMessages = []
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     // State for tracking user input when files are uploaded
     const [pendingInput, setPendingInput] = useState<string>('');
@@ -76,7 +76,13 @@ function ChatInterfaceComponent({
         setSelectedMultimedia,
         exportChatAsPDF,
         ticketTriggerContext,
-        messagesEndRef: hookMessagesEndRef
+        messagesEndRef: hookMessagesEndRef,
+        // New async processing properties
+        isAsyncProcessing,
+        currentRequestId,
+        asyncProgress,
+        asyncStatus,
+        refreshAsyncStatus
     } = useChatMessages({
         triggerMessage,
         onTriggerHandled,
@@ -148,13 +154,20 @@ function ChatInterfaceComponent({
         }
     }, [messages, isThinking]);
 
+    const {
+        showFeedbackForm,
+        feedback,
+        setFeedback,
+        submitFeedback,
+        closeFeedbackForm,
+        openFeedbackForm
+    } = useFeedback();
+
+    // Use the custom hook for agent styling
+    const agentStyling = useAgentStyling(activeAgent, isDarkMode);
+
     /**
      * Clears all document analysis related state
-     * This includes:
-     * - Uploaded files
-     * - File dropzone visibility
-     * - Document analysis prompt
-     * - Pending user input
      */
     const clearDocumentAnalysisState = useCallback(() => {
         // Clear any uploaded files
@@ -176,10 +189,6 @@ function ChatInterfaceComponent({
 
     /**
      * Monitors messages for ticket creation triggers
-     * When a bot message contains the triggerTicket flag:
-     * 1. Opens the ticket form
-     * 2. Pre-populates ticket details with context
-     * 3. Removes the flag to prevent reopening
      */
     useEffect(() => {
         if (messages.length > 0) {
@@ -218,9 +227,6 @@ function ChatInterfaceComponent({
 
     /**
      * Manages document analysis prompt visibility and file dropzone state
-     * - Shows file dropzone when document analysis prompt is active
-     * - Clears existing files when document analysis prompt is shown
-     * - Hides dropzone when prompt is cleared and no files are present
      */
     useEffect(() => {
         if (showDocumentAnalysisPrompt) {
@@ -245,8 +251,6 @@ function ChatInterfaceComponent({
 
     /**
      * Automatically hides file dropzone after message processing completes
-     * - Checks if message processing is complete and no files are present
-     * - Uses a small delay for smooth transition
      */
     useEffect(() => {
         // If we're not thinking (processing a message) and there are no files, hide the dropzone
@@ -260,24 +264,8 @@ function ChatInterfaceComponent({
         }
     }, [isThinking, uploadedFiles.length]);
 
-    const {
-        showFeedbackForm,
-        feedback,
-        setFeedback,
-        submitFeedback,
-        closeFeedbackForm,
-        openFeedbackForm
-    } = useFeedback();
-
-    // Use the custom hook for agent styling
-    const agentStyling = useAgentStyling(activeAgent, isDarkMode);
-
     /**
      * Custom suggestion handler with ticket creation capability
-     * - Opens ticket form when suggestion contains "ticket"
-     * - Otherwise delegates to the standard suggestion handler
-     *
-     * @param suggestion - The suggestion text clicked by the user
      */
     const handleCustomSuggestionClick = (suggestion: string) => {
         // Check if the suggestion text indicates ticket creation
@@ -292,11 +280,6 @@ function ChatInterfaceComponent({
 
     /**
      * Handles user input submission
-     * - Sends message with files if files are uploaded
-     * - Sends normal message otherwise
-     * - Cleans up UI state after sending
-     *
-     * @param input - The text input from the user
      */
     const handleInputSubmit = (input: string) => {
         if (uploadedFiles.length > 0) {
@@ -340,6 +323,13 @@ function ChatInterfaceComponent({
         setPendingInput(text);
     };
 
+    // Function to manually refresh async status
+    const handleRefreshStatus = useCallback(() => {
+        if (currentRequestId && isAsyncProcessing) {
+            refreshAsyncStatus();
+        }
+    }, [currentRequestId, isAsyncProcessing, refreshAsyncStatus]);
+
     return (
         <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
             <div className="flex-1 flex flex-col w-full">
@@ -363,6 +353,11 @@ function ChatInterfaceComponent({
                         handleReaction={handleReaction}
                         handlePinMessage={handlePinMessage}
                         messagesEndRef={messagesEndRef}
+                        // New async props
+                        isAsyncProcessing={isAsyncProcessing}
+                        asyncProgress={asyncProgress}
+                        asyncStatus={asyncStatus}
+                        onRefreshStatus={handleRefreshStatus}
                     />
                 </div>
 
@@ -377,7 +372,7 @@ function ChatInterfaceComponent({
                     ticketDetails={ticketDetails}
                     ticketStep={ticketStep}
                     setTicketStep={setTicketStep}
-                    setTicketDetails={setTicketDetails}
+                    setTicketDetails={setTicketDetails as React.Dispatch<React.SetStateAction<TicketDetails>>}
                     createTicket={createTicket}
                     closeTicketForm={closeTicketForm}
                     showFeedbackForm={showFeedbackForm}
@@ -401,6 +396,9 @@ function ChatInterfaceComponent({
                     inputRef={inputRef}
                     handleInputChange={handleInputChange}
                     pendingInput={pendingInput}
+                    // New async props
+                    isAsyncProcessing={isAsyncProcessing}
+                    asyncProgress={asyncProgress}
                 />
             </div>
 

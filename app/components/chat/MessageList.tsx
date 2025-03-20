@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import Message from '../Message';
 import { MessageType, MultimediaData } from '../../types/shared';
 
-const TypingIndicator = ({ isDarkMode }: { isDarkMode: boolean }) => {
+const TypingIndicator = ({ isDarkMode, isAsync = false }: { isDarkMode: boolean, isAsync?: boolean }) => {
   return (
     <div className={`p-3 rounded-lg inline-flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-      <div className="font-bold text-sm mr-2">AseekBot</div>
+      <div className="font-bold text-sm mr-2">AseekBot {isAsync ? '(Processing)' : ''}</div>
       <div className="flex space-x-1">
         <motion.div
           className={`w-1.5 h-1.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
@@ -42,6 +42,30 @@ const ProgressBar = ({ progress, isDarkMode }: { progress: number; isDarkMode: b
   );
 };
 
+const AsyncStatusIndicator = ({ status, progress, isDarkMode, onRefresh }: {
+  status: string,
+  progress: number,
+  isDarkMode: boolean,
+  onRefresh: () => void
+}) => {
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center">
+        <span className={`text-xs mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          Status: <span className="font-bold">{status}</span>
+        </span>
+        <button
+          onClick={onRefresh}
+          className={`text-xs px-2 py-1 rounded-md ml-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}
+        >
+          Refresh
+        </button>
+      </div>
+      <ProgressBar progress={progress} isDarkMode={isDarkMode} />
+    </div>
+  );
+};
+
 interface MessageListProps {
   messages: MessageType[];
   isThinking: boolean;
@@ -51,6 +75,11 @@ interface MessageListProps {
   handleReaction: (index: number, reaction: 'thumbs-up' | 'thumbs-down') => void;
   handlePinMessage: (index: number) => void;
   messagesEndRef?: React.RefObject<HTMLDivElement | null> | React.MutableRefObject<HTMLDivElement | null>;
+  // New async props
+  isAsyncProcessing?: boolean;
+  asyncProgress?: number;
+  asyncStatus?: string;
+  onRefreshStatus?: () => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -61,7 +90,12 @@ const MessageList: React.FC<MessageListProps> = ({
   openMultimedia,
   handleReaction,
   handlePinMessage,
-  messagesEndRef
+  messagesEndRef,
+  // New async props
+  isAsyncProcessing = false,
+  asyncProgress = 0,
+  asyncStatus = '',
+  onRefreshStatus = () => { }
 }) => {
   // Scroll to bottom when messages change or when isThinking changes
   useEffect(() => {
@@ -101,8 +135,17 @@ const MessageList: React.FC<MessageListProps> = ({
               <span className="text-xs font-bold">AB</span>
             </div>
             <div className="flex flex-col">
-              <TypingIndicator isDarkMode={isDarkMode} />
-              {progress > 0 && <ProgressBar progress={progress} isDarkMode={isDarkMode} />}
+              <TypingIndicator isDarkMode={isDarkMode} isAsync={isAsyncProcessing} />
+              {isAsyncProcessing && asyncStatus ? (
+                <AsyncStatusIndicator
+                  status={asyncStatus}
+                  progress={asyncProgress || progress}
+                  isDarkMode={isDarkMode}
+                  onRefresh={onRefreshStatus}
+                />
+              ) : (
+                progress > 0 && <ProgressBar progress={progress} isDarkMode={isDarkMode} />
+              )}
             </div>
           </div>
         </div>

@@ -1,15 +1,15 @@
 "use client";
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TicketDetails, TicketStep } from '../../types/index';
+import { TicketDetails, TicketStep } from '../../types/shared';
 
 interface TicketFormProps {
   isDarkMode: boolean;
-  ticketDetails: TicketDetails; // Match the useTicketSystem type
-  ticketStep: TicketStep; // Should be enum or string, not number
+  ticketDetails: TicketDetails;
+  ticketStep: TicketStep;
   setTicketStep: Dispatch<SetStateAction<TicketStep>>;
   setTicketDetails: Dispatch<SetStateAction<TicketDetails>>;
-  createTicket: () => void;
+  createTicket: () => Promise<any>;
   closeTicketForm: () => void;
 }
 
@@ -31,11 +31,11 @@ const TicketForm: React.FC<TicketFormProps> = ({
   };
 
   const handleNextStep = () => {
-    setTicketStep(ticketStep + 1);
+    setTicketStep((prev) => (typeof prev === 'number' ? (prev + 1) as TicketStep : prev));
   };
 
   const handlePreviousStep = () => {
-    setTicketStep(ticketStep - 1);
+    setTicketStep((prev) => (typeof prev === 'number' ? (prev - 1) as TicketStep : prev));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,9 +55,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className={`mb-6 p-4 rounded-lg shadow-lg ${
-        isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-      }`}
+      className={`mb-6 p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+        }`}
     >
       <h3 className="text-lg font-semibold mb-4">Create A Ticket</h3>
       <form onSubmit={handleSubmit}>
@@ -79,11 +78,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   id="ticketTitle"
                   value={String(ticketDetails.title || '')}
                   onChange={handleTitleChange}
-                  className={`w-full p-2 rounded-md ${
-                    isDarkMode
+                  className={`w-full p-2 rounded-md ${isDarkMode
                       ? 'bg-gray-700 text-white border-gray-600'
                       : 'bg-gray-50 text-gray-900 border-gray-300'
-                  } border focus:ring-blue-500 focus:border-blue-500`}
+                    } border focus:ring-blue-500 focus:border-blue-500`}
                   placeholder="Enter a title for your ticket"
                   required
                 />
@@ -106,11 +104,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   value={ticketDetails.description}
                   onChange={handleDescriptionChange}
                   rows={4}
-                  className={`w-full p-2 rounded-md ${
-                    isDarkMode
+                  className={`w-full p-2 rounded-md ${isDarkMode
                       ? 'bg-gray-700 text-white border-gray-600'
                       : 'bg-gray-50 text-gray-900 border-gray-300'
-                  } border focus:ring-blue-500 focus:border-blue-500`}
+                    } border focus:ring-blue-500 focus:border-blue-500`}
                   placeholder="Describe your request in detail"
                   required
                 />
@@ -124,11 +121,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
             <button
               type="button"
               onClick={closeTicketForm}
-              className={`px-4 py-2 rounded-md mr-2 ${
-                isDarkMode
-                  ? 'bg-gray-700 hover:bg-gray-600'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-md mr-2 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
             >
               Cancel
             </button>
@@ -136,11 +130,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
               <button
                 type="button"
                 onClick={handlePreviousStep}
-                className={`px-4 py-2 rounded-md ${
-                  isDarkMode
-                    ? 'bg-gray-700 hover:bg-gray-600'
-                    : 'bg-gray-200 hover:bg-gray-300'
-                }`}
+                className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                  }`}
               >
                 Back
               </button>
@@ -152,13 +143,12 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 type="button"
                 onClick={handleNextStep}
                 disabled={!String(ticketDetails.title || '').trim()}
-                className={`px-4 py-2 rounded-md ${
-                  !String(ticketDetails.title || '').trim()
+                className={`px-4 py-2 rounded-md ${!String(ticketDetails.title || '').trim()
                     ? 'bg-gray-500 cursor-not-allowed'
                     : isDarkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                } text-white`}
+                      ? 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  } text-white`}
               >
                 Next
               </button>
@@ -166,13 +156,12 @@ const TicketForm: React.FC<TicketFormProps> = ({
               <button
                 type="submit"
                 disabled={!(ticketDetails.description && ticketDetails.description.trim())}
-                className={`px-4 py-2 rounded-md ${
-                  !(ticketDetails.description && ticketDetails.description.trim())
+                className={`px-4 py-2 rounded-md ${!(ticketDetails.description && ticketDetails.description.trim())
                     ? 'bg-gray-500 cursor-not-allowed'
                     : isDarkMode
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-green-500 hover:bg-green-600'
-                } text-white`}
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-green-500 hover:bg-green-600'
+                  } text-white`}
               >
                 Submit Ticket
               </button>

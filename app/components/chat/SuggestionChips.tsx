@@ -4,20 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface SuggestionChipsProps {
   suggestions?: string[];
-  onSuggestionClick: (suggestion: string) => void;
+  onChipClick: (suggestion: string) => void;
+  darkMode: boolean;
 }
 
-const SuggestionChips: React.FC<SuggestionChipsProps> = ({
-  suggestions,
-  onSuggestionClick
-}) => {
+const SuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, onChipClick, darkMode }) => {
   const [selectedChip, setSelectedChip] = useState<string | null>(null);
 
   if (!suggestions || suggestions.length === 0) return null;
 
   const handleChipClick = (suggestion: string) => {
     setSelectedChip(suggestion);
-    onSuggestionClick(suggestion);
+    onChipClick(suggestion);
   };
 
   return (
@@ -31,13 +29,13 @@ const SuggestionChips: React.FC<SuggestionChipsProps> = ({
         {suggestions.map((suggestion, index) => (
           <motion.button
             key={`${suggestion}-${index}`}
-            className={`px-5 py-2.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800
-                      text-blue-800 dark:text-blue-100 rounded-full text-sm font-medium
-                      transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md
-                      border-2 ${selectedChip === suggestion
-                        ? 'border-blue-500 dark:border-blue-400 bg-blue-200 dark:bg-blue-800'
-                        : 'border-transparent'}`}
             onClick={() => handleChipClick(suggestion)}
+            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md border-2 ${selectedChip === suggestion
+                ? darkMode
+                  ? 'border-blue-400 bg-blue-800'
+                  : 'border-blue-500 bg-blue-200'
+                : 'border-transparent'
+              } ${darkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100' : 'bg-blue-100 hover:bg-blue-200 text-blue-800'}`}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2, delay: index * 0.05 }}
