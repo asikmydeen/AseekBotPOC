@@ -1,36 +1,10 @@
 // functions/document-analysis/status-updater.js
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 // Initialize clients
 const dynamoClient = new DynamoDBClient();
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-const s3Client = new S3Client();
-
-async function getDataFromS3(s3Bucket, s3Key) {
-  try {
-    const command = new GetObjectCommand({
-      Bucket: s3Bucket,
-      Key: s3Key
-    });
-
-    const response = await s3Client.send(command);
-
-    // Convert readable stream to text
-    const chunks = [];
-    for await (const chunk of response.Body) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
-    const text = buffer.toString('utf-8');
-
-    return JSON.parse(text);
-  } catch (error) {
-    console.error(`Error getting data from S3: ${error.message}`);
-    throw error;
-  }
-}
 
 exports.handler = async (event) => {
   console.log('Updating document status:', JSON.stringify(event, null, 2));
@@ -50,7 +24,7 @@ exports.handler = async (event) => {
       documentId,
       userId,
       status,
-      message,
+      message: message || `Status updated to ${status}`,
       timestamp: new Date().toISOString()
     };
 
@@ -62,30 +36,33 @@ exports.handler = async (event) => {
     if (event.s3Key) item.s3Key = event.s3Key;
     if (event.fileType) item.fileType = event.fileType;
 
-    // If we have an S3 reference to excelParsingResults that were stored separately,
-    // reintegrate that data here
-    if (event.excelParsingResults && event.excelParsingResults.s3Reference) {
-      try {
-        console.log('Found S3 reference to Excel parsing results, retrieving data...');
-        const ref = event.excelParsingResults.s3Reference;
+    // Store S3 reference information in a compact format
+    if (event.excelParsingResults) {
+      const refs = [];
 
-        // Store S3 reference information in DynamoDB for future retrieval
-        item.excelParsingResultsLocation = {
-          s3Bucket: ref.s3Bucket,
-          s3Key: ref.s3Key,
-          timestamp: ref.timestamp
-        };
+      if (event.excelParsingResults.fullDataRef) {
+        refs.push({
+          type: 'fullData',
+          s3Key: event.excelParsingResults.fullDataRef.s3Key
+        });
+      }
 
-        // Do not try to fetch the data here since we don't need it for the status update
-        // Just add a note to the status
+      if (event.excelParsingResults.procurementDataRef) {
+        refs.push({
+          type: 'procurementData',
+          s3Key: event.excelParsingResults.procurementDataRef.s3Key
+        });
+      }
+
+      if (refs.length > 0) {
+        item.dataReferences = refs;
+
+        // Add a note to the status message
         if (item.message) {
-          item.message += `. Excel data stored in S3 (${ref.s3Key})`;
+          item.message += `. Data stored in S3 (${refs.length} references)`;
         } else {
-          item.message = `Excel data stored in S3 (${ref.s3Key})`;
+          item.message = `Data stored in S3 (${refs.length} references)`;
         }
-      } catch (s3Error) {
-        console.error('Error processing S3 reference:', s3Error);
-        // Continue without the S3 data if there's an error
       }
     }
 
@@ -97,11 +74,22 @@ exports.handler = async (event) => {
 
     console.log(`Status updated for document ${documentId}: ${status}`);
 
-    // IMPORTANT: Return the complete input with all the original fields
-    // This ensures the next state has access to all required fields
-    return event;
+    // Filter out large properties to avoid Step Functions payload limit
+    // This creates a copy of the event without circular references
+    const filteredEvent = JSON.parse(JSON.stringify(event));
+
+    // Return a compact version of the event to avoid payload size issues
+    return filteredEvent;
   } catch (error) {
     console.error('Error updating status:', error);
-    throw error;
+
+    // Return a simplified error response
+    return {
+      ...event,
+      statusUpdateError: {
+        message: error.message,
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 };

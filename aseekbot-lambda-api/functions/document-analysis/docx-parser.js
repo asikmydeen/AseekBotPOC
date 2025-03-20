@@ -1,4 +1,5 @@
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+// functions/document-analysis/docx-parser.js
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const mammoth = require('mammoth');
 
 // Initialize client
@@ -6,9 +7,6 @@ const s3Client = new S3Client();
 
 /**
  * Downloads a DOCX file from S3
- * @param {string} bucket - S3 bucket name
- * @param {string} key - S3 object key
- * @returns {Promise<Buffer>} - File buffer
  */
 async function downloadDocxFile(bucket, key) {
   console.log(`Downloading DOCX file from s3://${bucket}/${key}`);
@@ -30,10 +28,34 @@ async function downloadDocxFile(bucket, key) {
 }
 
 /**
+ * Store DOCX content in S3 if it exceeds size threshold
+ */
+async function storeContentInS3(s3Bucket, documentId, content, contentType) {
+  try {
+    const s3Key = `document-analysis/${documentId}/${contentType}-content.json`;
+
+    await s3Client.send(new PutObjectCommand({
+      Bucket: s3Bucket,
+      Key: s3Key,
+      Body: JSON.stringify(content),
+      ContentType: 'application/json'
+    }));
+
+    console.log(`Stored ${contentType} in S3: s3://${s3Bucket}/${s3Key}`);
+
+    return {
+      s3Bucket,
+      s3Key,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error(`Error storing content in S3: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
  * Extracts text from a DOCX file buffer with options based on use case
- * @param {Buffer} fileBuffer - DOCX file buffer
- * @param {string} useCase - Use case for text extraction (defaults to 'general')
- * @returns {Promise<{text: string, metadata: Object}>} - Extracted text and metadata
  */
 async function extractTextFromDocx(fileBuffer, useCase = 'general') {
   console.log(`Extracting text from DOCX file for use case: ${useCase}`);
@@ -60,6 +82,7 @@ async function extractTextFromDocx(fileBuffer, useCase = 'general') {
 
     return {
       text: textResult.value,
+      html: htmlResult.value,
       metadata: {
         images: images.length,
         warnings: [...textResult.messages, ...htmlResult.messages],
@@ -86,29 +109,64 @@ exports.handler = async (event) => {
     const extractionResult = await extractTextFromDocx(fileBuffer, useCase);
     console.log(`Successfully extracted text (${extractionResult.text.length} chars) with ${extractionResult.metadata.images} images`);
 
+    // Check if text content is too large for Step Functions payload
+    // Threshold set conservatively at 100KB to allow room for other fields
+    const isTextTooLarge = extractionResult.text.length > 100000;
+    const isHtmlTooLarge = extractionResult.html.length > 50000;
+
+    let textRef = null;
+    let htmlRef = null;
+
+    // Store large text content in S3 if needed
+    if (isTextTooLarge) {
+      console.log(`Text content too large (${extractionResult.text.length} chars), storing in S3`);
+      textRef = await storeContentInS3(s3Bucket, documentId, extractionResult.text, 'docx-text');
+    }
+
+    // Store HTML in S3 if needed
+    if (isHtmlTooLarge) {
+      console.log(`HTML content too large (${extractionResult.html.length} chars), storing in S3`);
+      htmlRef = await storeContentInS3(s3Bucket, documentId, extractionResult.html, 'docx-html');
+    }
+
+    // Prepare text content for the response
+    // If text is too large, provide a preview and reference to S3
+    const textForResponse = isTextTooLarge
+      ? extractionResult.text.substring(0, 50000) + '... (truncated, full content in S3)'
+      : extractionResult.text;
+
     return {
       ...event,
-      extractedText: extractionResult.text,
+      extractedText: textForResponse,
       extractionMetadata: {
         ...extractionResult.metadata,
         timestamp: new Date().toISOString(),
         fileName: s3Key.split('/').pop(),
-        extractionMethod: 'mammoth'
+        extractionMethod: 'mammoth',
+        textContentStored: isTextTooLarge,
+        htmlContentStored: isHtmlTooLarge
       },
-      textExtractionMethod: 'docx-parser'
+      textExtractionMethod: 'docx-parser',
+      docxParsingResults: {
+        textRef,
+        htmlRef,
+        textPreview: extractionResult.text.substring(0, 500) +
+          (extractionResult.text.length > 500 ? '... (truncated)' : '')
+      }
     };
   } catch (error) {
     console.error('Error extracting DOCX text:', error);
 
-    // Return a more useful error response to allow processing to continue
+    // Return a more useful error response with limited size
     return {
       ...event,
       extractedText: `Error processing document: ${error.message}. The analysis will proceed with limited information.`,
       error: {
         message: error.message,
-        stack: error.stack
+        name: error.name
+        // Exclude stack trace to reduce payload size
       },
       textExtractionMethod: 'docx-parser-error'
     };
   }
-};
+}

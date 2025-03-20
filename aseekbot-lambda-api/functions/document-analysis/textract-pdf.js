@@ -1,5 +1,5 @@
 // functions/document-analysis/textract-pdf.js
-const { S3Client, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, GetObjectCommand, HeadObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
 const {
   TextractClient,
   DetectDocumentTextCommand,
@@ -23,29 +23,46 @@ const extractTextFromBlocks = (blocks) => {
   for (const block of blocks) {
     if (block.BlockType === 'LINE') {
       text += block.Text + '\n';
-    } else if (block.BlockType === 'PAGE' || block.BlockType === 'WORD') {
-      // Skip these types as we're focused on LINE blocks
-    } else if (block.BlockType === 'KEY_VALUE_SET' && block.EntityTypes?.includes('KEY')) {
-      if (block.Relationships) {
-        for (const relationship of block.Relationships) {
-          if (relationship.Type === 'VALUE') {
-            // This is a key-value pair, could extract in a structured way
-          }
-        }
-      }
     }
-    // Could add more sophisticated handling for tables, forms, etc.
   }
   return text;
 };
 
+/**
+ * Store large content in S3
+ */
+async function storeContentInS3(s3Bucket, documentId, content, contentType) {
+  try {
+    const s3Key = `document-analysis/${documentId}/${contentType}-content.json`;
+
+    await s3Client.send(new PutObjectCommand({
+      Bucket: s3Bucket,
+      Key: s3Key,
+      Body: JSON.stringify(content),
+      ContentType: 'application/json'
+    }));
+
+    console.log(`Stored ${contentType} in S3: s3://${s3Bucket}/${s3Key}`);
+
+    return {
+      s3Bucket,
+      s3Key,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error(`Error storing content in S3: ${error.message}`);
+    throw error;
+  }
+}
+
 exports.handler = async (event) => {
-  console.log('Extracting PDF text using Textract (advanced)', JSON.stringify(event, null, 2));
+  console.log('Extracting PDF text using Textract', JSON.stringify(event, null, 2));
 
   const { s3Bucket, s3Key, documentId } = event;
   let fileSize = 0;
   let extractedText = '';
   let extractionMethods = [];
+  let blocksData = []; // Store blocks for potential S3 storage
 
   try {
     // Get the S3 object metadata
@@ -92,6 +109,7 @@ exports.handler = async (event) => {
         // Extract text from the response
         if (detectResponse.Blocks && detectResponse.Blocks.length > 0) {
           console.log(`Detected ${detectResponse.Blocks.length} blocks with DetectDocumentText`);
+          blocksData = blocksData.concat(detectResponse.Blocks);
           const detectText = extractTextFromBlocks(detectResponse.Blocks);
           if (detectText.trim()) {
             extractedText += detectText;
@@ -99,19 +117,20 @@ exports.handler = async (event) => {
           }
         }
 
-        // APPROACH 2: Use AnalyzeDocument API with FORMS/TABLES features for more advanced extraction
+        // APPROACH 2: Use AnalyzeDocument API with FORMS/TABLES features
         const analyzeResponse = await textractClient.send(
           new AnalyzeDocumentCommand({
             Document: {
               Bytes: buffer
             },
-            FeatureTypes: ['FORMS', 'TABLES'] // Extract forms and tables
+            FeatureTypes: ['FORMS', 'TABLES']
           })
         );
 
         // Extract text from the analysis response
         if (analyzeResponse.Blocks && analyzeResponse.Blocks.length > 0) {
           console.log(`Analyzed ${analyzeResponse.Blocks.length} blocks with AnalyzeDocument`);
+          blocksData = blocksData.concat(analyzeResponse.Blocks);
           const analyzeText = extractTextFromBlocks(analyzeResponse.Blocks);
           if (analyzeText.trim() && (!extractedText || analyzeText.length > extractedText.length)) {
             extractedText = analyzeText; // Use the better result
@@ -139,8 +158,8 @@ exports.handler = async (event) => {
                 Name: s3Key
               }
             },
-            FeatureTypes: ['FORMS', 'TABLES'], // Extract forms and tables
-            JobTag: `analyze-${documentId}` // For better tracking
+            FeatureTypes: ['FORMS', 'TABLES'],
+            JobTag: `analyze-${documentId}`
           })
         );
 
@@ -151,11 +170,10 @@ exports.handler = async (event) => {
         let analysisResult;
         let analysisStatus = 'IN_PROGRESS';
         let retries = 0;
-        const maxRetries = 30; // Increased for longer documents
+        const maxRetries = 30;
 
         while (analysisStatus === 'IN_PROGRESS' && retries < maxRetries) {
-          // Wait with exponential backoff
-          const waitTime = Math.min(1000 * Math.pow(1.5, retries), 15000); // Wait between 1-15s
+          const waitTime = Math.min(1000 * Math.pow(1.5, retries), 15000);
           await new Promise(resolve => setTimeout(resolve, waitTime));
 
           // Get the job status
@@ -173,7 +191,7 @@ exports.handler = async (event) => {
             break;
           } else if (analysisStatus === 'FAILED') {
             console.log(`Analysis job failed: ${getResponse.StatusMessage || 'Unknown error'}`);
-            break; // Don't throw error, try text detection instead
+            break;
           }
 
           retries++;
@@ -182,12 +200,15 @@ exports.handler = async (event) => {
         // Process analysis results if successful
         if (analysisResult && analysisResult.Blocks) {
           console.log(`Processing ${analysisResult.Blocks.length} blocks from async analysis`);
+          blocksData = blocksData.concat(analysisResult.Blocks);
           let analysisText = extractTextFromBlocks(analysisResult.Blocks);
 
           // Handle pagination for analysis results
           let nextToken = analysisResult.NextToken;
+          let pageCount = 1;
+
           while (nextToken) {
-            console.log('Fetching additional analysis pages');
+            console.log(`Fetching additional analysis page ${++pageCount}`);
             const pageResponse = await textractClient.send(
               new GetDocumentAnalysisCommand({
                 JobId: analysisJobId,
@@ -196,6 +217,7 @@ exports.handler = async (event) => {
             );
 
             if (pageResponse.Blocks) {
+              blocksData = blocksData.concat(pageResponse.Blocks);
               analysisText += extractTextFromBlocks(pageResponse.Blocks);
             }
             nextToken = pageResponse.NextToken;
@@ -223,7 +245,7 @@ exports.handler = async (event) => {
                   Name: s3Key
                 }
               },
-              JobTag: `detect-${documentId}` // For better tracking
+              JobTag: `detect-${documentId}`
             })
           );
 
@@ -234,11 +256,10 @@ exports.handler = async (event) => {
           let detectionResult;
           let detectionStatus = 'IN_PROGRESS';
           let retries = 0;
-          const maxRetries = 30; // Increased for longer documents
+          const maxRetries = 30;
 
           while (detectionStatus === 'IN_PROGRESS' && retries < maxRetries) {
-            // Wait with exponential backoff
-            const waitTime = Math.min(1000 * Math.pow(1.5, retries), 15000); // Wait between 1-15s
+            const waitTime = Math.min(1000 * Math.pow(1.5, retries), 15000);
             await new Promise(resolve => setTimeout(resolve, waitTime));
 
             // Get the job status
@@ -268,12 +289,15 @@ exports.handler = async (event) => {
           // Process detection results
           if (detectionResult && detectionResult.Blocks) {
             console.log(`Processing ${detectionResult.Blocks.length} blocks from text detection`);
+            blocksData = blocksData.concat(detectionResult.Blocks);
             let detectionText = extractTextFromBlocks(detectionResult.Blocks);
 
             // Handle pagination for detection results
             let nextToken = detectionResult.NextToken;
+            let pageCount = 1;
+
             while (nextToken) {
-              console.log('Fetching additional detection pages');
+              console.log(`Fetching additional detection page ${++pageCount}`);
               const pageResponse = await textractClient.send(
                 new GetDocumentTextDetectionCommand({
                   JobId: detectionJobId,
@@ -282,6 +306,7 @@ exports.handler = async (event) => {
               );
 
               if (pageResponse.Blocks) {
+                blocksData = blocksData.concat(pageResponse.Blocks);
                 detectionText += extractTextFromBlocks(pageResponse.Blocks);
               }
               nextToken = pageResponse.NextToken;
@@ -301,50 +326,67 @@ exports.handler = async (event) => {
     // If we didn't get any text, provide a meaningful message
     if (!extractedText.trim()) {
       console.log('No text was extracted from the document even with OCR');
-
-      // Return a placeholder text to allow processing to continue
-      // This is more informative than the previous error
-      return {
-        ...event,
-        extractedText: "This document appears to contain primarily image content or is using a format that our current OCR system couldn't process. We've recorded this for improvement. You can still proceed with the analysis, but it will be limited to the document's metadata.",
-        textExtractionMethod: "textract-empty-result",
-        extractionDetails: {
-          fileSize,
-          timestamp: new Date().toISOString(),
-          attempts: extractionMethods
-        }
-      };
+      extractedText = "This document appears to contain primarily image content or is using a format that our OCR system couldn't process. The analysis will proceed with limited information.";
+      extractionMethods.push('textract-empty-result');
     }
 
-    console.log(`Successfully extracted text from PDF using methods: ${extractionMethods.join(', ')}`);
+    // Check if extracted text is too large for Step Functions payload
+    const isTextTooLarge = extractedText.length > 100000;
+    let textRef = null;
+    let blocksRef = null;
+
+    // Store large text content in S3 if needed
+    if (isTextTooLarge) {
+      console.log(`Extracted text too large (${extractedText.length} chars), storing in S3`);
+      textRef = await storeContentInS3(s3Bucket, documentId, extractedText, 'pdf-extracted-text');
+    }
+
+    // Store blocks data in S3 if it's large
+    if (blocksData.length > 1000) {
+      console.log(`Blocks data large (${blocksData.length} blocks), storing in S3`);
+      blocksRef = await storeContentInS3(s3Bucket, documentId, blocksData, 'pdf-blocks');
+    }
+
+    // Prepare text content for the response
+    const textForResponse = isTextTooLarge
+      ? extractedText.substring(0, 50000) + '... (truncated, full content in S3)'
+      : extractedText;
+
+    console.log(`Successfully extracted text using methods: ${extractionMethods.join(', ')}`);
 
     // Return the extracted text along with metadata
     return {
       ...event,
-      extractedText,
+      extractedText: textForResponse,
       textExtractionMethod: extractionMethods.join('+'),
+      pdfParsingResults: {
+        textRef,
+        blocksRef,
+        textPreview: extractedText.substring(0, 500) +
+          (extractedText.length > 500 ? '... (truncated)' : '')
+      },
       extractionDetails: {
         fileSize,
         timestamp: new Date().toISOString(),
         characterCount: extractedText.length,
         lineCount: extractedText.split('\n').length,
-        methods: extractionMethods
+        methods: extractionMethods,
+        pagesProcessed: blocksData.length > 0 ?
+          new Set(blocksData.filter(b => b.BlockType === 'PAGE').map(b => b.Page)).size : 0
       }
     };
   } catch (error) {
     console.error('Error extracting PDF text:', error);
 
-    // Create a fallback extraction result to keep the workflow going
+    // Return a lightweight error response
     return {
       ...event,
-      extractedText: `This document (${s3Key.split('/').pop()}) requires manual review. Error: ${error.message}. The analysis will proceed with limited information.`,
+      extractedText: `Error processing document: ${error.message}. The analysis will proceed with limited information.`,
       textExtractionMethod: 'error-with-fallback',
-      extractionError: error.message,
-      extractionDetails: {
-        errorCode: error.Code || error.code || error.$metadata?.httpStatusCode || 'unknown',
-        errorMessage: error.message,
-        timestamp: new Date().toISOString(),
-        attempts: extractionMethods
+      error: {
+        message: error.message,
+        name: error.name
+        // Exclude stack trace to reduce payload size
       }
     };
   }

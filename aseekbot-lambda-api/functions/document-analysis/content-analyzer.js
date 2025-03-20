@@ -5,42 +5,64 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const s3Client = new S3Client();
 
 /**
- * Fetches Excel parsing results from S3 if available
+ * Fetches data from S3 given a reference
+ */
+async function getDataFromS3(reference) {
+  if (!reference || !reference.s3Bucket || !reference.s3Key) return null;
+
+  try {
+    console.log(`Retrieving data from S3: ${reference.s3Bucket}/${reference.s3Key}`);
+
+    const command = new GetObjectCommand({
+      Bucket: reference.s3Bucket,
+      Key: reference.s3Key
+    });
+
+    const response = await s3Client.send(command);
+
+    // Convert stream to text and parse JSON
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    const text = buffer.toString('utf-8');
+
+    return JSON.parse(text);
+  } catch (error) {
+    console.error(`Error retrieving data from S3: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches Excel data from S3 references when available
  */
 async function getExcelDataFromS3(event) {
-  if (event.excelParsingResults && event.excelParsingResults.s3Reference) {
-    try {
-      const ref = event.excelParsingResults.s3Reference;
-      console.log(`Retrieving Excel parsing data from S3: ${ref.s3Bucket}/${ref.s3Key}`);
+  if (!event.excelParsingResults) return null;
 
-      const command = new GetObjectCommand({
-        Bucket: ref.s3Bucket,
-        Key: ref.s3Key
-      });
+  const results = {};
 
-      const response = await s3Client.send(command);
-
-      // Convert stream to text
-      const chunks = [];
-      for await (const chunk of response.Body) {
-        chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
-      const text = buffer.toString('utf-8');
-
-      // Parse JSON data
-      return JSON.parse(text);
-    } catch (error) {
-      console.error(`Error retrieving Excel data from S3: ${error.message}`);
-      // Return null if we can't get the data, we'll fall back to the extracted text
-      return null;
-    }
+  // Get full sheet data
+  if (event.excelParsingResults.fullDataRef) {
+    results.sheets = await getDataFromS3(event.excelParsingResults.fullDataRef);
   }
-  return null;
+
+  // Get procurement data
+  if (event.excelParsingResults.procurementDataRef) {
+    results.procurement = await getDataFromS3(event.excelParsingResults.procurementDataRef);
+  }
+
+  // Add any metadata that was already in the step function payload
+  if (event.excelParsingResults.metadata) {
+    results.metadata = event.excelParsingResults.metadata;
+  }
+
+  return Object.keys(results).length ? results : null;
 }
 
 exports.handler = async (event) => {
-  console.log('Analyzing content', JSON.stringify(event, null, 2));
+  console.log('Analyzing content for documentId:', event.documentId);
 
   const { extractedText, documentId, fileType } = event;
 
@@ -53,13 +75,8 @@ exports.handler = async (event) => {
     // Get Excel data from S3 if available
     const excelData = await getExcelDataFromS3(event);
 
-    // Use the additional data for richer analysis if available
-    const enhancedText = excelData ?
-      `${extractedText}\n\nAdditional Excel Data Available: ${excelData.metadata.sheetCount} sheets` :
-      extractedText;
-
     // Some simple rule-based analysis before using AI
-    const lowerText = enhancedText.toLowerCase();
+    const lowerText = extractedText.toLowerCase();
 
     const basicAnalysis = {
       documentType: determineDocumentType(lowerText, fileType),
@@ -68,53 +85,52 @@ exports.handler = async (event) => {
       isProcurementDocument: isProcurementRelated(lowerText)
     };
 
-    // Identify potential vendors
-    const vendors = excelData?.procurement?.partNumbers?.map(item => item.value) ||
-      extractVendors(lowerText);
+    // Build entities using excel data when available
+    const entities = {
+      vendors: excelData?.procurement?.partNumbers?.map(item => item.value) ||
+        extractVendors(lowerText),
+      products: extractProducts(lowerText),
+      prices: excelData?.procurement?.prices?.map(item => `${item.key}: ${item.value}`) ||
+        extractPrices(extractedText).map(p => p.raw || p)
+    };
 
-    // Extract price information
-    const prices = excelData?.procurement?.prices?.map(item => ({ raw: `${item.key}: ${item.value}` })) ||
-      extractPrices(extractedText);
-
-    // Extract dates
+    // Dates from excel data or extracted from text
     const dates = excelData?.procurement?.dates?.map(item => item.value) ||
       extractDates(extractedText);
 
-    // Identify product names
-    const products = extractProducts(lowerText);
-
-    // Calculate sentiment (simple version)
+    // Calculate sentiment
     const sentiment = calculateSentiment(lowerText);
+
+    // Build key findings
+    const keyFindings = generateKeyFindings(basicAnalysis, entities.vendors,
+      entities.prices, dates);
 
     // Consolidate analysis results
     const analysisResults = {
       documentType: basicAnalysis.documentType,
-      keyFindings: generateKeyFindings(basicAnalysis, vendors, prices, dates),
-      entities: {
-        vendors,
-        products,
-        prices: prices.map(p => p.raw || p)
-      },
+      keyFindings,
+      entities,
       sentiment,
-      confidenceScore: 0.85, // In a real implementation, this would vary
+      confidenceScore: 0.85,
       metadata: {
         wordCount: basicAnalysis.approximateWordCount,
-        keywords: basicAnalysis.keywords.slice(0, 10), // Top 10 keywords
+        keywords: basicAnalysis.keywords.slice(0, 10),
         dates
       }
     };
 
     // Add Excel-specific information if available
     if (excelData) {
+      // Include sheet metadata but not full content to keep payload small
       analysisResults.excelAnalysis = {
-        sheetCount: excelData.metadata.sheetCount,
-        sheetNames: excelData.metadata.sheetNames || [],
-        dataPoints: excelData.procurement ?
-          Object.keys(excelData.procurement).reduce((acc, key) => {
-            acc[key] = Array.isArray(excelData.procurement[key]) ?
-              excelData.procurement[key].length : 0;
-            return acc;
-          }, {}) : {}
+        sheetCount: excelData.metadata?.sheetNames?.length || 0,
+        sheetNames: excelData.metadata?.sheetNames || [],
+        dataPoints: {
+          prices: excelData.procurement?.prices?.length || 0,
+          quantities: excelData.procurement?.quantities?.length || 0,
+          partNumbers: excelData.procurement?.partNumbers?.length || 0,
+          dates: excelData.procurement?.dates?.length || 0
+        }
       };
     }
 
@@ -125,11 +141,31 @@ exports.handler = async (event) => {
     };
   } catch (error) {
     console.error('Error analyzing content:', error);
-    throw error;
+
+    // Return a simplified error response to avoid payload size issues
+    return {
+      ...event,
+      analysisResults: {
+        error: error.message,
+        documentType: "Unknown (Error)",
+        keyFindings: ["Error during document analysis"],
+        entities: { vendors: [], products: [], prices: [] },
+        sentiment: "neutral",
+        metadata: {
+          error: true,
+          errorTimestamp: new Date().toISOString()
+        }
+      },
+      analysisTimestamp: new Date().toISOString(),
+      error: {
+        message: error.message,
+        name: error.name
+      }
+    };
   }
 };
 
-// Helper function to determine document type
+// Helper functions (implementations from original not changed)
 function determineDocumentType(text, fileType) {
   if (text.includes('proposal') || text.includes('quote')) {
     return 'Vendor Proposal';
@@ -148,12 +184,10 @@ function determineDocumentType(text, fileType) {
   }
 }
 
-// Helper function to count words
 function countWords(text) {
   return text.split(/\s+/).filter(word => word.length > 0).length;
 }
 
-// Helper function to extract keywords
 function extractKeywords(text) {
   const stopWords = ['the', 'and', 'a', 'to', 'in', 'of', 'for', 'is', 'on', 'that', 'this', 'with', 'as', 'by'];
   const words = text.split(/\W+/).filter(word =>
@@ -173,16 +207,12 @@ function extractKeywords(text) {
     .map(([word]) => word);
 }
 
-// Helper function to check if document is procurement related
 function isProcurementRelated(text) {
   const procurementTerms = ['purchase', 'vendor', 'supplier', 'bid', 'quote', 'proposal', 'contract', 'price', 'cost', 'rfp', 'rfq'];
   return procurementTerms.some(term => text.includes(term));
 }
 
-// Helper function to extract vendors
 function extractVendors(text) {
-  // This is a simplified implementation
-  // In a real-world scenario, you might use named entity recognition
   const vendorPatterns = [
     /([A-Z][a-z]+ )?[A-Z][a-z]+ (Inc|LLC|Ltd|Corp|Corporation)/g,
     /([A-Z][a-z]+ )?Technologies/g,
@@ -192,58 +222,40 @@ function extractVendors(text) {
   const vendors = new Set();
   vendorPatterns.forEach(pattern => {
     const matches = text.match(pattern);
-    if (matches) {
-      matches.forEach(match => vendors.add(match));
-    }
+    if (matches) matches.forEach(match => vendors.add(match));
   });
 
-  // Fallback with common vendor names if nothing found
-  if (vendors.size === 0) {
-    return ['Example Vendor Inc.', 'Data Systems LLC'];
-  }
-
-  return Array.from(vendors);
+  return vendors.size > 0 ? Array.from(vendors) : ['Example Vendor Inc.', 'Data Systems LLC'];
 }
 
-// Helper function to extract prices
 function extractPrices(text) {
   const pricePattern = /\$\s?[\d,]+(\.\d{2})?|\d{1,3}(,\d{3})*(\.\d{2})?\s(USD|dollars)/g;
   const matches = text.match(pricePattern) || [];
 
-  return matches.map(match => {
-    // Clean up the price
-    const raw = match;
-    const value = parseFloat(match.replace(/[^\d.]/g, ''));
-    return { raw, value };
-  });
+  return matches.map(match => ({
+    raw: match,
+    value: parseFloat(match.replace(/[^\d.]/g, ''))
+  }));
 }
 
-// Helper function to extract dates
 function extractDates(text) {
-  // This is a simplified implementation
-  // Match various date formats
   const datePatterns = [
-    /\d{1,2}\/\d{1,2}\/\d{2,4}/g,  // MM/DD/YYYY or DD/MM/YYYY
-    /\d{1,2}-\d{1,2}-\d{2,4}/g,    // MM-DD-YYYY or DD-MM-YYYY
-    /[A-Z][a-z]{2,8} \d{1,2},? \d{4}/g,  // Month DD, YYYY
-    /Q[1-4] \d{4}/g                // Q1 2025, etc.
+    /\d{1,2}\/\d{1,2}\/\d{2,4}/g,
+    /\d{1,2}-\d{1,2}-\d{2,4}/g,
+    /[A-Z][a-z]{2,8} \d{1,2},? \d{4}/g,
+    /Q[1-4] \d{4}/g
   ];
 
   const dates = new Set();
   datePatterns.forEach(pattern => {
     const matches = text.match(pattern);
-    if (matches) {
-      matches.forEach(match => dates.add(match));
-    }
+    if (matches) matches.forEach(match => dates.add(match));
   });
 
   return Array.from(dates);
 }
 
-// Helper function to extract products
 function extractProducts(text) {
-  // This is a simplified implementation
-  // In a real implementation, you might use a more sophisticated approach
   const productPatterns = [
     /[A-Z][a-z]+ Rack [A-Z0-9\-]+/g,
     /[A-Z][a-z]+ Server [A-Z0-9\-]+/g,
@@ -255,20 +267,12 @@ function extractProducts(text) {
   const products = new Set();
   productPatterns.forEach(pattern => {
     const matches = text.match(pattern);
-    if (matches) {
-      matches.forEach(match => products.add(match));
-    }
+    if (matches) matches.forEach(match => products.add(match));
   });
 
-  // Fallback with common product names if nothing found
-  if (products.size === 0) {
-    return ['Server Rack Model XJ-5000', 'Cooling Unit B-200'];
-  }
-
-  return Array.from(products);
+  return products.size > 0 ? Array.from(products) : ['Server Rack Model XJ-5000', 'Cooling Unit B-200'];
 }
 
-// Helper function to calculate sentiment
 function calculateSentiment(text) {
   const positiveWords = ['excellent', 'good', 'best', 'great', 'high quality', 'reliable', 'recommended', 'positive', 'optimal', 'efficient'];
   const negativeWords = ['poor', 'bad', 'worst', 'issues', 'problems', 'concerns', 'delay', 'expensive', 'overpriced', 'unreliable'];
@@ -279,51 +283,37 @@ function calculateSentiment(text) {
   positiveWords.forEach(word => {
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
     const matches = text.match(regex);
-    if (matches) {
-      positiveScore += matches.length;
-    }
+    if (matches) positiveScore += matches.length;
   });
 
   negativeWords.forEach(word => {
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
     const matches = text.match(regex);
-    if (matches) {
-      negativeScore += matches.length;
-    }
+    if (matches) negativeScore += matches.length;
   });
 
-  if (positiveScore > negativeScore * 1.5) {
-    return 'positive';
-  } else if (negativeScore > positiveScore * 1.5) {
-    return 'negative';
-  } else {
-    return 'neutral';
-  }
+  if (positiveScore > negativeScore * 1.5) return 'positive';
+  else if (negativeScore > positiveScore * 1.5) return 'negative';
+  else return 'neutral';
 }
 
-// Helper function to generate key findings
 function generateKeyFindings(basicAnalysis, vendors, prices, dates) {
   const findings = [];
 
-  // Document type findings
   findings.push(`This document appears to be a ${basicAnalysis.documentType.toLowerCase()}`);
 
-  // Vendor findings
-  if (vendors.length > 0) {
+  if (vendors && vendors.length > 0) {
     findings.push(`Mentions vendors: ${vendors.slice(0, 3).join(', ')}${vendors.length > 3 ? '...' : ''}`);
   }
 
-  // Price findings
-  if (prices.length > 0) {
-    findings.push(`Contains pricing information: ${prices.slice(0, 3).map(p => typeof p === 'string' ? p : p.raw).join(', ')}${prices.length > 3 ? '...' : ''}`);
+  if (prices && prices.length > 0) {
+    findings.push(`Contains pricing information: ${prices.slice(0, 3).join(', ')}${prices.length > 3 ? '...' : ''}`);
   }
 
-  // Date findings
-  if (dates.length > 0) {
+  if (dates && dates.length > 0) {
     findings.push(`References dates: ${dates.slice(0, 2).join(', ')}${dates.length > 2 ? '...' : ''}`);
   }
 
-  // Procurement findings
   if (basicAnalysis.isProcurementDocument) {
     findings.push('Contains procurement-related terminology');
   }
