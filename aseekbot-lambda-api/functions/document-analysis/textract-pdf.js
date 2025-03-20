@@ -1,120 +1,193 @@
-// functions/document-analysis/textract-pdf.js
-const AWS = require('aws-sdk');
-const textract = new AWS.Textract();
-const s3 = new AWS.S3();
+// functions/document-analysis/textract-pdf.js - Using AWS SDK v3
+const { S3Client, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  TextractClient,
+  DetectDocumentTextCommand,
+  StartDocumentTextDetectionCommand,
+  GetDocumentTextDetectionCommand
+} = require("@aws-sdk/client-textract");
+
+// Create clients
+const region = process.env.AWS_REGION || 'us-east-1';
+const s3Client = new S3Client({ region });
+const textractClient = new TextractClient({ region });
 
 exports.handler = async (event) => {
   console.log('Extracting PDF text using Textract', JSON.stringify(event, null, 2));
 
   const { s3Bucket, s3Key, documentId } = event;
+  let s3Response = null;
+  let fileSize = 0;
+  let extractedText = '';
 
   try {
-    // For smaller PDFs (<5MB), we can use the synchronous DetectDocumentText API
-    // Get the S3 object
-    const s3Response = await s3.getObject({
-      Bucket: s3Bucket,
-      Key: s3Key
-    }).promise();
+    // Get the S3 object metadata
+    s3Response = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: s3Bucket,
+        Key: s3Key
+      })
+    );
 
     // Check the file size
-    const fileSize = s3Response.ContentLength;
+    fileSize = s3Response.ContentLength;
     console.log(`PDF file size: ${fileSize} bytes`);
-
-    let extractedText = '';
 
     // For small files (<5MB), use synchronous DetectDocumentText
     if (fileSize < 5 * 1024 * 1024) {
       console.log('Using synchronous DetectDocumentText API for small file');
 
-      const textractResponse = await textract.detectDocumentText({
-        Document: {
-          Bytes: s3Response.Body
-        }
-      }).promise();
+      try {
+        // Get the file content
+        const fileContent = await s3Client.send(
+          new GetObjectCommand({
+            Bucket: s3Bucket,
+            Key: s3Key
+          })
+        );
 
-      // Extract text from the response
-      if (textractResponse.Blocks) {
-        textractResponse.Blocks.forEach(block => {
-          if (block.BlockType === 'LINE') {
-            extractedText += block.Text + '\n';
+        // Convert the readable stream to a buffer
+        const chunks = [];
+        for await (const chunk of fileContent.Body) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+
+        // Use the DetectDocumentText API which inherently includes OCR
+        const textractResponse = await textractClient.send(
+          new DetectDocumentTextCommand({
+            Document: {
+              Bytes: buffer
+            }
+          })
+        );
+
+        // Extract text from the response
+        if (textractResponse.Blocks) {
+          console.log(`Detected ${textractResponse.Blocks.length} blocks`);
+
+          for (const block of textractResponse.Blocks) {
+            if (block.BlockType === 'LINE') {
+              extractedText += block.Text + '\n';
+            }
           }
-        });
+
+          console.log(`Extracted ${extractedText.length} characters using synchronous API`);
+        }
+      } catch (syncError) {
+        console.log('Synchronous extraction failed:', syncError.message);
+        // If synchronous method fails, we'll continue to asynchronous method
       }
     }
-    // For larger files, use the asynchronous StartDocumentTextDetection API
-    else {
-      console.log('Using asynchronous StartDocumentTextDetection API for larger file');
 
-      // Start the text detection job
-      const startResponse = await textract.startDocumentTextDetection({
-        DocumentLocation: {
-          S3Object: {
-            Bucket: s3Bucket,
-            Name: s3Key
+    // For larger files or if synchronous method failed, use asynchronous method
+    if (extractedText.length === 0) {
+      console.log('Using asynchronous StartDocumentTextDetection API');
+
+      // Start the asynchronous text detection job
+      const startResponse = await textractClient.send(
+        new StartDocumentTextDetectionCommand({
+          DocumentLocation: {
+            S3Object: {
+              Bucket: s3Bucket,
+              Name: s3Key
+            }
           }
-        }
-      }).promise();
+        })
+      );
 
       const jobId = startResponse.JobId;
       console.log(`Started Textract job with ID: ${jobId}`);
 
-      // Wait for the job to complete with exponential backoff
-      let result = null;
-      let status = 'IN_PROGRESS';
+      // Poll for completion with exponential backoff
+      let jobResult;
+      let jobStatus = 'IN_PROGRESS';
+      let retries = 0;
+      const maxRetries = 24; // Maximum 2 minutes wait (with exponential backoff)
 
-      while (status === 'IN_PROGRESS') {
-        // Wait for a few seconds before checking status
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      while (jobStatus === 'IN_PROGRESS' && retries < maxRetries) {
+        // Wait based on retry count (exponential backoff)
+        const waitTime = Math.min(1000 * Math.pow(2, retries), 10000); // Wait between 1s and 10s
+        await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // Get the job status
-        const jobResponse = await textract.getDocumentTextDetection({
-          JobId: jobId
-        }).promise();
+        const getResponse = await textractClient.send(
+          new GetDocumentTextDetectionCommand({
+            JobId: jobId
+          })
+        );
 
-        status = jobResponse.JobStatus;
-        console.log(`Job status: ${status}`);
+        jobStatus = getResponse.JobStatus;
+        console.log(`Job status after ${retries + 1} checks: ${jobStatus}`);
 
-        if (status === 'SUCCEEDED') {
-          result = jobResponse;
+        if (jobStatus === 'SUCCEEDED') {
+          jobResult = getResponse;
+          break;
+        } else if (jobStatus === 'FAILED') {
+          throw new Error(`Textract job failed: ${getResponse.StatusMessage || 'Unknown error'}`);
+        }
 
-          // Collect text from all pages
-          const blocks = result.Blocks || [];
-          blocks.forEach(block => {
-            if (block.BlockType === 'LINE') {
-              extractedText += block.Text + '\n';
-            }
-          });
+        retries++;
+      }
 
-          // Handle pagination if there are more pages of results
-          let nextToken = result.NextToken;
-          while (nextToken) {
-            const moreResults = await textract.getDocumentTextDetection({
+      if (jobStatus === 'IN_PROGRESS') {
+        throw new Error('Textract job timed out - still in progress after maximum wait time');
+      }
+
+      // Process results and handle pagination
+      if (jobResult.Blocks) {
+        console.log(`Processing ${jobResult.Blocks.length} blocks from async job result`);
+
+        // Extract text from the blocks
+        for (const block of jobResult.Blocks) {
+          if (block.BlockType === 'LINE') {
+            extractedText += block.Text + '\n';
+          }
+        }
+
+        // Handle pagination if there are more results
+        let nextToken = jobResult.NextToken;
+        while (nextToken) {
+          console.log('Fetching additional result pages');
+
+          const pageResponse = await textractClient.send(
+            new GetDocumentTextDetectionCommand({
               JobId: jobId,
               NextToken: nextToken
-            }).promise();
+            })
+          );
 
-            const moreBlocks = moreResults.Blocks || [];
-            moreBlocks.forEach(block => {
+          if (pageResponse.Blocks) {
+            for (const block of pageResponse.Blocks) {
               if (block.BlockType === 'LINE') {
                 extractedText += block.Text + '\n';
               }
-            });
-
-            nextToken = moreResults.NextToken;
+            }
           }
-        } else if (status === 'FAILED') {
-          throw new Error(`Textract job failed: ${jobResponse.StatusMessage || 'Unknown error'}`);
+
+          nextToken = pageResponse.NextToken;
         }
+
+        console.log(`Extracted ${extractedText.length} characters using asynchronous API`);
       }
     }
 
     // If we didn't get any text, provide a meaningful message
     if (!extractedText.trim()) {
-      extractedText = "No text content was extracted from the PDF. The document might be scanned as images or protected.";
+      console.log('No text was extracted from the document even with OCR');
+
+      return {
+        ...event,
+        extractedText: "No text content was extracted from the PDF even with OCR. The document might have image quality issues, unusual fonts, or special protection.",
+        textExtractionMethod: "textract-empty-result",
+        extractionDetails: {
+          fileSize,
+          timestamp: new Date().toISOString()
+        }
+      };
     }
 
     console.log('Successfully extracted text from PDF');
-    console.log(`Text length: ${extractedText.length} characters`);
 
     // Return the extracted text along with metadata
     return {
@@ -123,18 +196,25 @@ exports.handler = async (event) => {
       textExtractionMethod: 'textract',
       extractionDetails: {
         fileSize,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        characterCount: extractedText.length,
+        lineCount: extractedText.split('\n').length
       }
     };
   } catch (error) {
     console.error('Error extracting PDF text:', error);
 
-    // Return a fallback so the workflow can continue
+    // Create a fallback extraction result to keep the workflow going
     return {
       ...event,
-      extractedText: `Error extracting text from PDF: ${error.message}. Please check the PDF file format and contents.`,
-      textExtractionMethod: 'error',
-      extractionError: error.message
+      extractedText: `This document (${s3Key.split('/').pop()}) could not be processed due to: ${error.message}. The step functions workflow will continue with limited information.`,
+      textExtractionMethod: 'error-with-fallback',
+      extractionError: error.message,
+      extractionDetails: {
+        errorCode: error.Code || error.code || 'unknown',
+        errorMessage: error.message,
+        timestamp: new Date().toISOString()
+      }
     };
   }
 };

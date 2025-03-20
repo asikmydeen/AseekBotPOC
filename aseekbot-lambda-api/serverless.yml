@@ -34,10 +34,11 @@ provider:
     # Add the following permissions for Textract
     - Effect: Allow
       Action:
+        - textract:DetectDocumentText
         - textract:StartDocumentTextDetection
         - textract:GetDocumentTextDetection
-        - textract:DetectDocumentText
-        - textract:AnalyzeDocument
+        - textract:StartDocumentAnalysis
+        - textract:GetDocumentAnalysis
       Resource: "*"
 
 functions:
@@ -99,6 +100,7 @@ functions:
   textractPdf:
     handler: functions/document-analysis/textract-pdf.handler
     name: aseekbot-api-dev-textract-pdf
+    timeout: 300
   docxParser:
     handler: functions/document-analysis/docx-parser.handler
     name: aseekbot-api-dev-docx-parser
