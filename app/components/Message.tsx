@@ -75,7 +75,6 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
 
     useEffect(() => {
         if (message.sender === 'bot') {
-            // Check if message content exists
             const messageContent = getMessageContent();
             if (!messageContent) {
                 setDisplayedText("Error: No message content available.");
@@ -84,55 +83,30 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
                 return;
             }
 
-            let index = 0;
-            // Clear any existing interval
-            if (typingIntervalRef.current) {
-                clearInterval(typingIntervalRef.current);
-            }
+            // Instead of the typing animation, immediately set the full text
+            setDisplayedText(messageContent);
+            setIsTyping(false);
 
-            // Use a faster typing speed (10ms) for better performance
-            typingIntervalRef.current = setInterval(() => {
-                if (index < messageContent.length) {
-                    setDisplayedText(messageContent.slice(0, index + 1));
-                    index++;
-                } else {
-                    if (typingIntervalRef.current) {
-                        clearInterval(typingIntervalRef.current);
-                        typingIntervalRef.current = null;
-                    }
-                    setIsTyping(false);
-
-                    const renderer = new marked.Renderer();
-
-                    // Customize image rendering to show thumbnails
-                    renderer.image = ({ href, title, text }: { href: string, title: string | null, text: string }): string => {
-                        return `<div class="image-thumbnail">
-        <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-        <div class="image-overlay">Click to view</div>
-    </div>`;
-                    };
-
-
-                    const options = {
-                        gfm: true,
-                        breaks: true,
-                        renderer,
-                    };
-
-                    const content = marked.parse(messageContent, options) as string;
-                    const formattedContent = content.replace(/<img /g, '<img class="inline-markdown-image" ');
-                    setParsedContent(formattedContent);
-                }
-            }, 10);
-
-            return () => {
-                if (typingIntervalRef.current) {
-                    clearInterval(typingIntervalRef.current);
-                    typingIntervalRef.current = null;
-                }
+            // Process markdown immediately
+            const renderer = new marked.Renderer();
+            renderer.image = ({ href, title, text }: { href: string, title: string | null, text: string }): string => {
+                return `<div class="image-thumbnail">
+                <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
+                <div class="image-overlay">Click to view</div>
+            </div>`;
             };
+
+            const options = {
+                gfm: true,
+                breaks: true,
+                renderer,
+            };
+
+            const content = marked.parse(messageContent, options) as string;
+            const formattedContent = content.replace(/<img /g, '<img class="inline-markdown-image" ');
+            setParsedContent(formattedContent);
         } else {
-            // For user messages - no typing effect
+            // Keep the user message handling as is
             const messageContent = getMessageContent();
             if (!messageContent) {
                 setDisplayedText("");
@@ -142,13 +116,12 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
 
             setDisplayedText(messageContent);
 
-            // Parse markdown immediately for user messages
             const renderer = new marked.Renderer();
             renderer.image = ({ href, title, text }: { href: string, title: string | null, text: string }): string => {
                 return `<div class="image-thumbnail">
-        <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-        <div class="image-overlay">Click to view</div>
-    </div>`;
+                <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
+                <div class="image-overlay">Click to view</div>
+            </div>`;
             };
 
             const options = {

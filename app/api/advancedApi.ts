@@ -14,40 +14,36 @@ import {
 export async function processChatMessage(
   message: string,
   history: ChatHistoryItem[],
-  attachments?: File[]
+  attachments?: any[]
 ): Promise<ApiResponse> {
   try {
-    // Create form data to send message, history, and attachments
-    const formData = new FormData();
-    formData.append('message', message);
-    formData.append('history', JSON.stringify(history));
+    // Prepare request payload
+    const payload: any = {
+      message: message,
+      history: history,
+      sessionId: `session-${Date.now()}`
+    };
 
     // Add S3 file references if attachments are present
     if (attachments && attachments.length > 0) {
-      // Map file objects to the format expected by the API route
-      const s3Files = attachments.map(file => {
-        // Get the file with additional properties via type casting
-        const uploadedFile = file as any;
+      // Map file objects to the format expected by the API
+      const s3Files = attachments.map(file => ({
+        name: file.name,
+        s3Url: file.url || file.fileUrl,
+        mimeType: file.type || 'application/octet-stream',
+        useCase: "CHAT"
+      }));
 
-        return {
-          name: file.name,
-          mimeType: file.type,
-          // Use s3Url from the file or fall back to url/fileUrl properties
-          s3Url: uploadedFile.s3Url || uploadedFile.url || uploadedFile.fileUrl,
-          useCase: "CHAT"
-        };
-      });
-
-      // Log file references for debugging
-      console.debug('Sending file references to Bedrock agent:', s3Files);
-
-      formData.append('s3Files', JSON.stringify(s3Files));
+      payload.s3Files = s3Files;
     }
 
     // Call the Lambda API endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.processChatMessage, {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -57,7 +53,8 @@ export async function processChatMessage(
 
     return await response.json();
   } catch (error) {
-    handleClientError(error, 'process chat message');
+    console.error('Error in processChatMessage:', error);
+    throw error;
   }
 }
 
