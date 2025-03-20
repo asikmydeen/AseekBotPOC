@@ -134,8 +134,6 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   // To make the file dropzone work
   const handleAttachClick = () => {
     toggleFileDropzone();
-    // Force file dropzone to show
-    setShowFileDropzone(true);
   };
 
   // Render different footer components based on context
