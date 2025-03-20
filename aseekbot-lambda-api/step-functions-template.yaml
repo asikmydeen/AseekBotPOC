@@ -20,7 +20,7 @@ Resources:
                   "timestamp.$": "$$.Execution.StartTime"
                 }
               },
-              "ResultPath": "$.processData",
+              "OutputPath": "$.Payload",
               "Next": "UpdateStatusStarted"
             },
             "UpdateStatusStarted": {
@@ -31,10 +31,14 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
                   "status": "STARTED",
                   "message": "Document analysis process has started."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "ValidateFileAndScan"
             },
             "ValidateFileAndScan": {
@@ -65,6 +69,7 @@ Resources:
                   "Next": "HandleValidationError"
                 }
               ],
+              "ResultPath": "$.validationResult",
               "Next": "UpdateStatusValidated"
             },
             "UpdateStatusValidated": {
@@ -75,10 +80,14 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
                   "status": "VALIDATED",
                   "message": "Document validated and scanned successfully."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "DetermineFileType"
             },
             "HandleValidationError": {
@@ -92,6 +101,7 @@ Resources:
                   "errorType": "ValidationError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "DetermineFileType": {
@@ -147,6 +157,7 @@ Resources:
                   "Next": "HandleExtractionError"
                 }
               ],
+              "ResultPath": "$.extractionResult",
               "Next": "UpdateStatusExtracted"
             },
             "ExtractDocxText": {
@@ -176,6 +187,7 @@ Resources:
                   "Next": "HandleExtractionError"
                 }
               ],
+              "ResultPath": "$.extractionResult",
               "Next": "UpdateStatusExtracted"
             },
             "ExtractXlsxData": {
@@ -205,6 +217,7 @@ Resources:
                   "Next": "HandleExtractionError"
                 }
               ],
+              "ResultPath": "$.extractionResult",
               "Next": "UpdateStatusExtracted"
             },
             "ExtractCsvData": {
@@ -234,6 +247,7 @@ Resources:
                   "Next": "HandleExtractionError"
                 }
               ],
+              "ResultPath": "$.extractionResult",
               "Next": "UpdateStatusExtracted"
             },
             "UpdateStatusExtracted": {
@@ -244,10 +258,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
+                  "extractedText.$": "$.extractionResult.Payload.extractedText",
                   "status": "TEXT_EXTRACTED",
                   "message": "Document text successfully extracted."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "AnalyzeContent"
             },
             "HandleExtractionError": {
@@ -261,6 +280,7 @@ Resources:
                   "errorType": "ExtractionError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "HandleUnsupportedFileType": {
@@ -274,6 +294,7 @@ Resources:
                   "errorType": "UnsupportedFileType"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "AnalyzeContent": {
@@ -282,7 +303,7 @@ Resources:
               "Parameters": {
                 "FunctionName": "${ContentAnalyzerLambdaArn}",
                 "Payload": {
-                  "extractedText.$": "$.extractedText",
+                  "extractedText.$": "$.extractionResult.Payload.extractedText",
                   "documentId.$": "$.documentId",
                   "fileType.$": "$.fileType",
                   "modelType": "BEDROCK_CLAUDE"
@@ -304,6 +325,7 @@ Resources:
                   "Next": "HandleAnalysisError"
                 }
               ],
+              "ResultPath": "$.analysisResult",
               "Next": "UpdateStatusAnalyzed"
             },
             "UpdateStatusAnalyzed": {
@@ -314,10 +336,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
+                  "analysisResults.$": "$.analysisResult.Payload.analysisResults",
                   "status": "CONTENT_ANALYZED",
                   "message": "Document content successfully analyzed."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "CheckMultipleDocuments"
             },
             "HandleAnalysisError": {
@@ -331,6 +358,7 @@ Resources:
                   "errorType": "AnalysisError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "CheckMultipleDocuments": {
@@ -351,7 +379,9 @@ Resources:
                 "FunctionName": "${DocumentComparerLambdaArn}",
                 "Payload": {
                   "documents.$": "$.documents",
-                  "documentId.$": "$.documentId"
+                  "documentId.$": "$.documentId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key"
                 }
               },
               "TimeoutSeconds": 300,
@@ -370,6 +400,7 @@ Resources:
                   "Next": "HandleComparisonError"
                 }
               ],
+              "ResultPath": "$.comparisonResult",
               "Next": "UpdateStatusCompared"
             },
             "UpdateStatusCompared": {
@@ -380,10 +411,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
+                  "comparisonResults.$": "$.comparisonResult.Payload.comparisonResults",
                   "status": "DOCUMENTS_COMPARED",
                   "message": "Documents successfully compared."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "GenerateInsights"
             },
             "HandleComparisonError": {
@@ -397,6 +433,7 @@ Resources:
                   "errorType": "ComparisonError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "GenerateInsights": {
@@ -405,9 +442,11 @@ Resources:
               "Parameters": {
                 "FunctionName": "${InsightGeneratorLambdaArn}",
                 "Payload": {
-                  "analysisResults.$": "$.analysisResults",
-                  "comparisonResults.$": "$.comparisonResults",
-                  "documentId.$": "$.documentId"
+                  "analysisResults.$": "$.analysisResult.Payload.analysisResults",
+                  "documentId.$": "$.documentId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType"
                 }
               },
               "TimeoutSeconds": 180,
@@ -426,6 +465,7 @@ Resources:
                   "Next": "HandleInsightError"
                 }
               ],
+              "ResultPath": "$.insightsResult",
               "Next": "UpdateStatusInsightsGenerated"
             },
             "UpdateStatusInsightsGenerated": {
@@ -436,10 +476,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
+                  "insights.$": "$.insightsResult.Payload.insights",
                   "status": "INSIGHTS_GENERATED",
                   "message": "Document insights successfully generated."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "Next": "StoreResults"
             },
             "HandleInsightError": {
@@ -453,6 +498,7 @@ Resources:
                   "errorType": "InsightError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "StoreResults": {
@@ -461,11 +507,13 @@ Resources:
               "Parameters": {
                 "FunctionName": "${ResultStorageLambdaArn}",
                 "Payload": {
-                  "insights.$": "$.insights",
-                  "analysisResults.$": "$.analysisResults",
-                  "comparisonResults.$": "$.comparisonResults",
+                  "insights.$": "$.insightsResult.Payload.insights",
+                  "analysisResults.$": "$.analysisResult.Payload.analysisResults",
                   "documentId.$": "$.documentId",
-                  "userId.$": "$.userId"
+                  "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType"
                 }
               },
               "TimeoutSeconds": 120,
@@ -484,6 +532,7 @@ Resources:
                   "Next": "HandleStorageError"
                 }
               ],
+              "ResultPath": "$.storageResult",
               "Next": "UpdateStatusCompleted"
             },
             "HandleStorageError": {
@@ -497,6 +546,7 @@ Resources:
                   "errorType": "StorageError"
                 }
               },
+              "ResultPath": "$.errorHandlerResult",
               "Next": "UpdateStatusFailed"
             },
             "UpdateStatusCompleted": {
@@ -507,11 +557,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
+                  "resultLocation.$": "$.storageResult.Payload.resultLocation",
                   "status": "COMPLETED",
-                  "message": "Document analysis workflow completed successfully.",
-                  "resultLocation.$": "$.resultLocation"
+                  "message": "Document analysis workflow completed successfully."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "End": true
             },
             "UpdateStatusFailed": {
@@ -522,11 +576,15 @@ Resources:
                 "Payload": {
                   "documentId.$": "$.documentId",
                   "userId.$": "$.userId",
-                  "status": "FAILED",
+                  "s3Bucket.$": "$.s3Bucket",
+                  "s3Key.$": "$.s3Key",
+                  "fileType.$": "$.fileType",
                   "error.$": "$.error",
+                  "status": "FAILED",
                   "message": "Document analysis workflow failed."
                 }
               },
+              "ResultPath": "$.statusUpdate",
               "End": true
             }
           }

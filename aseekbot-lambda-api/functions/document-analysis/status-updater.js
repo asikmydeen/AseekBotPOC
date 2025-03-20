@@ -2,46 +2,48 @@ const AWS = require('aws-sdk');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-  // Log the full input event with detailed formatting
   console.log('Updating document status:', JSON.stringify(event, null, 2));
 
   try {
-    // Extract all relevant information from the event
+    // Extract status update information
     const {
       documentId,
       userId,
       status,
       message,
       resultLocation,
-      s3Bucket,
-      s3Key,
-      fileType
     } = event;
 
-    // TODO: Update status in DynamoDB
+    // Create item to save in DynamoDB
+    const item = {
+      documentId,
+      userId,
+      status,
+      message,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add optional fields if they exist
+    if (resultLocation) item.resultLocation = resultLocation;
+
+    // Save original input fields that need to be preserved
+    if (event.s3Bucket) item.s3Bucket = event.s3Bucket;
+    if (event.s3Key) item.s3Key = event.s3Key;
+    if (event.fileType) item.fileType = event.fileType;
+
+    // Update status in DynamoDB
     await dynamoDB.put({
       TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
-      Item: {
-        documentId,
-        userId,
-        status,
-        message,
-        resultLocation,
-        s3Bucket,
-        s3Key,
-        fileType,
-        timestamp: new Date().toISOString()
-      }
+      Item: item
     }).promise();
 
     console.log(`Status updated for document ${documentId}: ${status}`);
 
-    // Return the entire original event to preserve all context
+    // IMPORTANT: Return the complete input with all the original fields
+    // This ensures the next state has access to all required fields
     return event;
   } catch (error) {
     console.error('Error updating status:', error);
-
-    // Rethrow the error to allow Step Functions to handle it
     throw error;
   }
 };
