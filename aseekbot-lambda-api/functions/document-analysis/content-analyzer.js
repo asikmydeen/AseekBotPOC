@@ -1,6 +1,8 @@
 // functions/document-analysis/content-analyzer.js
-const AWS = require('aws-sdk');
-const bedrock = new AWS.BedrockRuntime();
+const { BedrockRuntimeClient } = require('@aws-sdk/client-bedrock-runtime');
+
+// Initialize client
+const bedrockClient = new BedrockRuntimeClient();
 
 exports.handler = async (event) => {
   console.log('Analyzing content', JSON.stringify(event, null, 2));

@@ -1,6 +1,7 @@
-// functions/document-analysis/file-validation.js
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
+const { S3Client, HeadObjectCommand } = require('@aws-sdk/client-s3');
+
+// Initialize client
+const s3Client = new S3Client();
 
 exports.handler = async (event) => {
   console.log('Validating file', JSON.stringify(event, null, 2));
@@ -9,10 +10,12 @@ exports.handler = async (event) => {
 
   try {
     // Check if file exists in S3
-    const headObject = await s3.headObject({
+    const headObjectCommand = new HeadObjectCommand({
       Bucket: s3Bucket,
       Key: s3Key
-    }).promise();
+    });
+
+    const headObject = await s3Client.send(headObjectCommand);
 
     const fileSizeBytes = headObject.ContentLength;
     const maxSizeBytes = 10 * 1024 * 1024; // 10MB

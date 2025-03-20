@@ -1,7 +1,12 @@
 // functions/document-analysis/result-storage.js
-const AWS = require('aws-sdk');
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const s3 = new AWS.S3();
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+// Initialize clients
+const dynamoClient = new DynamoDBClient();
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const s3Client = new S3Client();
 
 exports.handler = async (event) => {
     console.log('Storing results', JSON.stringify(event, null, 2));
@@ -22,15 +27,15 @@ exports.handler = async (event) => {
 
         const s3Key = `analysis-results/${documentId}/results.json`;
 
-        await s3.putObject({
+        await s3Client.send(new PutObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
             Key: s3Key,
             Body: JSON.stringify(fullResults, null, 2),
             ContentType: 'application/json'
-        }).promise();
+        }));
 
-        // Store summary in DynamoDB for quick access
-        await dynamoDB.put({
+        // Store summary in DynamoDB
+        await docClient.send(new PutCommand({
             TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
             Item: {
                 documentId,
@@ -40,7 +45,7 @@ exports.handler = async (event) => {
                 summary: insights.summary,
                 resultLocation: s3Key
             }
-        }).promise();
+        }));
 
         return {
             ...event,

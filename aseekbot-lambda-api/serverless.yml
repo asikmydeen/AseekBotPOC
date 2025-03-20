@@ -1,5 +1,11 @@
 service: aseekbot-api
 
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!.serverless/**'
+
 provider:
   name: aws
   runtime: nodejs18.x
@@ -31,7 +37,6 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:Query
       Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/DocumentAnalysisStatus"
-    # Add the following permissions for Textract
     - Effect: Allow
       Action:
         - textract:DetectDocumentText
@@ -41,95 +46,140 @@ provider:
         - textract:GetDocumentAnalysis
       Resource: "*"
 
+layers:
+  awsSdkLayer:
+    path: layers/aws-sdk-v3
+    name: aws-sdk-v3-layer
+    description: AWS SDK v3 libraries and other common dependencies
+    compatibleRuntimes:
+      - nodejs18.x
+
 functions:
   processChatMessage:
     handler: lambdas/processChatMessage.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: processChatMessage
           method: post
-          cors: true # Enable CORS
+          cors: true
   uploadFile:
     handler: lambdas/uploadFile.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: uploadFile
           method: post
-          cors: true # Enable CORS
+          cors: true
   deleteFile:
     handler: lambdas/deleteFile.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: deleteFile
           method: post
-          cors: true # Enable CORS
+          cors: true
   createTicket:
     handler: lambdas/createTicket.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: createTicket
           method: post
-          cors: true # Enable CORS
+          cors: true
   quickLink:
     handler: lambdas/quickLink.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: quickLink
           method: post
-          cors: true # Enable CORS
+          cors: true
   processMessage:
     handler: lambdas/processMessage.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: processMessage
           method: post
-          cors: true # Enable CORS
+          cors: true
   documentAnalysis:
     handler: lambdas/getDocumentAnalysisStatus.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
     events:
       - http:
           path: document-analysis/{proxy+}
           method: any
-          cors: true # Enable CORS
+          cors: true
   initProcess:
     handler: functions/document-analysis/init-process.handler
     name: aseekbot-api-dev-init-process
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   fileValidation:
     handler: functions/document-analysis/file-validation.handler
     name: aseekbot-api-dev-file-validation
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   textractPdf:
     handler: functions/document-analysis/textract-pdf.handler
     name: aseekbot-api-dev-textract-pdf
     timeout: 300
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   docxParser:
     handler: functions/document-analysis/docx-parser.handler
     name: aseekbot-api-dev-docx-parser
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   excelParser:
     handler: functions/document-analysis/excel-parser.handler
     name: aseekbot-api-dev-excel-parser
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   csvParser:
     handler: functions/document-analysis/csv-parser.handler
     name: aseekbot-api-dev-csv-parser
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   contentAnalyzer:
     handler: functions/document-analysis/content-analyzer.handler
     name: aseekbot-api-dev-content-analyzer
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   documentComparer:
     handler: functions/document-analysis/document-comparer.handler
     name: aseekbot-api-dev-document-comparer
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   insightGenerator:
     handler: functions/document-analysis/insight-generator.handler
     name: aseekbot-api-dev-insight-generator
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   resultStorage:
     handler: functions/document-analysis/result-storage.handler
     name: aseekbot-api-dev-result-storage
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   errorHandler:
     handler: functions/document-analysis/error-handler.handler
     name: aseekbot-api-dev-error-handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
   statusUpdater:
     handler: functions/document-analysis/status-updater.handler
     name: aseekbot-api-dev-status-updater
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
 
-# Add custom section for more detailed CORS configuration
 custom:
   cors:
     allowOrigin: '*'

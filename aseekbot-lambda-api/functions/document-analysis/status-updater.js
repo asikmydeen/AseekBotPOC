@@ -1,5 +1,10 @@
-const AWS = require('aws-sdk');
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+// functions/document-analysis/status-updater.js
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+
+// Initialize clients
+const dynamoClient = new DynamoDBClient();
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 exports.handler = async (event) => {
   console.log('Updating document status:', JSON.stringify(event, null, 2));
@@ -32,10 +37,10 @@ exports.handler = async (event) => {
     if (event.fileType) item.fileType = event.fileType;
 
     // Update status in DynamoDB
-    await dynamoDB.put({
+    await docClient.send(new PutCommand({
       TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
       Item: item
-    }).promise();
+    }));
 
     console.log(`Status updated for document ${documentId}: ${status}`);
 

@@ -1,90 +1,321 @@
 // functions/document-analysis/excel-parser.js
-const AWS = require('aws-sdk');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const XLSX = require('xlsx');
-const s3 = new AWS.S3();
 
-/**
- * Downloads an Excel file from S3
- * @param {string} bucket - S3 bucket name
- * @param {string} key - S3 object key
- * @returns {Promise<Buffer>} - Excel file as buffer
- */
+// Initialize client
+const s3Client = new S3Client();
+
 async function downloadExcelFile(bucket, key) {
   console.log(`Downloading Excel file from s3://${bucket}/${key}`);
+  try {
+    const params = { Bucket: bucket, Key: key };
+    const response = await s3Client.send(new GetObjectCommand(params));
 
-  const params = {
-    Bucket: bucket,
-    Key: key
-  };
+    // Convert readable stream to buffer
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error(`Error downloading Excel file: ${error.message}`);
+    throw new Error(`Failed to download Excel file: ${error.message}`);
+  }
+}
 
-  const response = await s3.getObject(params).promise();
-  return response.Body;
+/**
+ * Extract meaningful content from Excel data
+ */
+function extractTextualContent(sheetData) {
+  if (!sheetData || !Array.isArray(sheetData) || sheetData.length === 0) return '';
+
+  return sheetData.map(row => {
+    return Object.entries(row)
+      .map(([key, val]) => {
+        if (val !== null && val !== undefined && val !== '') {
+          return `${key}: ${val}`;
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .join(', ');
+  }).join('\n');
 }
 
 /**
  * General parser that extracts all data from all sheets
- * @param {Buffer} fileBuffer - Excel file buffer
- * @returns {Object} - Parsed data with sheet names as keys
  */
 function generalParser(fileBuffer) {
   console.log('Using general parser to extract all sheets');
 
-  // Read the workbook from buffer
-  const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+  // Read the workbook with full options for better data extraction
+  const workbook = XLSX.read(fileBuffer, {
+    type: 'buffer',
+    cellFormula: true,
+    cellStyles: true,
+    cellDates: true,
+    cellNF: true
+  });
+
   const result = {};
+  let textContent = '';
 
   // Process each sheet
   workbook.SheetNames.forEach(sheetName => {
-    const worksheet = workbook.Sheets[sheetName];
-    // Convert sheet to JSON
-    const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-    result[sheetName] = sheetData;
+    try {
+      const worksheet = workbook.Sheets[sheetName];
+      // Convert sheet to JSON with headers
+      const sheetData = XLSX.utils.sheet_to_json(worksheet, {
+        defval: '',
+        header: 'A',
+        range: 0
+      });
+
+      // Also get the data with column headers for better text representation
+      const sheetDataWithHeaders = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+      // Store the full JSON data
+      result[sheetName] = sheetData;
+
+      // Build text representation
+      textContent += `### Sheet: ${sheetName} ###\n`;
+
+      // Format headers if available
+      if (sheetDataWithHeaders.length > 0) {
+        textContent += `Headers: ${Object.keys(sheetDataWithHeaders[0]).join(', ')}\n\n`;
+      }
+
+      // Format data rows
+      sheetDataWithHeaders.forEach((row, idx) => {
+        const rowText = Object.entries(row)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(' | ');
+        textContent += `Row ${idx+1}: ${rowText}\n`;
+      });
+
+      textContent += '\n\n';
+    } catch (error) {
+      console.warn(`Error processing sheet ${sheetName}: ${error.message}`);
+      result[sheetName] = { error: error.message };
+      textContent += `### Error processing sheet ${sheetName}: ${error.message} ###\n\n`;
+    }
   });
 
-  return result;
+  return {
+    sheets: result,
+    textContent: textContent.trim(),
+    metadata: {
+      sheetNames: workbook.SheetNames,
+      sheetCount: workbook.SheetNames.length
+    }
+  };
 }
 
 /**
- * Bid parser that specifically looks for 'Supplier Bid Upload' sheet
- * @param {Buffer} fileBuffer - Excel file buffer
- * @returns {Object} - Parsed bid data
+ * Bid parser that specifically looks for procurement-related sheets
  */
 function bidParser(fileBuffer) {
-  console.log('Using bid parser to extract Supplier Bid Upload sheet');
+  console.log('Using specialized bid parser');
 
-  // Read the workbook from buffer
-  const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+  // Read the workbook with full options
+  const workbook = XLSX.read(fileBuffer, {
+    type: 'buffer',
+    cellFormula: true,
+    cellStyles: true,
+    cellDates: true,
+    cellNF: true
+  });
 
-  // Check if the required sheet exists
-  const targetSheetName = 'Supplier Bid Upload';
-  if (!workbook.SheetNames.includes(targetSheetName)) {
-    console.warn(`Sheet '${targetSheetName}' not found in the workbook`);
-    return { error: `Required sheet '${targetSheetName}' not found` };
+  // Look for commonly used procurement sheet names
+  const bidSheetNames = ['Supplier Bid', 'Supplier Bid Upload', 'Pricing', 'Quote', 'Costs', 'Bid'];
+  const foundSheets = {};
+  let textContent = '';
+
+  // First check for exact matches
+  for (const targetName of bidSheetNames) {
+    if (workbook.SheetNames.includes(targetName)) {
+      const worksheet = workbook.Sheets[targetName];
+      const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      foundSheets[targetName] = sheetData;
+
+      // Build text representation
+      textContent += `### Bid Sheet: ${targetName} (EXACT MATCH) ###\n`;
+      if (sheetData.length > 0) {
+        textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
+      }
+
+      sheetData.forEach((row, idx) => {
+        const rowText = Object.entries(row)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(' | ');
+        textContent += `Row ${idx+1}: ${rowText}\n`;
+      });
+
+      textContent += '\n\n';
+    }
   }
 
-  // Extract data from the target sheet
-  const worksheet = workbook.Sheets[targetSheetName];
-  const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+  // If no exact matches, look for partial matches
+  if (Object.keys(foundSheets).length === 0) {
+    for (const sheetName of workbook.SheetNames) {
+      const lowerSheetName = sheetName.toLowerCase();
+      if (bidSheetNames.some(bidName => lowerSheetName.includes(bidName.toLowerCase()))) {
+        const worksheet = workbook.Sheets[sheetName];
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+        foundSheets[sheetName] = sheetData;
+
+        // Build text representation
+        textContent += `### Bid Sheet: ${sheetName} (PARTIAL MATCH) ###\n`;
+        if (sheetData.length > 0) {
+          textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
+        }
+
+        sheetData.forEach((row, idx) => {
+          const rowText = Object.entries(row)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(' | ');
+          textContent += `Row ${idx+1}: ${rowText}\n`;
+        });
+
+        textContent += '\n\n';
+      }
+    }
+  }
+
+  // If still no bid sheets found, check content of sheets for bid-related keywords
+  if (Object.keys(foundSheets).length === 0) {
+    const keywordPatterns = [
+      /price/i, /cost/i, /quote/i, /bid/i, /offer/i, /proposal/i, /unit/i,
+      /quantity/i, /total/i, /amount/i, /vendor/i, /supplier/i
+    ];
+
+    for (const sheetName of workbook.SheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+      const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+      // Check if headers contain bid-related keywords
+      if (sheetData.length > 0) {
+        const headers = Object.keys(sheetData[0]);
+        if (headers.some(header => keywordPatterns.some(pattern => pattern.test(header)))) {
+          foundSheets[sheetName] = sheetData;
+
+          // Build text representation
+          textContent += `### Bid Sheet: ${sheetName} (KEYWORD MATCH) ###\n`;
+          textContent += `Headers: ${headers.join(', ')}\n\n`;
+
+          sheetData.forEach((row, idx) => {
+            const rowText = Object.entries(row)
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(' | ');
+            textContent += `Row ${idx+1}: ${rowText}\n`;
+          });
+
+          textContent += '\n\n';
+        }
+      }
+    }
+  }
+
+  // If still no bid sheets found, return the first sheet as fallback
+  if (Object.keys(foundSheets).length === 0 && workbook.SheetNames.length > 0) {
+    const firstSheet = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheet];
+    const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    foundSheets[firstSheet] = sheetData;
+
+    // Build text representation
+    textContent += `### Default Sheet: ${firstSheet} (FALLBACK) ###\n`;
+    if (sheetData.length > 0) {
+      textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
+    }
+
+    sheetData.forEach((row, idx) => {
+      const rowText = Object.entries(row)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(' | ');
+      textContent += `Row ${idx+1}: ${rowText}\n`;
+    });
+  }
 
   return {
-    [targetSheetName]: sheetData
+    sheets: foundSheets,
+    textContent: textContent.trim(),
+    metadata: {
+      sheetNames: Object.keys(foundSheets),
+      sheetCount: Object.keys(foundSheets).length,
+      allSheets: workbook.SheetNames
+    }
   };
+}
+
+/**
+ * Extract key-value pairs that look like procurement data
+ */
+function extractProcurementData(parsedData) {
+  const results = {
+    prices: [],
+    quantities: [],
+    partNumbers: [],
+    dates: []
+  };
+
+  // Process each sheet
+  Object.values(parsedData.sheets).forEach(sheetData => {
+    if (!Array.isArray(sheetData)) return;
+
+    sheetData.forEach(row => {
+      // Look for pricing information
+      Object.entries(row).forEach(([key, value]) => {
+        const keyLower = String(key).toLowerCase();
+
+        // Extract prices
+        if (value && typeof value === 'number' &&
+            (keyLower.includes('price') || keyLower.includes('cost') ||
+             keyLower.includes('amount') || keyLower.includes('total'))) {
+          results.prices.push({ key, value });
+        }
+
+        // Extract quantities
+        if (value && typeof value === 'number' &&
+            (keyLower.includes('qty') || keyLower.includes('quantity') ||
+             keyLower.includes('units'))) {
+          results.quantities.push({ key, value });
+        }
+
+        // Extract part numbers
+        if (value && typeof value === 'string' &&
+            (keyLower.includes('part') || keyLower.includes('sku') ||
+             keyLower.includes('item') || keyLower.includes('model'))) {
+          results.partNumbers.push({ key, value });
+        }
+
+        // Extract dates
+        if (value instanceof Date ||
+            (typeof value === 'string' &&
+             /\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(value))) {
+          results.dates.push({ key, value: value instanceof Date ? value.toISOString() : value });
+        }
+      });
+    });
+  });
+
+  return results;
 }
 
 exports.handler = async (event) => {
   console.log('Extracting Excel data', JSON.stringify(event, null, 2));
 
-  const { s3Bucket, s3Key, documentId, parserType = 'general-parser' } = event;
+  const { s3Bucket, s3Key, documentId, useCase = 'general' } = event;
 
   try {
     // Download the Excel file from S3
     const fileBuffer = await downloadExcelFile(s3Bucket, s3Key);
 
-    // Determine which parser to use
+    // Determine which parser to use based on useCase
     let parsedData;
     let parserUsed;
 
-    if (parserType === 'bid-parser') {
+    if (useCase === 'bid-analysis' || useCase === 'bid-parser' || useCase === 'CODE_INTERPRETER') {
       parsedData = bidParser(fileBuffer);
       parserUsed = 'bid-parser';
     } else {
@@ -93,22 +324,59 @@ exports.handler = async (event) => {
       parserUsed = 'general-parser';
     }
 
-    console.log(`Successfully parsed Excel file using ${parserUsed}`);
+    // Extract procurement-specific data for better analysis
+    const procurementData = extractProcurementData(parsedData);
+    parsedData.procurement = procurementData;
 
+    console.log(`Successfully parsed Excel file using ${parserUsed}, found ${parsedData.metadata.sheetCount} relevant sheets`);
+
+    // Return the extraction result
     return {
       ...event,
-      extractedText: JSON.stringify(parsedData),
-      textExtractionMethod: `excel-parser:${parserUsed}`
+      extractedText: parsedData.textContent,
+      extractedData: parsedData,
+      textExtractionMethod: `excel-parser:${parserUsed}`,
+      extractionMetadata: {
+        timestamp: new Date().toISOString(),
+        sheetCount: parsedData.metadata.sheetCount,
+        dataPoints: {
+          prices: procurementData.prices.length,
+          quantities: procurementData.quantities.length,
+          partNumbers: procurementData.partNumbers.length,
+          dates: procurementData.dates.length
+        }
+      }
     };
   } catch (error) {
     console.error('Error extracting Excel data:', error);
-    return {
-      ...event,
-      error: {
-        message: `Failed to parse Excel file: ${error.message}`,
-        stack: error.stack
-      },
-      textExtractionMethod: 'excel-parser:failed'
-    };
+
+    // Try a simpler approach as fallback
+    try {
+      console.log('Attempting fallback CSV-like parsing...');
+      // Create simplified text representation from the file
+      const fileContent = await downloadExcelFile(s3Bucket, s3Key);
+      const textContent = fileContent.toString('utf-8', 0, Math.min(fileContent.length, 10000));
+
+      return {
+        ...event,
+        extractedText: `Warning: Excel parsing failed. Extracted partial content:\n\n${textContent}`,
+        error: {
+          message: error.message,
+          stack: error.stack
+        },
+        textExtractionMethod: 'excel-parser:fallback'
+      };
+    } catch (fallbackError) {
+      // If even the fallback fails, return a useful error
+      return {
+        ...event,
+        extractedText: `Error extracting data from Excel file: ${error.message}. The analysis will continue with limited information.`,
+        error: {
+          message: error.message,
+          stack: error.stack
+        },
+        textExtractionMethod: 'excel-parser:error'
+      };
+    }
   }
 };

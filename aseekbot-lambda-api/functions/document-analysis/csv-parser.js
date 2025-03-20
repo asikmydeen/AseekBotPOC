@@ -1,25 +1,32 @@
 // functions/document-analysis/csv-parser.js
-const AWS = require('aws-sdk');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
-const s3 = new AWS.S3();
 
-/**
- * Downloads a CSV file from S3
- * @param {string} bucket - S3 bucket name
- * @param {string} key - S3 object key
- * @returns {Promise<Buffer>} - File buffer
- */
+// Initialize client
+const s3Client = new S3Client();
+
 const downloadCsvFile = async (bucket, key) => {
   console.log(`Downloading CSV file from s3://${bucket}/${key}`);
 
-  const params = {
-    Bucket: bucket,
-    Key: key
-  };
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key
+    });
 
-  const response = await s3.getObject(params).promise();
-  return response.Body;
+    const response = await s3Client.send(command);
+
+    // Convert readable stream to buffer
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error(`Error downloading CSV file: ${error.message}`);
+    throw error;
+  }
 };
 
 /**

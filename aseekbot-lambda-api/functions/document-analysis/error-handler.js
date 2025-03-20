@@ -1,6 +1,10 @@
 // functions/document-analysis/error-handler.js
-const AWS = require('aws-sdk');
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+
+// Initialize clients
+const dynamoClient = new DynamoDBClient();
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 exports.handler = async (event) => {
   console.log('Handling error', JSON.stringify(event, null, 2));
@@ -12,7 +16,7 @@ exports.handler = async (event) => {
     console.error(`Error in document analysis (${errorType}):`, error);
 
     // Record error in DynamoDB
-    await dynamoDB.put({
+    await docClient.send(new PutCommand({
       TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
       Item: {
         documentId,
@@ -21,7 +25,7 @@ exports.handler = async (event) => {
         errorMessage: error.message || JSON.stringify(error),
         timestamp: new Date().toISOString()
       }
-    }).promise();
+    }));
 
     return {
       ...event,

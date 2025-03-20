@@ -46,6 +46,44 @@ if [[ -z "$AWS_S3_BUCKET_NAME" ]]; then
     export AWS_S3_BUCKET_NAME
 fi
 
+# Create AWS SDK v3 Lambda Layer
+create_aws_sdk_layer() {
+    echo -e "\n${BOLD}${CYAN}Creating AWS SDK v3 Lambda Layer...${NC}"
+
+    # Create layer directory structure
+    mkdir -p layers/aws-sdk-v3/nodejs
+    cd layers/aws-sdk-v3/nodejs
+
+    # Initialize package.json
+    echo -e "${YELLOW}Initializing package.json for AWS SDK v3 layer...${NC}"
+    cat > package.json << EOF
+{
+  "name": "aws-sdk-v3-layer",
+  "version": "1.0.0",
+  "description": "AWS SDK v3 and utility libraries for Lambda functions",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.465.0",
+    "@aws-sdk/client-dynamodb": "^3.465.0",
+    "@aws-sdk/lib-dynamodb": "^3.465.0",
+    "@aws-sdk/client-textract": "^3.465.0",
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.465.0",
+    "@aws-sdk/client-sfn": "^3.465.0",
+    "xlsx": "^0.18.5",
+    "csv-parser": "^3.0.0"
+  }
+}
+EOF
+
+    # Install dependencies
+    echo -e "${YELLOW}Installing AWS SDK v3 layer dependencies (this may take a few minutes)...${NC}"
+    npm install
+
+    # Back to project root
+    cd ../../..
+
+    echo -e "${GREEN}AWS SDK v3 Lambda Layer created successfully${NC}"
+}
+
 # Step Functions deployment function
 deploy_step_functions() {
     echo -e "\n${BOLD}${CYAN}Deploying Document Analysis Step Functions Workflow...${NC}"
@@ -146,8 +184,80 @@ deploy_step_functions() {
 deploy_backend() {
     echo -e "\n${BOLD}${CYAN}Deploying Backend Lambda Functions...${NC}"
 
+    # Create the AWS SDK v3 Lambda Layer first
+    create_aws_sdk_layer
+
     # Navigate to backend directory
     cd aseekbot-lambda-api || exit 1
+
+    # Check if we need to update functions to use AWS SDK v3
+    echo -e "${YELLOW}Checking Lambda functions for AWS SDK v3 compatibility...${NC}"
+
+    # Update key Lambda functions to use AWS SDK v3
+    update_status_updater=false
+
+    if grep -q "require('aws-sdk')" functions/document-analysis/status-updater.js 2>/dev/null; then
+        echo -e "${YELLOW}Updating status-updater.js to use AWS SDK v3...${NC}"
+        update_status_updater=true
+    fi
+
+    if [ "$update_status_updater" = true ]; then
+        cat > functions/document-analysis/status-updater.js << 'EOF'
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+
+// Initialize clients
+const dynamoClient = new DynamoDBClient();
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
+
+exports.handler = async (event) => {
+  console.log('Updating document status:', JSON.stringify(event, null, 2));
+
+  try {
+    // Extract status update information
+    const {
+      documentId,
+      userId,
+      status,
+      message,
+      resultLocation,
+    } = event;
+
+    // Create item to save in DynamoDB
+    const item = {
+      documentId,
+      userId,
+      status,
+      message,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add optional fields if they exist
+    if (resultLocation) item.resultLocation = resultLocation;
+
+    // Save original input fields that need to be preserved
+    if (event.s3Bucket) item.s3Bucket = event.s3Bucket;
+    if (event.s3Key) item.s3Key = event.s3Key;
+    if (event.fileType) item.fileType = event.fileType;
+
+    // Update status in DynamoDB
+    await docClient.send(new PutCommand({
+      TableName: process.env.DOCUMENT_ANALYSIS_STATUS_TABLE || 'DocumentAnalysisStatus',
+      Item: item
+    }));
+
+    console.log(`Status updated for document ${documentId}: ${status}`);
+
+    // IMPORTANT: Return the complete input with all the original fields
+    // This ensures the next state has access to all required fields
+    return event;
+  } catch (error) {
+    console.error('Error updating status:', error);
+    throw error;
+  }
+};
+EOF
+    fi
 
     # Ask if deploying specific function or all
     echo -e "\n${BOLD}Would you like to deploy a specific Lambda function or all functions?${NC}"

@@ -1,0 +1,8 @@
+{
+    "name": "document-analysis-functions",
+    "version": "1.0.0",
+    "description": "Lambda functions for document analysis",
+    "dependencies": {
+        "xlsx": "^0.18.5"
+    }
+}
