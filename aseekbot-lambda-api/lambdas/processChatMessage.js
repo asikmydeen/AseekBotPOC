@@ -8,14 +8,22 @@ const { handleApiError } = require('../utils/apiErrorHandler');
 const app = express();
 app.use(express.json());
 
-// Add CORS middleware
+// Updated CORS middleware section in lambdas/processChatMessage.js
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Allow requests from any origin
+  res.header('Access-Control-Allow-Origin', '*');
+
+  // Allow specific HTTP methods
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+
+  // Allow specific headers
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    return res.status(200).send();
   }
+
   next();
 });
 

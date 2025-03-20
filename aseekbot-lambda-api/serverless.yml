@@ -63,7 +63,16 @@ functions:
       - http:
           path: processChatMessage
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Requested-With
+            allowCredentials: false
   uploadFile:
     handler: lambdas/uploadFile.handler
     layers:
