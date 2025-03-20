@@ -1,8 +1,43 @@
 // functions/document-analysis/content-analyzer.js
-const { BedrockRuntimeClient } = require('@aws-sdk/client-bedrock-runtime');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
-// Initialize client
-const bedrockClient = new BedrockRuntimeClient();
+// Initialize S3 client
+const s3Client = new S3Client();
+
+/**
+ * Fetches Excel parsing results from S3 if available
+ */
+async function getExcelDataFromS3(event) {
+  if (event.excelParsingResults && event.excelParsingResults.s3Reference) {
+    try {
+      const ref = event.excelParsingResults.s3Reference;
+      console.log(`Retrieving Excel parsing data from S3: ${ref.s3Bucket}/${ref.s3Key}`);
+
+      const command = new GetObjectCommand({
+        Bucket: ref.s3Bucket,
+        Key: ref.s3Key
+      });
+
+      const response = await s3Client.send(command);
+
+      // Convert stream to text
+      const chunks = [];
+      for await (const chunk of response.Body) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const text = buffer.toString('utf-8');
+
+      // Parse JSON data
+      return JSON.parse(text);
+    } catch (error) {
+      console.error(`Error retrieving Excel data from S3: ${error.message}`);
+      // Return null if we can't get the data, we'll fall back to the extracted text
+      return null;
+    }
+  }
+  return null;
+}
 
 exports.handler = async (event) => {
   console.log('Analyzing content', JSON.stringify(event, null, 2));
@@ -15,8 +50,16 @@ exports.handler = async (event) => {
       throw new Error('No text content provided for analysis');
     }
 
+    // Get Excel data from S3 if available
+    const excelData = await getExcelDataFromS3(event);
+
+    // Use the additional data for richer analysis if available
+    const enhancedText = excelData ?
+      `${extractedText}\n\nAdditional Excel Data Available: ${excelData.metadata.sheetCount} sheets` :
+      extractedText;
+
     // Some simple rule-based analysis before using AI
-    const lowerText = extractedText.toLowerCase();
+    const lowerText = enhancedText.toLowerCase();
 
     const basicAnalysis = {
       documentType: determineDocumentType(lowerText, fileType),
@@ -25,17 +68,17 @@ exports.handler = async (event) => {
       isProcurementDocument: isProcurementRelated(lowerText)
     };
 
-    // You could use Amazon Bedrock for more sophisticated analysis
-    // For now, we'll implement a simplified version
-
     // Identify potential vendors
-    const vendors = extractVendors(lowerText);
+    const vendors = excelData?.procurement?.partNumbers?.map(item => item.value) ||
+      extractVendors(lowerText);
 
     // Extract price information
-    const prices = extractPrices(extractedText);
+    const prices = excelData?.procurement?.prices?.map(item => ({ raw: `${item.key}: ${item.value}` })) ||
+      extractPrices(extractedText);
 
     // Extract dates
-    const dates = extractDates(extractedText);
+    const dates = excelData?.procurement?.dates?.map(item => item.value) ||
+      extractDates(extractedText);
 
     // Identify product names
     const products = extractProducts(lowerText);
@@ -50,7 +93,7 @@ exports.handler = async (event) => {
       entities: {
         vendors,
         products,
-        prices: prices.map(p => p.raw)
+        prices: prices.map(p => p.raw || p)
       },
       sentiment,
       confidenceScore: 0.85, // In a real implementation, this would vary
@@ -60,6 +103,20 @@ exports.handler = async (event) => {
         dates
       }
     };
+
+    // Add Excel-specific information if available
+    if (excelData) {
+      analysisResults.excelAnalysis = {
+        sheetCount: excelData.metadata.sheetCount,
+        sheetNames: excelData.metadata.sheetNames || [],
+        dataPoints: excelData.procurement ?
+          Object.keys(excelData.procurement).reduce((acc, key) => {
+            acc[key] = Array.isArray(excelData.procurement[key]) ?
+              excelData.procurement[key].length : 0;
+            return acc;
+          }, {}) : {}
+      };
+    }
 
     return {
       ...event,
@@ -84,6 +141,8 @@ function determineDocumentType(text, fileType) {
     return 'Technical Specification';
   } else if (text.includes('rfp') || text.includes('request for proposal')) {
     return 'RFP Document';
+  } else if (fileType === 'xlsx' || fileType === 'csv') {
+    return 'Spreadsheet Data';
   } else {
     return 'Procurement Document';
   }
@@ -256,7 +315,7 @@ function generateKeyFindings(basicAnalysis, vendors, prices, dates) {
 
   // Price findings
   if (prices.length > 0) {
-    findings.push(`Contains pricing information: ${prices.slice(0, 3).map(p => p.raw).join(', ')}${prices.length > 3 ? '...' : ''}`);
+    findings.push(`Contains pricing information: ${prices.slice(0, 3).map(p => typeof p === 'string' ? p : p.raw).join(', ')}${prices.length > 3 ? '...' : ''}`);
   }
 
   // Date findings

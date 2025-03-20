@@ -1,5 +1,5 @@
 // functions/document-analysis/excel-parser.js
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const XLSX = require('xlsx');
 
 // Initialize client
@@ -75,7 +75,7 @@ function generalParser(fileBuffer) {
       const sheetDataWithHeaders = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
       // Store the full JSON data
-      result[sheetName] = sheetData;
+      result[sheetName] = sheetDataWithHeaders;
 
       // Build text representation
       textContent += `### Sheet: ${sheetName} ###\n`;
@@ -85,13 +85,18 @@ function generalParser(fileBuffer) {
         textContent += `Headers: ${Object.keys(sheetDataWithHeaders[0]).join(', ')}\n\n`;
       }
 
-      // Format data rows
-      sheetDataWithHeaders.forEach((row, idx) => {
+      // Format data rows (limit text representation to first 100 rows to keep manageable)
+      const rowsToShow = Math.min(100, sheetDataWithHeaders.length);
+      sheetDataWithHeaders.slice(0, rowsToShow).forEach((row, idx) => {
         const rowText = Object.entries(row)
           .map(([key, value]) => `${key}: ${value}`)
           .join(' | ');
-        textContent += `Row ${idx+1}: ${rowText}\n`;
+        textContent += `Row ${idx + 1}: ${rowText}\n`;
       });
+
+      if (sheetDataWithHeaders.length > rowsToShow) {
+        textContent += `... and ${sheetDataWithHeaders.length - rowsToShow} more rows\n`;
+      }
 
       textContent += '\n\n';
     } catch (error) {
@@ -144,12 +149,18 @@ function bidParser(fileBuffer) {
         textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
       }
 
-      sheetData.forEach((row, idx) => {
+      // Show first 100 rows in text representation
+      const rowsToShow = Math.min(100, sheetData.length);
+      sheetData.slice(0, rowsToShow).forEach((row, idx) => {
         const rowText = Object.entries(row)
           .map(([key, value]) => `${key}: ${value}`)
           .join(' | ');
-        textContent += `Row ${idx+1}: ${rowText}\n`;
+        textContent += `Row ${idx + 1}: ${rowText}\n`;
       });
+
+      if (sheetData.length > rowsToShow) {
+        textContent += `... and ${sheetData.length - rowsToShow} more rows\n`;
+      }
 
       textContent += '\n\n';
     }
@@ -170,12 +181,18 @@ function bidParser(fileBuffer) {
           textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
         }
 
-        sheetData.forEach((row, idx) => {
+        // Show first 100 rows in text representation
+        const rowsToShow = Math.min(100, sheetData.length);
+        sheetData.slice(0, rowsToShow).forEach((row, idx) => {
           const rowText = Object.entries(row)
             .map(([key, value]) => `${key}: ${value}`)
             .join(' | ');
-          textContent += `Row ${idx+1}: ${rowText}\n`;
+          textContent += `Row ${idx + 1}: ${rowText}\n`;
         });
+
+        if (sheetData.length > rowsToShow) {
+          textContent += `... and ${sheetData.length - rowsToShow} more rows\n`;
+        }
 
         textContent += '\n\n';
       }
@@ -203,12 +220,18 @@ function bidParser(fileBuffer) {
           textContent += `### Bid Sheet: ${sheetName} (KEYWORD MATCH) ###\n`;
           textContent += `Headers: ${headers.join(', ')}\n\n`;
 
-          sheetData.forEach((row, idx) => {
+          // Show first 100 rows in text representation
+          const rowsToShow = Math.min(100, sheetData.length);
+          sheetData.slice(0, rowsToShow).forEach((row, idx) => {
             const rowText = Object.entries(row)
               .map(([key, value]) => `${key}: ${value}`)
               .join(' | ');
-            textContent += `Row ${idx+1}: ${rowText}\n`;
+            textContent += `Row ${idx + 1}: ${rowText}\n`;
           });
+
+          if (sheetData.length > rowsToShow) {
+            textContent += `... and ${sheetData.length - rowsToShow} more rows\n`;
+          }
 
           textContent += '\n\n';
         }
@@ -229,12 +252,18 @@ function bidParser(fileBuffer) {
       textContent += `Headers: ${Object.keys(sheetData[0]).join(', ')}\n\n`;
     }
 
-    sheetData.forEach((row, idx) => {
+    // Show first 100 rows in text representation
+    const rowsToShow = Math.min(100, sheetData.length);
+    sheetData.slice(0, rowsToShow).forEach((row, idx) => {
       const rowText = Object.entries(row)
         .map(([key, value]) => `${key}: ${value}`)
         .join(' | ');
-      textContent += `Row ${idx+1}: ${rowText}\n`;
+      textContent += `Row ${idx + 1}: ${rowText}\n`;
     });
+
+    if (sheetData.length > rowsToShow) {
+      textContent += `... and ${sheetData.length - rowsToShow} more rows\n`;
+    }
   }
 
   return {
@@ -268,32 +297,40 @@ function extractProcurementData(parsedData) {
       Object.entries(row).forEach(([key, value]) => {
         const keyLower = String(key).toLowerCase();
 
-        // Extract prices
+        // Extract prices (limit to 50 items each to avoid excessive data)
         if (value && typeof value === 'number' &&
-            (keyLower.includes('price') || keyLower.includes('cost') ||
-             keyLower.includes('amount') || keyLower.includes('total'))) {
-          results.prices.push({ key, value });
+          (keyLower.includes('price') || keyLower.includes('cost') ||
+            keyLower.includes('amount') || keyLower.includes('total'))) {
+          if (results.prices.length < 50) {
+            results.prices.push({ key, value });
+          }
         }
 
         // Extract quantities
         if (value && typeof value === 'number' &&
-            (keyLower.includes('qty') || keyLower.includes('quantity') ||
-             keyLower.includes('units'))) {
-          results.quantities.push({ key, value });
+          (keyLower.includes('qty') || keyLower.includes('quantity') ||
+            keyLower.includes('units'))) {
+          if (results.quantities.length < 50) {
+            results.quantities.push({ key, value });
+          }
         }
 
         // Extract part numbers
         if (value && typeof value === 'string' &&
-            (keyLower.includes('part') || keyLower.includes('sku') ||
-             keyLower.includes('item') || keyLower.includes('model'))) {
-          results.partNumbers.push({ key, value });
+          (keyLower.includes('part') || keyLower.includes('sku') ||
+            keyLower.includes('item') || keyLower.includes('model'))) {
+          if (results.partNumbers.length < 50) {
+            results.partNumbers.push({ key, value });
+          }
         }
 
         // Extract dates
         if (value instanceof Date ||
-            (typeof value === 'string' &&
-             /\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(value))) {
-          results.dates.push({ key, value: value instanceof Date ? value.toISOString() : value });
+          (typeof value === 'string' &&
+            /\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(value))) {
+          if (results.dates.length < 50) {
+            results.dates.push({ key, value: value instanceof Date ? value.toISOString() : value });
+          }
         }
       });
     });
@@ -302,16 +339,50 @@ function extractProcurementData(parsedData) {
   return results;
 }
 
+/**
+ * Store Excel parsing results in S3 and return a reference
+ */
+async function storeParsingResultInS3(s3Bucket, documentId, parsedData) {
+  try {
+    // Generate a unique S3 key for the parsing results
+    const s3Key = `document-analysis/${documentId}/excel-parsing-results.json`;
+
+    // Save the full parsed data to S3
+    await s3Client.send(new PutObjectCommand({
+      Bucket: s3Bucket,
+      Key: s3Key,
+      Body: JSON.stringify(parsedData),
+      ContentType: 'application/json'
+    }));
+
+    console.log(`Successfully stored parsing results in S3: s3://${s3Bucket}/${s3Key}`);
+
+    return {
+      s3Bucket,
+      s3Key,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error storing parsing results in S3:', error);
+    throw error;
+  }
+}
+
 exports.handler = async (event) => {
   console.log('Extracting Excel data', JSON.stringify(event, null, 2));
 
-  const { s3Bucket, s3Key, documentId, useCase = 'general' } = event;
+  const { s3Bucket, s3Key, documentId, fileType } = event;
+
+  // Extract the useCase from the event - this will help determine which parser to use
+  // Default to 'general' if not specified
+  const useCase = event.useCase || 'general';
+  console.log(`Using use case: ${useCase}`);
 
   try {
     // Download the Excel file from S3
     const fileBuffer = await downloadExcelFile(s3Bucket, s3Key);
 
-    // Determine which parser to use based on useCase
+    // Determine which parser to use based on useCase parameter
     let parsedData;
     let parserUsed;
 
@@ -330,53 +401,43 @@ exports.handler = async (event) => {
 
     console.log(`Successfully parsed Excel file using ${parserUsed}, found ${parsedData.metadata.sheetCount} relevant sheets`);
 
-    // Return the extraction result
+    // Store the full parsed data in S3 to avoid Step Functions payload limits
+    const parsingResultRef = await storeParsingResultInS3(s3Bucket, documentId, parsedData);
+
+    // Extract a subset of text for immediate use in the state machine (keep this small)
+    // Extract first 1000 chars for preview
+    const textPreview = parsedData.textContent.substring(0, 1000) +
+      (parsedData.textContent.length > 1000 ? '...(truncated for preview)' : '');
+
+    // Return a lightweight response with a reference to the S3 data
     return {
       ...event,
-      extractedText: parsedData.textContent,
-      extractedData: parsedData,
+      extractedText: parsedData.textContent,  // This is needed for next steps
       textExtractionMethod: `excel-parser:${parserUsed}`,
-      extractionMetadata: {
-        timestamp: new Date().toISOString(),
+      excelParsingResults: {
+        s3Reference: parsingResultRef,
+        textPreview: textPreview,
         sheetCount: parsedData.metadata.sheetCount,
-        dataPoints: {
-          prices: procurementData.prices.length,
-          quantities: procurementData.quantities.length,
-          partNumbers: procurementData.partNumbers.length,
-          dates: procurementData.dates.length
+        // Include minimal metadata that won't exceed size limits
+        metadata: {
+          sheetNames: parsedData.metadata.sheetNames,
+          timestamp: new Date().toISOString(),
+          parserUsed: parserUsed
         }
       }
     };
   } catch (error) {
     console.error('Error extracting Excel data:', error);
 
-    // Try a simpler approach as fallback
-    try {
-      console.log('Attempting fallback CSV-like parsing...');
-      // Create simplified text representation from the file
-      const fileContent = await downloadExcelFile(s3Bucket, s3Key);
-      const textContent = fileContent.toString('utf-8', 0, Math.min(fileContent.length, 10000));
-
-      return {
-        ...event,
-        extractedText: `Warning: Excel parsing failed. Extracted partial content:\n\n${textContent}`,
-        error: {
-          message: error.message,
-          stack: error.stack
-        },
-        textExtractionMethod: 'excel-parser:fallback'
-      };
-    } catch (fallbackError) {
-      // If even the fallback fails, return a useful error
-      return {
-        ...event,
-        extractedText: `Error extracting data from Excel file: ${error.message}. The analysis will continue with limited information.`,
-        error: {
-          message: error.message,
-          stack: error.stack
-        },
-        textExtractionMethod: 'excel-parser:error'
-      };
-    }
+    // Return a useful error response
+    return {
+      ...event,
+      extractedText: `Error extracting data from Excel file: ${error.message}. The analysis will proceed with limited information.`,
+      error: {
+        message: error.message,
+        stack: error.stack
+      },
+      textExtractionMethod: 'excel-parser:error'
+    };
   }
 };
