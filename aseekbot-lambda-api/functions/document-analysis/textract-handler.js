@@ -1,4 +1,4 @@
-// functions/document-analysis/textract-pdf.js
+// functions/document-analysis/textract-handler.js
 const { S3Client, GetObjectCommand, HeadObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
 const {
   TextractClient,
@@ -56,9 +56,9 @@ async function storeContentInS3(s3Bucket, documentId, content, contentType) {
 }
 
 exports.handler = async (event) => {
-  console.log('Extracting PDF text using Textract', JSON.stringify(event, null, 2));
+  console.log('Extracting document text using Textract', JSON.stringify(event, null, 2));
 
-  const { s3Bucket, s3Key, documentId } = event;
+  const { s3Bucket, s3Key, documentId, fileType } = event;
   let fileSize = 0;
   let extractedText = '';
   let extractionMethods = [];
@@ -75,7 +75,7 @@ exports.handler = async (event) => {
 
     // Check the file size
     fileSize = s3Response.ContentLength;
-    console.log(`PDF file size: ${fileSize} bytes`);
+    console.log(`Document file size: ${fileSize} bytes, type: ${fileType}`);
 
     // For small files (<5MB), use synchronous DetectDocumentText and AnalyzeDocument
     if (fileSize < 5 * 1024 * 1024) {
@@ -338,13 +338,13 @@ exports.handler = async (event) => {
     // Store large text content in S3 if needed
     if (isTextTooLarge) {
       console.log(`Extracted text too large (${extractedText.length} chars), storing in S3`);
-      textRef = await storeContentInS3(s3Bucket, documentId, extractedText, 'pdf-extracted-text');
+      textRef = await storeContentInS3(s3Bucket, documentId, extractedText, `${fileType}-extracted-text`);
     }
 
     // Store blocks data in S3 if it's large
     if (blocksData.length > 1000) {
       console.log(`Blocks data large (${blocksData.length} blocks), storing in S3`);
-      blocksRef = await storeContentInS3(s3Bucket, documentId, blocksData, 'pdf-blocks');
+      blocksRef = await storeContentInS3(s3Bucket, documentId, blocksData, `${fileType}-blocks`);
     }
 
     // Prepare text content for the response
@@ -352,14 +352,14 @@ exports.handler = async (event) => {
       ? extractedText.substring(0, 50000) + '... (truncated, full content in S3)'
       : extractedText;
 
-    console.log(`Successfully extracted text using methods: ${extractionMethods.join(', ')}`);
+    console.log(`Successfully extracted text from ${fileType} file using methods: ${extractionMethods.join(', ')}`);
 
     // Return the extracted text along with metadata
     return {
       ...event,
       extractedText: textForResponse,
       textExtractionMethod: extractionMethods.join('+'),
-      pdfParsingResults: {
+      textractResults: {
         textRef,
         blocksRef,
         textPreview: extractedText.substring(0, 500) +
@@ -367,6 +367,7 @@ exports.handler = async (event) => {
       },
       extractionDetails: {
         fileSize,
+        fileType,
         timestamp: new Date().toISOString(),
         characterCount: extractedText.length,
         lineCount: extractedText.split('\n').length,
@@ -376,7 +377,7 @@ exports.handler = async (event) => {
       }
     };
   } catch (error) {
-    console.error('Error extracting PDF text:', error);
+    console.error(`Error extracting text from ${fileType} file:`, error);
 
     // Return a lightweight error response
     return {
@@ -386,7 +387,6 @@ exports.handler = async (event) => {
       error: {
         message: error.message,
         name: error.name
-        // Exclude stack trace to reduce payload size
       }
     };
   }

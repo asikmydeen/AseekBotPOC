@@ -137,9 +137,9 @@ functions:
     name: aseekbot-api-dev-file-validation
     layers:
       - {Ref: AwsSdkLayerLambdaLayer}
-  textractPdf:
-    handler: functions/document-analysis/textract-pdf.handler
-    name: aseekbot-api-dev-textract-pdf
+  textractHandler:
+    handler: functions/document-analysis/textract-handler.handler
+    name: aseekbot-api-dev-textract-handler
     timeout: 300
     layers:
       - {Ref: AwsSdkLayerLambdaLayer}
