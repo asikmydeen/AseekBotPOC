@@ -47,7 +47,6 @@ Create utility files and Lambda functions as per the project structure. Each Lam
 - `deleteFile.js`: Removes files from S3
 - `createTicket.js`: Creates support tickets
 - `quickLink.js`: Provides quick response options
-- `processMessage.js`: Processes raw message data
 
 #### 3. Configure Serverless Deployment
 Create a `serverless.yml` file:
@@ -111,14 +110,6 @@ functions:
     events:
       - http:
           path: quickLink
-          method: post
-          cors: true
-
-  processMessage:
-    handler: lambdas/processMessage.handler
-    events:
-      - http:
-          path: processMessage
           method: post
           cors: true
 ```

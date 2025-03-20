@@ -1,4 +1,4 @@
-// app/hooks/useChatMessages.ts
+// app/hooks/useChatMessages.ts - Fixed version
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
@@ -51,22 +51,28 @@ export default function useChatMessages({
   // New state for async processing
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const [isAsyncProcessing, setIsAsyncProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<Error | null>(null);
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<string>('');
   const isUpdatingRef = useRef<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const requestCancelledRef = useRef<boolean>(false);
 
-  // Set up the async processing hook for status monitoring
+  // Set up the async processing hook for status monitoring with error handling
   const {
     result: asyncResult,
     status: asyncStatus,
     progress: asyncProgress,
     error: asyncError,
-    refreshStatus
+    refreshStatus,
+    hasErrored
   } = useAsyncProcessing(currentRequestId, {
     pollingInterval: 2000,
     onStatusChange: (status) => {
+      // Don't process if request was cancelled
+      if (requestCancelledRef.current) return;
+
       // Update progress based on async status
       if (status.progress) {
         setProgress(status.progress);
@@ -103,22 +109,63 @@ export default function useChatMessages({
       if (status.status === 'FAILED') {
         setIsThinking(false);
         setProgress(0);
-        setCurrentRequestId(null);
         setIsAsyncProcessing(false);
 
-        const errorMessage: MessageType = {
+        // Don't reset currentRequestId to null here - this helps prevent repeated polling
+
+        let errorMessage = status.error?.message || 'An error occurred during processing.';
+        setProcessingError(new Error(errorMessage));
+
+        const errorBotMessage: MessageType = {
           sender: 'bot',
-          text: `**Error**: ${status.error?.message || 'An error occurred during processing.'}`,
+          text: `**Error**: ${errorMessage}`,
           timestamp: new Date().toISOString(),
           isError: true
         };
 
-        safeUpdateMessages(prev => [...prev, errorMessage]);
+        safeUpdateMessages(prev => [...prev, errorBotMessage]);
       }
     }
   });
 
+  // Effect to handle async error state
+  useEffect(() => {
+    if (hasErrored && currentRequestId) {
+      console.log('Detected error state, cleaning up async processing');
+      // Clean up the async processing state when an error occurs
+      setCurrentRequestId(null);
+
+      // If we haven't already shown an error message, show one
+      if (!processingError) {
+        const errorMessage = asyncError?.message || 'An error occurred during processing.';
+        setProcessingError(new Error(errorMessage));
+
+        const errorBotMessage: MessageType = {
+          sender: 'bot',
+          text: `**Error**: ${errorMessage}`,
+          timestamp: new Date().toISOString(),
+          isError: true
+        };
+
+        safeUpdateMessages(prev => [...prev, errorBotMessage]);
+      }
+    }
+  }, [hasErrored, asyncError, currentRequestId, processingError]);
+
+  // Clean up interval when component unmounts
+  useEffect(() => {
+    return () => {
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+      }
+      requestCancelledRef.current = true;
+    };
+  }, []);
+
   const safeUpdateMessages = useCallback((updater: (prev: MessageType[]) => MessageType[]) => {
+    if (isUpdatingRef.current) return;
+
     isUpdatingRef.current = true;
     setMessages(prev => {
       const newMessages = updater(prev);
@@ -163,10 +210,20 @@ export default function useChatMessages({
     };
   };
 
-  // Enhanced sendMessage that supports async processing
+  // Enhanced sendMessage that supports async processing with better error handling
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
     if (!text.trim() && !isFileUpload) return;
+
+    // Reset any previous error state
+    setProcessingError(null);
+    requestCancelledRef.current = false;
+
+    // Clear any existing progress interval
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
 
     let userMessageText = text;
     if (isFileUpload) {
@@ -231,8 +288,16 @@ export default function useChatMessages({
           // Initial progress setup
           setProgress(10);
 
-          // Start the progress animation
+          // Start the progress animation, but with a safety mechanism to prevent constant updates
           progressInterval.current = setInterval(() => {
+            if (requestCancelledRef.current) {
+              if (progressInterval.current) {
+                clearInterval(progressInterval.current);
+                progressInterval.current = null;
+              }
+              return;
+            }
+
             setProgress(prev => {
               // Don't exceed 95% for async operations until completion
               return prev < 95 ? prev + (Math.random() * 1) : 95;
@@ -244,6 +309,14 @@ export default function useChatMessages({
       } else {
         // Use standard processing for simple requests
         progressInterval.current = setInterval(() => {
+          if (requestCancelledRef.current) {
+            if (progressInterval.current) {
+              clearInterval(progressInterval.current);
+              progressInterval.current = null;
+            }
+            return;
+          }
+
           setProgress(prev => {
             const increment = Math.random() * 15;
             const newProgress = prev + increment;
@@ -295,6 +368,7 @@ export default function useChatMessages({
         }, 500);
       }
     } catch (error) {
+      // Clean up any ongoing intervals
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
@@ -302,15 +376,18 @@ export default function useChatMessages({
 
       setIsThinking(false);
       setProgress(0);
-      setCurrentRequestId(null);
       setIsAsyncProcessing(false);
+      setCurrentRequestId(null);
+      setProcessingError(error instanceof Error ? error : new Error('Unknown error'));
+      requestCancelledRef.current = true;
+
+      console.error('Error sending message:', error);
 
       let errorTitle = 'Error';
       let errorMsg = 'Sorry, I encountered an error processing your request. Please try again.';
       let errorSuggestions: string[] = [];
 
       if (error instanceof Error) {
-        console.error('Error sending message:', error);
         errorMsg = error.message || errorMsg;
       } else if (typeof error === 'object' && error !== null) {
         const errorObj = error as any;
@@ -339,18 +416,29 @@ export default function useChatMessages({
     }
   }, [messages, safeUpdateMessages]);
 
-  // Add cleanup for async processing
-  useEffect(() => {
-    // Cleanup when component unmounts or when async processing is done
-    return () => {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-        progressInterval.current = null;
-      }
-    };
+  // Function to cancel ongoing async request - critical for preventing infinite loops
+  const cancelAsyncRequest = useCallback(() => {
+    // Mark the request as cancelled
+    requestCancelledRef.current = true;
+
+    // Clear any ongoing intervals
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
+
+    // Reset the processing states
+    setIsThinking(false);
+    setProgress(0);
+    setIsAsyncProcessing(false);
+
+    // Don't immediately clear currentRequestId to prevent new polling attempts
+    // It will be cleared on the next message or when component unmounts
+
+    console.log('Async request cancelled');
   }, []);
 
-  // Other handlers (handleReaction, handlePinMessage, etc.) remain unchanged
+  // Other handlers remain unchanged
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
     safeUpdateMessages(prev =>
       prev.map((msg, i) => i === index ? { ...msg, reaction } : msg)
@@ -477,6 +565,8 @@ export default function useChatMessages({
     currentRequestId,
     asyncProgress,
     asyncStatus,
-    refreshAsyncStatus: refreshStatus
+    refreshAsyncStatus: refreshStatus,
+    cancelAsyncRequest,
+    processingError
   };
 }

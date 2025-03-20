@@ -1,6 +1,6 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
-const { SFNClient, StartExecutionCommand } = require('@aws-sdk/client-sfn');
+const { SFNClient, StartExecutionCommand, DescribeExecutionCommand } = require('@aws-sdk/client-sfn');
 const { invokeBedrockAgent } = require('../utils/invokeBedrockAgent');
 const { transformS3Url } = require('../utils/invokeBedrockAgent');
 
@@ -69,7 +69,7 @@ async function processChatMessage(requestId, message, history, s3Files, sessionI
             name: file.name,
             s3Url: file.s3Url,
             mimeType: file.mimeType || file.type || 'application/octet-stream',
-            useCase: file.useCase || 'CHAT'
+            useCase: 'CODE_INTERPRETER' // Changed from DOCUMENT_ANALYSIS
         })) : [];
 
         console.log(`Processing message for requestId ${requestId}`, message);
@@ -119,7 +119,7 @@ async function processChatMessage(requestId, message, history, s3Files, sessionI
 /**
  * Start document analysis workflow using Step Functions
  */
-async function startDocumentAnalysis(requestId, s3Files, userId) {
+async function startDocumentAnalysis(requestId, s3Files, message, sessionId) {
     try {
         if (!s3Files || !s3Files.length || !s3Files[0].s3Url) {
             throw new Error('No valid files provided for document analysis');
@@ -149,15 +149,24 @@ async function startDocumentAnalysis(requestId, s3Files, userId) {
         const fileType = fileExt || file.mimeType?.split('/').pop() || 'unknown';
 
         console.log(`Starting document analysis for file: ${fileName}, type: ${fileType}`);
+        console.log(`User query: ${message}`);
+
+        // Update status to PROCESSING
+        await updateRequestStatus(requestId, {
+            status: 'PROCESSING',
+            progress: 25,
+            message: `Analyzing document: ${fileName}`
+        });
 
         // Prepare input for Step Functions
         const input = {
             documentId: requestId,
-            userId: userId || 'anonymous',
+            userId: sessionId || 'anonymous',
             s3Bucket,
             s3Key,
             fileType,
-            isMultipleDocuments: false, // Set to true if processing multiple documents
+            userQuery: message,
+            isMultipleDocuments: false,
             startedBy: 'async-worker'
         };
 
@@ -184,6 +193,134 @@ async function startDocumentAnalysis(requestId, s3Files, userId) {
         });
 
         console.log(`Document analysis started with execution ARN: ${response.executionArn}`);
+
+        // Monitor the Step Functions execution until completion or timeout
+        let executionComplete = false;
+        let retryCount = 0;
+        const maxRetries = 120; // 10 minutes at 5 second intervals
+        let executionResult = null;
+
+        while (!executionComplete && retryCount < maxRetries) {
+            try {
+                // Get the current state of the execution
+                const describeParams = {
+                    executionArn: response.executionArn
+                };
+
+                const execution = await sfnClient.send(new DescribeExecutionCommand(describeParams));
+
+                // Calculate progress based on execution status
+                const startTime = new Date(execution.startDate).getTime();
+                const currentTime = new Date().getTime();
+                const elapsedTime = currentTime - startTime;
+                const estimatedTotalTime = 5 * 60 * 1000; // 5 minutes estimated total time
+                const progress = Math.min(90, 25 + Math.floor((elapsedTime / estimatedTotalTime) * 65));
+
+                // Update progress
+                await updateRequestStatus(requestId, {
+                    progress
+                });
+
+                // Check if execution is complete
+                if (execution.status === 'SUCCEEDED') {
+                    executionComplete = true;
+                    executionResult = execution.output;
+                    console.log(`Execution completed successfully: ${execution.executionArn}`);
+                } else if (execution.status === 'FAILED' || execution.status === 'TIMED_OUT' || execution.status === 'ABORTED') {
+                    executionComplete = true;
+                    console.error(`Execution failed: ${execution.executionArn} - Status: ${execution.status}`);
+                    throw new Error(`Step Functions execution failed with status: ${execution.status}`);
+                } else {
+                    // Wait 5 seconds before checking again
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    retryCount++;
+                }
+            } catch (error) {
+                console.error(`Error checking execution status: ${error.message}`);
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                retryCount++;
+
+                // If we've retried too many times, throw the error
+                if (retryCount >= maxRetries) {
+                    throw error;
+                }
+            }
+        }
+
+        if (!executionComplete) {
+            console.log(`Execution still in progress after maximum wait time: ${response.executionArn}`);
+            // Continue processing anyway, but use Bedrock to summarize what we have so far
+        }
+
+        // Process the results and use Bedrock to create a summary
+        try {
+            let analysisResults = {};
+            let insights = {};
+
+            // If we have execution results, parse and use them
+            if (executionResult) {
+                try {
+                    const resultData = JSON.parse(executionResult);
+                    analysisResults = resultData.analysisResults || {};
+                    insights = resultData.insights || {};
+                } catch (parseError) {
+                    console.error(`Error parsing execution results: ${parseError.message}`);
+                }
+            }
+
+            // Use Bedrock to create a summary
+            const summaryPrompt = `
+            You are an assistant analyzing a document in response to a user query.
+
+            Original User Query: "${message}"
+
+            Document Analysis Summary:
+            ${JSON.stringify(insights, null, 2)}
+
+            Extracted Document Information:
+            ${JSON.stringify(analysisResults, null, 2)}
+
+            Based on this document analysis, please provide a comprehensive response to the user's query.
+            Make sure to directly address the user's question and highlight the most relevant information from the document.
+            Be concise but thorough, and format your response in a clear and readable manner.
+            `;
+
+            console.log(`Generating summary for requestId ${requestId}`);
+
+            // Invoke Bedrock Agent
+            const summaryResponse = await invokeBedrockAgent(summaryPrompt, sessionId, {
+                agentId: process.env.BEDROCK_AGENT_ID || '7FDALECWCL',
+                agentAliasId: process.env.BEDROCK_AGENT_ALIAS_ID || '11OBDAVIQQ',
+                region: process.env.AWS_REGION || 'us-east-1'
+            });
+
+            // Update status to COMPLETED with results
+            await updateRequestStatus(requestId, {
+                status: 'COMPLETED',
+                progress: 100,
+                result: {
+                    message: summaryResponse.completion,
+                    fileName: file.name,
+                    insights,
+                    documentType: analysisResults.documentType || 'Unknown',
+                    sessionId,
+                    timestamp: new Date().toISOString(),
+                },
+                documentAnalysis: {
+                    completed: true,
+                    executionArn: response.executionArn,
+                    fileName: file.name,
+                    fileType
+                }
+            });
+
+            console.log(`Document analysis and summary completed for requestId ${requestId}`);
+            return true;
+        } catch (summaryError) {
+            console.error(`Error creating summary: ${summaryError.message}`);
+            throw summaryError;
+        }
     } catch (error) {
         console.error(`Error starting document analysis for requestId ${requestId}:`, error);
 
@@ -210,17 +347,17 @@ exports.handler = async (event) => {
     for (const record of event.Records) {
         try {
             const body = JSON.parse(record.body);
-            const { requestId, message, history, s3Files, sessionId } = body;
+            const { requestId, message, history, s3Files, sessionId, documentAnalysis } = body;
 
             console.log(`Processing request ${requestId}`);
 
             // Determine request type from message attributes if available
             const requestType = record.messageAttributes?.RequestType?.stringValue ||
-                'CHAT_MESSAGE'; // Default to chat message
+                (documentAnalysis ? 'DOCUMENT_ANALYSIS' : 'CHAT_MESSAGE');
 
             if (requestType === 'DOCUMENT_ANALYSIS') {
                 // Start document analysis workflow
-                await startDocumentAnalysis(requestId, s3Files, sessionId);
+                await startDocumentAnalysis(requestId, s3Files, message, sessionId);
             } else {
                 // Process standard chat message
                 await processChatMessage(requestId, message, history, s3Files, sessionId);

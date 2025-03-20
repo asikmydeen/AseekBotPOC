@@ -103,20 +103,22 @@ deploy_step_functions() {
     # Get Lambda ARNs for the state machine definition
     ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 
-    # Deploy using pre-created template
-    sed -e "s/\${InitProcessLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-init-process/g" \
-        -e "s/\${StatusUpdaterLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-status-updater/g" \
-        -e "s/\${FileValidationLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-file-validation/g" \
-        -e "s/\${TextractPdfLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-textract-pdf/g" \
-        -e "s/\${DocxParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-docx-parser/g" \
-        -e "s/\${ExcelParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-excel-parser/g" \
-        -e "s/\${CsvParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-csv-parser/g" \
-        -e "s/\${ContentAnalyzerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-content-analyzer/g" \
-        -e "s/\${DocumentComparerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-document-comparer/g" \
-        -e "s/\${InsightGeneratorLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-insight-generator/g" \
-        -e "s/\${ResultStorageLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-result-storage/g" \
-        -e "s/\${ErrorHandlerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-error-handler/g" \
-        step-functions-template.yaml > step-functions-deployment.yaml
+    # In your deploy.sh script, replace the template substitution section with:
+
+# Deploy using pre-created template
+sed -e "s/\${InitProcessLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-init-process/g" \
+    -e "s/\${StatusUpdaterLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-status-updater/g" \
+    -e "s/\${FileValidationLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-file-validation/g" \
+    -e "s/\${TextractHandlerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-textract-handler/g" \
+    -e "s/\${DocxParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-docx-parser/g" \
+    -e "s/\${ExcelParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-excel-parser/g" \
+    -e "s/\${CsvParserLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-csv-parser/g" \
+    -e "s/\${ContentAnalyzerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-content-analyzer/g" \
+    -e "s/\${DocumentComparerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-document-comparer/g" \
+    -e "s/\${InsightGeneratorLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-insight-generator/g" \
+    -e "s/\${ResultStorageLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-result-storage/g" \
+    -e "s/\${ErrorHandlerLambdaArn}/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:aseekbot-api-dev-error-handler/g" \
+    step-functions-template.yaml > step-functions-deployment.yaml   
 
     # Deploy the CloudFormation stack
     aws cloudformation deploy \

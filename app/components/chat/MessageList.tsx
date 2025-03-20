@@ -42,11 +42,18 @@ const ProgressBar = ({ progress, isDarkMode }: { progress: number; isDarkMode: b
   );
 };
 
-const AsyncStatusIndicator = ({ status, progress, isDarkMode, onRefresh }: {
+const AsyncStatusIndicator = ({
+  status,
+  progress,
+  isDarkMode,
+  onRefresh,
+  onCancel
+}: {
   status: string,
   progress: number,
   isDarkMode: boolean,
-  onRefresh: () => void
+  onRefresh: () => void,
+  onCancel: () => void
 }) => {
   return (
     <div className="flex flex-col">
@@ -56,9 +63,15 @@ const AsyncStatusIndicator = ({ status, progress, isDarkMode, onRefresh }: {
         </span>
         <button
           onClick={onRefresh}
-          className={`text-xs px-2 py-1 rounded-md ml-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}
+          className={`text-xs px-2 py-1 rounded-md mx-1 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}
         >
           Refresh
+        </button>
+        <button
+          onClick={onCancel}
+          className={`text-xs px-2 py-1 rounded-md ml-1 ${isDarkMode ? 'bg-red-800 text-gray-200' : 'bg-red-200 text-red-700'}`}
+        >
+          Cancel
         </button>
       </div>
       <ProgressBar progress={progress} isDarkMode={isDarkMode} />
@@ -80,6 +93,7 @@ interface MessageListProps {
   asyncProgress?: number;
   asyncStatus?: string;
   onRefreshStatus?: () => void;
+  onCancelRequest?: () => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -95,7 +109,8 @@ const MessageList: React.FC<MessageListProps> = ({
   isAsyncProcessing = false,
   asyncProgress = 0,
   asyncStatus = '',
-  onRefreshStatus = () => { }
+  onRefreshStatus = () => { },
+  onCancelRequest = () => { }
 }) => {
   // Scroll to bottom when messages change or when isThinking changes
   useEffect(() => {
@@ -142,6 +157,7 @@ const MessageList: React.FC<MessageListProps> = ({
                   progress={asyncProgress || progress}
                   isDarkMode={isDarkMode}
                   onRefresh={onRefreshStatus}
+                  onCancel={onCancelRequest}
                 />
               ) : (
                 progress > 0 && <ProgressBar progress={progress} isDarkMode={isDarkMode} />

@@ -20,17 +20,45 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     next();
 });
 
-// Get status of a request
-app.get('/status/:requestId', async (req, res) => {
+// Add debugging middleware
+app.use((req, res, next) => {
+    console.log('Request received:');
+    console.log('- Method:', req.method);
+    console.log('- URL:', req.url);
+    console.log('- Path:', req.path);
+    console.log('- Params:', req.params);
+    console.log('- Query:', req.query);
+    next();
+});
+
+// Handle dynamic routes with proxy+
+app.get('/status/:requestId', getStatusHandler);
+app.get('/*/status/:requestId', getStatusHandler); // Handle nested paths
+app.get('*/status/:requestId', getStatusHandler);  // Handle any prefix
+
+// Also support direct requestId in URL param for maximum flexibility
+app.get('/:requestId', (req, res, next) => {
+    // Only handle if it looks like a request ID (UUID format)
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.requestId)) {
+        return getStatusHandler(req, res, next);
+    }
+    next();
+});
+
+// Handle summary endpoint
+app.get('/summary', getSummaryHandler);
+app.get('/*/summary', getSummaryHandler); // Handle nested paths
+
+// Main status handler function
+async function getStatusHandler(req, res, next) {
     try {
-        const { requestId } = req.params;
+        const requestId = req.params.requestId;
 
         if (!requestId) {
             return res.status(400).json({ error: 'Request ID is required' });
@@ -55,7 +83,7 @@ app.get('/status/:requestId', async (req, res) => {
 
         const statusItem = result.Item;
 
-        // For document analysis requests, also check Step Functions status
+        // For document analysis requests with step functions, check current status
         if (statusItem.status === 'PROCESSING' && statusItem.stepFunctionsExecution) {
             try {
                 const sfnParams = {
@@ -97,7 +125,6 @@ app.get('/status/:requestId', async (req, res) => {
                     const elapsed = currentTime - startTime;
 
                     // Assume document analysis takes about 2 minutes on average
-                    // Adjust this based on your actual workflow timing
                     const estimatedTotalTime = 2 * 60 * 1000;
                     const estimatedProgress = Math.min(95, Math.floor((elapsed / estimatedTotalTime) * 100));
 
@@ -115,10 +142,10 @@ app.get('/status/:requestId', async (req, res) => {
         const errorResponse = handleApiError(error);
         return res.status(errorResponse.status || 500).json(errorResponse.body);
     }
-});
+}
 
-// Add a summary endpoint to get multiple statuses
-app.get('/summary', async (req, res) => {
+// Summary handler function
+async function getSummaryHandler(req, res) {
     try {
         const { sessionId } = req.query;
 
@@ -127,8 +154,7 @@ app.get('/summary', async (req, res) => {
         }
 
         // This is a simplified implementation
-        // In a production environment, you'd want to use a query with an index on sessionId
-        // For now, assume we're scanning the entire table (which is not efficient)
+        // In production, you'd want to use a query with an index on sessionId
         return res.status(501).json({
             message: 'This endpoint is not yet implemented',
             note: 'In production, you would query with a GSI on sessionId'
@@ -138,7 +164,7 @@ app.get('/summary', async (req, res) => {
         const errorResponse = handleApiError(error);
         return res.status(errorResponse.status || 500).json(errorResponse.body);
     }
-});
+}
 
 // Add catch-all handler
 app.all('*', (req, res) => {

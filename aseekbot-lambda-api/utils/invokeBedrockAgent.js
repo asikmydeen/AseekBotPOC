@@ -73,9 +73,15 @@ function normalizeUseCase(useCase, mimeType) {
     return 'CODE_INTERPRETER';
   }
 
+  // Handle DOCUMENT_ANALYSIS by converting it to CODE_INTERPRETER
+  if (useCase && useCase.toUpperCase() === 'DOCUMENT_ANALYSIS') {
+    console.log('Converting DOCUMENT_ANALYSIS to CODE_INTERPRETER');
+    return 'CODE_INTERPRETER';
+  }
+
   if (useCase) {
     const upperUseCase = useCase.toUpperCase();
-    if (['CHAT', 'DOCUMENT_ANALYSIS', 'CODE_INTERPRETER'].includes(upperUseCase)) {
+    if (['CHAT', 'CODE_INTERPRETER'].includes(upperUseCase)) {
       console.log(`Using explicitly provided useCase: ${upperUseCase}`);
       return upperUseCase;
     }
@@ -91,9 +97,11 @@ function normalizeUseCase(useCase, mimeType) {
 
     if (mimeType.includes('wordprocessing') ||
       mimeType.includes('msword') ||
-      mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
-      console.log(`Using DOCUMENT_ANALYSIS for document mime type: ${mimeType}`);
-      return 'DOCUMENT_ANALYSIS';
+      mimeType.includes('openxmlformats-officedocument.wordprocessingml') ||
+      mimeType.includes('pdf') ||
+      mimeType.includes('text/plain')) {
+      console.log(`Using CODE_INTERPRETER for document mime type: ${mimeType}`);
+      return 'CODE_INTERPRETER';  // Changed from DOCUMENT_ANALYSIS to CODE_INTERPRETER
     }
   }
 

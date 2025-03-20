@@ -40,7 +40,7 @@ interface ChatFooterProps {
   handleFileAction: (action: string) => void;
   handleInputSubmit: (text: string) => void;
   isThinking: boolean;
-  inputRef: React.RefObject<HTMLTextAreaElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
   handleInputChange?: (text: string) => void;
   pendingInput?: string;
   // New async props

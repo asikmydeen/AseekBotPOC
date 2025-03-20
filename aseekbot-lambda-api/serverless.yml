@@ -122,15 +122,6 @@ functions:
           path: quickLink
           method: post
           cors: true
-  processMessage:
-    handler: lambdas/processMessage.handler
-    layers:
-      - {Ref: AwsSdkLayerLambdaLayer}
-    events:
-      - http:
-          path: processMessage
-          method: post
-          cors: true
   documentAnalysis:
     handler: lambdas/getDocumentAnalysisStatus.handler
     layers:

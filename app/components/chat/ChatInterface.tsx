@@ -1,4 +1,4 @@
-// app/components/chat/ChatInterface.tsx (fixed)
+// app/components/chat/ChatInterface.tsx
 "use client";
 import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -13,7 +13,7 @@ import useChatMessages from '../../hooks/useChatMessages';
 import useFileUpload from '../../hooks/useFileUpload';
 import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
-import { ChatProvider, useChatContext } from '../../context/ChatContext';
+import { ChatProvider } from '../../context/ChatContext';
 import DocumentAnalysisPrompt from './DocumentAnalysisPrompt';
 import FileUploadSection from './FileUploadSection';
 import ChatFooter from './ChatFooter';
@@ -53,11 +53,14 @@ function ChatInterfaceComponent({
     initialMessages = []
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
-    const inputRef = useRef<HTMLTextAreaElement | null>(null);
+    // Using useRef<HTMLTextAreaElement>(null) to match ChatFooter's expected type
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // State for tracking user input when files are uploaded
     const [pendingInput, setPendingInput] = useState<string>('');
+    const [errorDialogVisible, setErrorDialogVisible] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const {
         messages,
@@ -82,7 +85,9 @@ function ChatInterfaceComponent({
         currentRequestId,
         asyncProgress,
         asyncStatus,
-        refreshAsyncStatus
+        refreshAsyncStatus,
+        cancelAsyncRequest,
+        processingError
     } = useChatMessages({
         triggerMessage,
         onTriggerHandled,
@@ -92,7 +97,9 @@ function ChatInterfaceComponent({
 
     // Connect the ref from the hook to our local ref
     useEffect(() => {
-        hookMessagesEndRef.current = messagesEndRef.current;
+        if (hookMessagesEndRef) {
+            hookMessagesEndRef.current = messagesEndRef.current;
+        }
     }, [hookMessagesEndRef]);
 
     // Load initial messages when they change (when switching between chats)
@@ -108,6 +115,21 @@ function ChatInterfaceComponent({
             onMessagesUpdate(messages);
         }
     }, [messages, onMessagesUpdate]);
+
+    // Handle processing errors
+    useEffect(() => {
+        if (processingError) {
+            setErrorMessage(processingError.message);
+            setErrorDialogVisible(true);
+            console.error('Processing error detected:', processingError);
+
+            // Cancel any ongoing async request to prevent infinite loops
+            if (isAsyncProcessing && currentRequestId) {
+                console.log('Cancelling async request due to error');
+                cancelAsyncRequest();
+            }
+        }
+    }, [processingError, isAsyncProcessing, currentRequestId, cancelAsyncRequest]);
 
     // Track the current active agent based on the latest bot message
     const [activeAgent, setActiveAgent] = useState<string>('default');
@@ -225,6 +247,12 @@ function ChatInterfaceComponent({
         }
     }, [messages]);
 
+    // Error Dialog handler
+    const handleCloseErrorDialog = useCallback(() => {
+        setErrorDialogVisible(false);
+        setErrorMessage('');
+    }, []);
+
     /**
      * Manages document analysis prompt visibility and file dropzone state
      */
@@ -332,6 +360,24 @@ function ChatInterfaceComponent({
 
     return (
         <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
+            {/* Error Dialog */}
+            {errorDialogVisible && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className={`p-6 rounded-lg shadow-xl max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                        <h3 className="text-xl font-bold mb-4">Error</h3>
+                        <p className="mb-6">{errorMessage || 'An unexpected error occurred. Please try again.'}</p>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleCloseErrorDialog}
+                                className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex-1 flex flex-col w-full">
                 <ChatHeader
                     isDarkMode={isDarkMode}
@@ -358,6 +404,7 @@ function ChatInterfaceComponent({
                         asyncProgress={asyncProgress}
                         asyncStatus={asyncStatus}
                         onRefreshStatus={handleRefreshStatus}
+                        onCancelRequest={cancelAsyncRequest}
                     />
                 </div>
 
