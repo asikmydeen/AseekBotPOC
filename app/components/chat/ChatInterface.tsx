@@ -359,17 +359,17 @@ function ChatInterfaceComponent({
     }, [currentRequestId, isAsyncProcessing, refreshAsyncStatus]);
 
     return (
-        <div className={`flex-1 flex h-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
+        <div className={`flex-1 flex h-full ${isDarkMode ? 'dark-bg dark-text' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
             {/* Error Dialog */}
             {errorDialogVisible && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className={`p-6 rounded-lg shadow-xl max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                    <div className={`p-6 rounded-lg shadow-xl max-w-md ${isDarkMode ? 'dark-card-bg dark-text' : 'bg-white text-gray-900'}`}>
                         <h3 className="text-xl font-bold mb-4">Error</h3>
                         <p className="mb-6">{errorMessage || 'An unexpected error occurred. Please try again.'}</p>
                         <div className="flex justify-end">
                             <button
                                 onClick={handleCloseErrorDialog}
-                                className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                                className={`px-4 py-2 rounded-md ${isDarkMode ? 'dark-primary-bg hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
                             >
                                 Close
                             </button>
@@ -389,7 +389,7 @@ function ChatInterfaceComponent({
                     exportChat={exportChatAsPDF}
                 />
 
-                <div className={`flex-1 overflow-y-auto p-6 ${isDarkMode ? 'bg-gray-850' : 'bg-white'} rounded-lg shadow-inner mx-2 my-2`}>
+                <div className={`flex-1 overflow-y-auto p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-white'} rounded-lg shadow-inner mx-2 my-2`}>
                     <MessageList
                         messages={filteredMessages}
                         isThinking={isThinking}

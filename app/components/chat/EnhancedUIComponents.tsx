@@ -95,7 +95,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             disabled={isThinking}
             className={`w-full p-4 pr-24 rounded-2xl resize-none transition-all duration-300 focus:outline-none ${
               isDarkMode
-                ? 'bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-blue-500 placeholder-gray-400'
+                ? 'dark-bg dark-text dark-border focus:ring-2 focus:ring-blue-500 dark-placeholder'
                 : 'bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-600 placeholder-gray-500'
             } ${isFocused ? 'border-transparent' : 'border'} ${
               isThinking ? 'opacity-70' : 'opacity-100'
@@ -115,7 +115,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onClick={onFileUploadClick}
               className={`p-3 rounded-full transition-colors ${
                 isDarkMode
-                  ? 'text-gray-300 hover:text-white bg-gray-600 hover:bg-gray-500'
+                  ? 'dark-text-secondary hover:dark-text dark-bg-secondary hover:dark-bg-hover'
                   : 'text-gray-600 hover:text-gray-800 bg-gray-200 hover:bg-gray-300'
               } ${
                 showFileDropzone ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-700') : ''
@@ -136,7 +136,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               className={`p-3 rounded-full transition-all duration-300 ${
                 !inputValue.trim() || isThinking
                   ? isDarkMode
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    ? 'dark-bg dark-text-disabled cursor-not-allowed'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : isDarkMode
                     ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-md'

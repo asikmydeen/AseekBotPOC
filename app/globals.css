@@ -1,4 +1,6 @@
 /* app/globals.css */
+@import './styles/theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,11 +28,14 @@ body {
 
 /* Dark mode specific styles */
 .dark .prose th {
-  @apply border-gray-600 bg-gray-700 text-gray-200;
+  border: 1px solid var(--dark-border);
+  background-color: var(--dark-card-bg);
+  color: var(--dark-text);
 }
 
 .dark .prose td {
-  @apply border-gray-600 text-gray-200;
+  border: 1px solid var(--dark-border);
+  color: var(--dark-text);
 }
 
 /* Light mode specific styles */
@@ -48,7 +53,7 @@ body {
 }
 
 .dark .sidebar-section {
-  @apply border-gray-700;
+  border-color: var(--dark-border);
 }
 
 .light .sidebar-section {
@@ -65,7 +70,8 @@ body {
 }
 
 .dark .active {
-  @apply bg-blue-900 bg-opacity-30;
+  background-color: var(--dark-hover);
+  border-color: var(--dark-primary);
 }
 
 /* Sidebar container styling for layering */
@@ -74,7 +80,8 @@ body {
 }
 
 .dark .sidebar-container {
-  @apply bg-gray-900 shadow-lg shadow-gray-950;
+  background-color: var(--dark-bg);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .light .sidebar-container {
@@ -87,7 +94,7 @@ body {
 }
 
 .dark .chat-sidebar {
-  @apply bg-gray-800;
+  background-color: var(--dark-sidebar);
 }
 
 .light .chat-sidebar {
@@ -97,7 +104,16 @@ body {
 /* Message highlight animation */
 @keyframes highlight-animation {
   0% {
-    background-color: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
+    background-color: rgba(59, 130, 246, 0.3); /* blue-500 with opacity for light mode */
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.dark @keyframes highlight-animation {
+  0% {
+    background-color: rgba(130, 190, 247, 0.3); /* dark-primary with opacity */
   }
   100% {
     background-color: transparent;
@@ -111,12 +127,35 @@ body {
 
 .dark .highlight-message {
   animation: highlight-animation 2s ease-out;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px var(--dark-primary);
 }
 
 .light .highlight-message {
   animation: highlight-animation 2s ease-out;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Add light mode variables to complement dark mode variables in theme.css */
+:root {
+  /* Core background colors for light mode */
+  --light-bg: #ffffff;
+  --light-text: #333333;
+  --light-border: #e5e5e5;
+  --light-sidebar: #f5f5f5;
+
+  /* Additional UI element colors */
+  --light-card-bg: #ffffff;
+  --light-hover: #f0f0f0;
+  --light-active: #e8e8e8;
+  --light-disabled: #cccccc;
+
+  /* Accent colors for light mode */
+  --light-primary: #3b82f6;
+  --light-secondary: #a855f7;
+  --light-success: #22c55e;
+  --light-error: #ef4444;
+  --light-warning: #f59e0b;
+  --light-info: #3b82f6;
 }
 
 /* Add these styles to your globals.css file */
@@ -240,4 +279,9 @@ body {
   .prose table {
     font-size: 0.875rem;
   }
+}
+
+/* Attachment background styling */
+.attachment-bg-light {
+  background-color: var(--attachment-bg-light);
 }

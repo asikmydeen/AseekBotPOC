@@ -244,12 +244,12 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className={`mt-3 p-3 rounded-xl ${isDarkMode ? 'bg-gray-750' : 'bg-gray-50'} shadow-md`}
+                className={`mt-3 p-3 rounded-xl ${isDarkMode ? 'dark-card-bg' : 'attachment-bg-light'} shadow-md`}
             >
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                        <FaPaperclip className={`mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                        <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        <FaPaperclip className={`mr-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`} />
+                        <span className={`text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-700'}`}>
                             {message.attachments.length} Attachment{message.attachments.length !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -258,7 +258,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setIsFileCollapsed(!isFileCollapsed)}
-                            className={`text-xs px-3 py-1 rounded-lg ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-650' : 'bg-gray-200 text-blue-600 hover:bg-gray-300'} transition-colors`}
+                            className={`text-xs px-3 py-1 rounded-lg ${isDarkMode ? 'dark-active dark-primary hover:dark-hover' : 'bg-gray-200 text-blue-600 hover:bg-gray-300'} transition-colors`}
                         >
                             {isFileCollapsed ? 'Show All' : 'Collapse'}
                         </motion.button>
@@ -281,14 +281,14 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                         ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
                                         : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
                                 }}
-                                className={`flex items-center p-3 rounded-lg ${isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50'
+                                className={`flex items-center p-3 rounded-lg ${isDarkMode ? 'dark-active hover:dark-hover' : 'bg-white hover:bg-gray-50'
                                     } cursor-pointer transition-all duration-200 shadow-sm`}
                                 onClick={() => file.url && window.open(file.url, '_blank')}
                             >
                                 {getFileIcon(file.type)}
                                 <div className="ml-2 flex-grow min-w-0">
                                     <div className="text-sm font-medium truncate">{file.name}</div>
-                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    <div className={`text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`}>
                                         {formatFileSize(file.size)}
                                     </div>
                                 </div>
@@ -304,7 +304,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     aria-label="Open file"
                                     title="Open file"
                                 >
-                                    <FaExternalLinkAlt size={14} className={isDarkMode ? 'text-gray-300' : 'text-gray-500'} />
+                                    <FaExternalLinkAlt size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
                                 </motion.button>
                             </motion.div>
                         ))}
@@ -314,7 +314,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 whileHover={{ backgroundColor: isDarkMode ? 'rgba(55, 65, 81, 1)' : 'rgba(243, 244, 246, 1)' }}
-                                className={`text-center p-2 rounded-lg text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-650' : 'bg-white text-gray-500 hover:bg-gray-100'
+                                className={`text-center p-2 rounded-lg text-sm ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-white text-gray-500 hover:bg-gray-100'
                                     } cursor-pointer transition-colors shadow-sm`}
                                 onClick={() => setIsFileCollapsed(false)}
                             >
@@ -355,7 +355,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className={`mt-4 p-5 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'
+                className={`mt-4 p-5 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-gray-100'} shadow-lg border ${isDarkMode ? 'dark-border' : 'border-gray-300'
                     }`}
             >
                 <div className="flex justify-between items-center mb-3">
@@ -363,7 +363,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
-                        className={`text-xl font-bold flex items-center ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+                        className={`text-xl font-bold flex items-center ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`}
                     >
                         <FaBook className="mr-2" /> {report.title}
                     </motion.h3>
@@ -372,7 +372,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsCollapsed(!isCollapsed)}
-                            className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            className={`p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                 }`}
                             aria-label={isCollapsed ? 'Expand report' : 'Collapse report'}
                             aria-expanded={!isCollapsed}
@@ -383,7 +383,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleDownload}
-                            className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            className={`p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                 }`}
                             aria-label="Download report as PDF"
                         >
@@ -414,8 +414,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.4, type: "spring" }}
-                            className={`prose max-w-none ${isDarkMode ? 'prose-invert text-gray-200' : 'text-gray-900'
-                                } prose-headings:${isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                            className={`prose max-w-none ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'
+                                } prose-headings:${isDarkMode ? 'dark-primary' : 'text-blue-600'
                                 } prose-p:mt-2 prose-ul:mt-2 prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal
               prose-table:border-collapse prose-table:w-full prose-thead:bg-gray-700 prose-th:p-2 prose-th:border
               prose-th:border-gray-600 prose-td:border prose-td:border-gray-600 prose-td:p-2 ${isDarkMode ? 'prose-thead:text-gray-200' : 'prose-thead:text-gray-800'
@@ -431,15 +431,15 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'bg-blue-900/30 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}
+                            className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'dark-info-bg border dark-border' : 'bg-blue-50 border border-blue-200'}`}
                             id="citation-panel"
                             role="region"
                             aria-label="Citations panel"
                         >
-                            <h4 className={`text-sm font-bold mb-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                            <h4 className={`text-sm font-bold mb-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`}>
                                 Citations
                             </h4>
-                            <ul className={`list-disc pl-5 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} space-y-1`}>
+                            <ul className={`list-disc pl-5 text-sm ${isDarkMode ? 'dark-text' : 'text-gray-600'} space-y-1`}>
                                 {report.citations.map((citation, idx) => (
                                     <motion.li
                                         key={idx}
@@ -459,13 +459,13 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
-                        className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-green-900/30 border border-green-800' : 'bg-green-50 border border-green-200'
+                        className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'dark-success-bg border dark-border' : 'bg-green-50 border border-green-200'
                             }`}
                     >
-                        <p className={`text-sm font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                        <p className={`text-sm font-medium ${isDarkMode ? 'dark-success' : 'text-green-600'}`}>
                             Ticket Created: {message.ticket.id}
                         </p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className={`text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`}>
                             Status: {message.ticket.status}
                         </p>
                     </motion.div>
@@ -487,14 +487,14 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                     <motion.div
                         whileHover={{ scale: 1.1 }}
                         className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${message.sender === 'user'
-                                ? isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                                : isDarkMode ? 'bg-blue-900' : 'bg-blue-100'
+                                ? isDarkMode ? 'dark-active' : 'bg-gray-200'
+                                : isDarkMode ? 'dark-info-bg' : 'bg-blue-100'
                             }`}
                     >
                         {message.sender === 'user' ? (
-                            <FaUser className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                            <FaUser className={`${isDarkMode ? 'dark-text' : 'text-gray-600'}`} />
                         ) : (
-                            <FaRobot className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                            <FaRobot className={`${isDarkMode ? 'dark-primary' : 'text-blue-600'}`} />
                         )}
                     </motion.div>
                 </motion.div>
@@ -508,10 +508,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                     onHoverEnd={() => setIsHovered(false)}
                     className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${message.sender === 'user'
                             ? isDarkMode
-                                ? 'bg-gradient-to-br from-gray-800 to-gray-900 text-white border border-gray-700 text-left'
+                                ? 'bg-gradient-to-br from-gray-800 to-gray-900 dark-text border dark-border text-left'
                                 : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border border-gray-200 text-left'
                             : isDarkMode
-                                ? 'bg-gradient-to-br from-blue-900 to-blue-950 text-white border border-blue-800'
+                                ? 'bg-gradient-to-br from-blue-900 to-blue-950 dark-text border dark-border'
                                 : 'bg-gradient-to-br from-blue-100 to-blue-200 text-gray-900 border border-blue-300'
                         }`}
                 >
@@ -536,8 +536,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                         </div>
                     ) : (
                         <div
-                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden ${isDarkMode ? 'prose-invert text-gray-200' : 'text-gray-900'
-                                } prose-a:${isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'
+                                } prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'
                                 } prose-img:max-w-full prose-img:rounded-md prose-img:my-2
               prose-pre:max-w-full prose-pre:overflow-x-auto`}
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
@@ -562,13 +562,13 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0.9, opacity: 0 }}
                                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} max-w-lg w-full shadow-2xl`}
+                                    className={`p-6 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-white'} max-w-lg w-full shadow-2xl`}
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                    <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'dark-text' : 'text-gray-900'}`}>
                                         View Image
                                     </h3>
-                                    <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <p className={`mb-4 ${isDarkMode ? 'dark-text' : 'text-gray-700'}`}>
                                         Would you like to view this image in full size?
                                     </p>
                                     <div className="flex justify-end gap-3">
@@ -577,7 +577,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                                                 } transition-colors shadow-md`}
                                             onClick={() => setShowImageConfirmation(false)}
                                         >
@@ -588,7 +588,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
+                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'dark-primary-bg text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
                                                 } transition-colors shadow-md`}
                                             onClick={confirmViewImage}
                                         >
@@ -608,7 +608,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                 whileTap="tap"
                                 onClick={() => onMultimediaClick(message.multimedia!)}
                                 className={`mt-3 px-4 py-2 rounded-lg flex items-center ${isDarkMode
-                                        ? 'bg-blue-800 hover:bg-blue-700 text-blue-100'
+                                        ? 'dark-primary-bg hover:bg-blue-700 text-blue-100'
                                         : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
                                     } transition-colors shadow-md`}
                                 aria-label={`View ${message.multimedia.type}`}
@@ -633,10 +633,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     onClick={() => onReact('thumbs-up')}
                                     className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-up'
                                             ? isDarkMode
-                                                ? 'bg-green-800 text-green-200'
+                                                ? 'dark-success-bg dark-success'
                                                 : 'bg-green-100 text-green-600'
                                             : isDarkMode
-                                                ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
                                                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                                         }`}
                                     aria-label="Thumbs up"
@@ -653,10 +653,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     onClick={() => onReact('thumbs-down')}
                                     className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-down'
                                             ? isDarkMode
-                                                ? 'bg-red-800 text-red-200'
+                                                ? 'dark-error-bg dark-error'
                                                 : 'bg-red-100 text-red-600'
                                             : isDarkMode
-                                                ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
                                                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                                         }`}
                                     aria-label="Thumbs down"
@@ -673,10 +673,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     onClick={onPin}
                                     className={`p-2 rounded-full transition-colors ${message.pinned
                                             ? isDarkMode
-                                                ? 'bg-blue-800 text-blue-200'
+                                                ? 'dark-primary-bg dark-primary'
                                                 : 'bg-blue-100 text-blue-600'
                                             : isDarkMode
-                                                ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
                                                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                                         }`}
                                     aria-label={message.pinned ? 'Unpin message' : 'Pin message'}
@@ -685,7 +685,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     <FaThumbtack size={16} />
                                 </motion.button>
 
-                                <span className={`text-xs rounded-full px-2 py-1 ${isDarkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'
+                                <span className={`text-xs rounded-full px-2 py-1 ${isDarkMode ? 'dark-bg dark-text' : 'bg-gray-100 text-gray-500'
                                     }`}>
                                     {new Date(message.timestamp).toLocaleTimeString()}
                                 </span>

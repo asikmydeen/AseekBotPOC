@@ -38,21 +38,21 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const { createChat, activeChat } = useChatHistory();
 
   return (
-    <header className={`px-6 py-4 flex items-center justify-between border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <header className={`px-6 py-4 flex items-center justify-between border-b ${isDarkMode ? 'dark-bg dark-border' : 'bg-white border-gray-200'}`}>
       {/* Logo/Title and Chat Info */}
       <div className="flex items-center">
-        <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <h1 className={`text-xl font-semibold ${isDarkMode ? 'dark-text' : 'text-gray-900'}`}>
           AseekBot
         </h1>
         {activeChat && (
-          <span className={`ml-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <span className={`ml-4 text-sm ${isDarkMode ? 'dark-text-secondary' : 'text-gray-600'}`}>
             {activeChat.title}
           </span>
         )}
       </div>
 
       {/* Search Bar */}
-      <div className={`relative mx-4 flex-grow max-w-2xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+      <div className={`relative mx-4 flex-grow max-w-2xl ${isDarkMode ? 'dark-text' : 'text-gray-900'}`}>
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <MdSearch className="h-5 w-5 text-gray-400" />
         </div>
@@ -62,7 +62,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`block w-full pl-10 pr-3 py-2 rounded-md ${isDarkMode
-              ? 'bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500'
+              ? 'dark-bg-secondary dark-border dark-placeholder dark-text focus:ring-blue-500 focus:border-blue-500'
               : 'bg-gray-100 border-gray-300 placeholder-gray-500 text-gray-900 focus:ring-blue-600 focus:border-blue-600'
             } border focus:outline-none focus:ring-2 transition-colors`}
         />
@@ -74,7 +74,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={createChat}
           className={`p-2 rounded-full ${isDarkMode
-              ? 'hover:bg-gray-700 text-gray-300'
+              ? 'hover:dark-bg-secondary dark-text-secondary'
               : 'hover:bg-gray-200 text-gray-700'
             } transition-colors flex items-center`}
           aria-label="Start new chat"
@@ -87,7 +87,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={toggleTheme}
           className={`p-2 rounded-full ${isDarkMode
-              ? 'hover:bg-gray-700 text-gray-300'
+              ? 'hover:dark-bg-secondary dark-text-secondary'
               : 'hover:bg-gray-200 text-gray-700'
             } transition-colors`}
           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -99,7 +99,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <Link
           href="/userguide"
           className={`p-2 rounded-full ${isDarkMode
-              ? 'hover:bg-gray-700 text-gray-300'
+              ? 'hover:dark-bg-secondary dark-text-secondary'
               : 'hover:bg-gray-200 text-gray-700'
             } transition-colors`}
           aria-label="User Guide"
@@ -112,7 +112,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={exportChat}
             className={`p-2 rounded-full ${isDarkMode
-                ? 'hover:bg-gray-700 text-gray-300'
+                ? 'hover:dark-bg-secondary dark-text-secondary'
                 : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Export conversation"
@@ -126,7 +126,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowFeedbackForm}
             className={`p-2 rounded-full ${isDarkMode
-                ? 'hover:bg-gray-700 text-gray-300'
+                ? 'hover:dark-bg-secondary dark-text-secondary'
                 : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Provide feedback"
@@ -140,7 +140,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowTicketForm}
             className={`p-2 rounded-full ${isDarkMode
-                ? 'hover:bg-gray-700 text-gray-300'
+                ? 'hover:dark-bg-secondary dark-text-secondary'
                 : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Create a ticket"

@@ -1,5 +1,5 @@
  "use client";
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define the shape of our theme context
 interface ThemeContextType {
@@ -30,6 +30,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const toggleTheme = () => {
     setIsDarkMode((prevMode) => !prevMode);
   };
+
+  // Apply or remove the 'dark' class on the document root based on the current theme
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // Value object that will be provided to consumers
   const value = {

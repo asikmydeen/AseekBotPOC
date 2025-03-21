@@ -102,7 +102,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
         transition={{ duration: 0.3 }}
-        className={`flex items-center justify-center py-2 px-4 rounded-lg text-sm ${isDarkMode ? 'bg-blue-900/70 text-blue-100' : 'bg-blue-50 text-blue-700'
+        className={`flex items-center justify-center py-2 px-4 rounded-lg text-sm ${isDarkMode ? 'dark-info-bg dark-info-text' : 'bg-blue-50 text-blue-700'
           } mb-3 shadow-md`}
       >
         <FiClock className="mr-2" />
@@ -173,14 +173,14 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
             className="mb-3"
           >
             <div className="flex justify-between items-center mb-2">
-              <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <h3 className={`text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-600'}`}>
                 Suggested replies
               </h3>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowSuggestions(false)}
-                className={`text-xs px-2 py-1 rounded-md ${isDarkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                className={`text-xs px-2 py-1 rounded-md ${isDarkMode ? 'dark-text-secondary hover:dark-text hover:dark-bg-hover' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
               >
                 Hide
               </motion.button>
@@ -197,7 +197,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   };
 
   return (
-    <div className={`px-4 pt-2 pb-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+    <div className={`px-4 pt-2 pb-4 border-t ${isDarkMode ? 'dark-border dark-bg' : 'border-gray-200 bg-white'}`}>
       {/* Async processing status indicator */}
       {isThinking && isAsyncProcessing && renderAsyncProcessingInfo()}
 

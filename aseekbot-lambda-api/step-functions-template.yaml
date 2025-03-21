@@ -108,7 +108,7 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.validationResult.isTextractSupported",
+                  "Variable": "$.validationResult.Payload.validationResult.isTextractSupported",
                   "BooleanEquals": true,
                   "Next": "ExtractWithTextract"
                 },

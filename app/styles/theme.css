@@ -1,0 +1,60 @@
+/**
+ * Theme CSS Variables
+ * This file centralizes color definitions for the application,
+ * making it easier to maintain and update the theme.
+ */
+
+:root {
+  /* Light mode variables are defined in globals.css */
+
+  /* Attachment background for light mode */
+  --attachment-bg-light: #f9f9f9;
+}
+
+.dark {
+  /* Core background colors */
+  --dark-bg: #080808;         /* Extremely dark background color */
+  --dark-text: #f0f0f0;       /* Lighter text color for better contrast */
+  --dark-border: #222222;     /* Darker borders */
+  --dark-sidebar: #050505;    /* Darker sidebar background */
+
+  /* Additional UI element colors */
+  --dark-card-bg: #101010;    /* Darker card background */
+  --dark-hover: #1a1a1a;      /* Darker hover state */
+  --dark-active: #252525;     /* Darker active state */
+  --dark-disabled: #555555;   /* Darker disabled state */
+
+  /* Accent colors for dark mode */
+  --dark-primary: #82bef7;    /* Slightly darker primary accent */
+  --dark-secondary: #c685d3;  /* Slightly darker secondary accent */
+  --dark-success: #73b976;    /* Slightly darker success state */
+  --dark-error: #e06666;      /* Slightly darker error state */
+  --dark-warning: #ffa726;    /* Slightly darker warning state */
+  --dark-info: #5aaaf0;       /* Slightly darker info state */
+}
+
+/* Utility classes for dark mode */
+.dark-bg { background-color: var(--dark-bg); }
+.dark-text { color: var(--dark-text); }
+.dark-border { border-color: var(--dark-border); }
+.dark-sidebar { background-color: var(--dark-sidebar); }
+.dark-card-bg { background-color: var(--dark-card-bg); }
+.dark-hover { background-color: var(--dark-hover); }
+.dark-active { background-color: var(--dark-active); }
+.dark-disabled { background-color: var(--dark-disabled); }
+
+/* Accent color utility classes */
+.dark-primary { color: var(--dark-primary); }
+.dark-secondary { color: var(--dark-secondary); }
+.dark-success { color: var(--dark-success); }
+.dark-error { color: var(--dark-error); }
+.dark-warning { color: var(--dark-warning); }
+.dark-info { color: var(--dark-info); }
+
+/* Background accent color utility classes */
+.dark-primary-bg { background-color: var(--dark-primary); }
+.dark-secondary-bg { background-color: var(--dark-secondary); }
+.dark-success-bg { background-color: var(--dark-success); }
+.dark-error-bg { background-color: var(--dark-error); }
+.dark-warning-bg { background-color: var(--dark-warning); }
+.dark-info-bg { background-color: var(--dark-info); }

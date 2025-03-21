@@ -43,7 +43,7 @@ export default function AppSidebar({
     onToggle
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
-    const { createChat } = useChatHistory();
+    const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
 
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [activeTab, setActiveTab] = useState<string>('history');
@@ -98,14 +98,14 @@ export default function AppSidebar({
 
     return (
         <motion.div
-            className={`h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} border-r ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50`}
+            className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'bg-white text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50`}
             initial={false}
             animate={isOpen ? 'open' : 'closed'}
             variants={sidebarVariants}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
             {/* Sidebar Header */}
-            <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'dark-border' : 'border-gray-200'}`}>
                 {isOpen && (
                     <div className="flex items-center justify-between w-full">
                         <h2 className="text-xl font-bold flex items-center">
@@ -113,7 +113,7 @@ export default function AppSidebar({
                         </h2>
                         <button
                             onClick={handleNewChat}
-                            className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-800'}`}
+                            className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-800 dark-text' : 'hover:bg-gray-100 text-gray-800'}`}
                             aria-label="New Chat"
                             title="New Chat"
                         >
@@ -132,10 +132,10 @@ export default function AppSidebar({
 
             {/* Sidebar Tabs */}
             {isOpen && (
-                <div className={`grid grid-cols-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} p-1`}>
+                <div className={`grid grid-cols-4 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'} p-1`}>
                     <button
                         onClick={() => setActiveTab('history')}
-                        className={`p-2 rounded-md flex justify-center ${activeTab === 'history' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
+                        className={`p-2 rounded-md flex justify-center ${activeTab === 'history' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
                         aria-label="Chat History"
                         title="Chat History"
                     >
@@ -143,7 +143,7 @@ export default function AppSidebar({
                     </button>
                     <button
                         onClick={() => setActiveTab('files')}
-                        className={`p-2 rounded-md flex justify-center ${activeTab === 'files' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
+                        className={`p-2 rounded-md flex justify-center ${activeTab === 'files' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
                         aria-label="Uploaded Files"
                         title="Uploaded Files"
                     >
@@ -151,7 +151,7 @@ export default function AppSidebar({
                     </button>
                     <button
                         onClick={() => setActiveTab('prompts')}
-                        className={`p-2 rounded-md flex justify-center ${activeTab === 'prompts' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
+                        className={`p-2 rounded-md flex justify-center ${activeTab === 'prompts' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
                         aria-label="Saved Prompts"
                         title="Saved Prompts"
                     >
@@ -159,7 +159,7 @@ export default function AppSidebar({
                     </button>
                     <button
                         onClick={() => setActiveTab('settings')}
-                        className={`p-2 rounded-md flex justify-center ${activeTab === 'settings' ? (isDarkMode ? 'bg-gray-700' : 'bg-white') : ''}`}
+                        className={`p-2 rounded-md flex justify-center ${activeTab === 'settings' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
                         aria-label="Settings"
                         title="Settings"
                     >
@@ -186,7 +186,7 @@ export default function AppSidebar({
                                     <div
                                         key={`file-${index}`}
                                         className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                            ? 'bg-gray-800 hover:bg-gray-700'
+                                            ? 'dark-card-bg hover:bg-gray-700'
                                             : 'bg-gray-100 hover:bg-gray-200'
                                             }`}
                                         onClick={() => file.url && onFileClick(file.url)}
@@ -228,7 +228,7 @@ export default function AppSidebar({
                                 <div
                                     key={`prompt-${index}`}
                                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                        ? 'bg-gray-800 hover:bg-gray-700'
+                                        ? 'dark-card-bg hover:bg-gray-700'
                                         : 'bg-gray-100 hover:bg-gray-200'
                                         }`}
                                     onClick={() => onPromptClick(prompt.text)}
@@ -248,13 +248,13 @@ export default function AppSidebar({
                             <h3 className="font-semibold text-lg">Settings</h3>
                         </div>
                         <div className="space-y-4">
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Theme</p>
                                 <div className="flex items-center">
                                     <button
                                         onClick={toggleTheme}
                                         className={`px-3 py-2 rounded-md flex items-center ${isDarkMode
-                                            ? 'bg-gray-700 hover:bg-gray-600'
+                                            ? 'dark-active hover:bg-gray-600'
                                             : 'bg-white hover:bg-gray-200 border border-gray-300'
                                             }`}
                                     >
@@ -264,10 +264,10 @@ export default function AppSidebar({
                                 </div>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Account</p>
                                 <div className="flex items-center">
-                                    <div className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-white border border-gray-300'} mr-3`}>
+                                    <div className={`p-2 rounded-full ${isDarkMode ? 'dark-active' : 'bg-white border border-gray-300'} mr-3`}>
                                         <MdAccountCircle size={24} />
                                     </div>
                                     <div>
@@ -277,12 +277,12 @@ export default function AppSidebar({
                                 </div>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Help</p>
                                 <Link
                                     href="/userguide"
                                     className={`flex items-center p-2 rounded-md ${isDarkMode
-                                            ? 'bg-gray-700 hover:bg-gray-600'
+                                            ? 'dark-active hover:bg-gray-600'
                                             : 'bg-white hover:bg-gray-200 border border-gray-300'
                                         }`}
                                 >
@@ -291,7 +291,7 @@ export default function AppSidebar({
                                 </Link>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">About</p>
                                 <div className="text-xs text-gray-500">
                                     <p className="mb-1">AseekBot v1.0.0</p>
@@ -305,42 +305,52 @@ export default function AppSidebar({
 
             {/* Collapsed Sidebar */}
             {!isOpen && (
-                <div className="flex flex-col items-center pt-4 space-y-6">
+                <div className="flex flex-col items-center pt-4 space-y-4">
                     <button
                         onClick={handleNewChat}
-                        className={`p-2 rounded-md ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                        className={`p-2 rounded-md ${isDarkMode
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
                         aria-label="New Chat"
                         title="New Chat"
                     >
                         <MdAdd size={24} />
                     </button>
                     <button
-                        onClick={() => { setActiveTab('history'); setIsOpen(true); }}
-                        className={`p-2 rounded-md ${activeTab === 'history' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
+                        onClick={() => setActiveTab('history')}
+                        className={`p-2 rounded-md ${activeTab === 'history'
+                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
                         aria-label="History"
                         title="History"
                     >
                         <MdHistory size={24} />
                     </button>
                     <button
-                        onClick={() => { setActiveTab('files'); setIsOpen(true); }}
-                        className={`p-2 rounded-md ${activeTab === 'files' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
+                        onClick={() => setActiveTab('files')}
+                        className={`p-2 rounded-md ${activeTab === 'files'
+                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
                         aria-label="Uploaded Files"
                         title="Uploaded Files"
                     >
                         <MdAttachment size={24} />
                     </button>
                     <button
-                        onClick={() => { setActiveTab('prompts'); setIsOpen(true); }}
-                        className={`p-2 rounded-md ${activeTab === 'prompts' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
+                        onClick={() => setActiveTab('prompts')}
+                        className={`p-2 rounded-md ${activeTab === 'prompts'
+                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
                         aria-label="Saved Prompts"
                         title="Saved Prompts"
                     >
                         <MdLightbulb size={24} />
                     </button>
                     <button
-                        onClick={() => { setActiveTab('settings'); setIsOpen(true); }}
-                        className={`p-2 rounded-md ${activeTab === 'settings' ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-200') : ''}`}
+                        onClick={() => setActiveTab('settings')}
+                        className={`p-2 rounded-md ${activeTab === 'settings'
+                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
                         aria-label="Settings"
                         title="Settings"
                     >
@@ -348,16 +358,221 @@ export default function AppSidebar({
                     </button>
                     <Link
                         href="/userguide"
-                        className={`p-2 rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200'}`}
+                        className={`p-2 rounded-md ${isDarkMode
+                            ? 'text-gray-300 hover:bg-gray-800 border border-gray-700'
+                            : 'text-gray-700 hover:bg-gray-200 border border-gray-200'}`}
                         aria-label="User Guide"
                         title="User Guide"
                     >
                         <FiHelpCircle size={24} />
                     </Link>
                     <div className="grow"></div>
+
+                    {/* Compact view of active tab content */}
+                    <div className={`w-full px-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {/* History Tab Compact View */}
+                        {activeTab === 'history' && (
+                            <div className="flex flex-col">
+                                <div className="text-xs py-2 border-t border-b mb-2 mt-2 text-center">
+                                    <div className="font-semibold">History</div>
+                                </div>
+                                <div className="max-h-60 overflow-y-auto px-1">
+                                    {pinnedChats && pinnedChats.length > 0 && (
+                                        <>
+                                            {pinnedChats.map((chat) => (
+                                                <div
+                                                    key={`pinned-${chat.id}`}
+                                                    onClick={() => {
+                                                        loadChat(chat.id);
+                                                        setIsOpen(true);
+                                                        if (onToggle) onToggle(true);
+                                                    }}
+                                                    className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                                        isDarkMode
+                                                            ? 'hover:bg-gray-700'
+                                                            : 'hover:bg-gray-200'
+                                                    } ${
+                                                        activeChat?.id === chat.id
+                                                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                                                            : ''
+                                                    }`}
+                                                >
+                                                    <MdPushPin className="mr-1 text-xs" />
+                                                    <span className="text-xs truncate w-full">{chat.title || 'Untitled Chat'}</span>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+
+                                    {recentChats && recentChats.length > 0 && (
+                                        <>
+                                            {recentChats.slice(0, 5).map((chat) => (
+                                                <div
+                                                    key={`recent-${chat.id}`}
+                                                    onClick={() => {
+                                                        loadChat(chat.id);
+                                                        setIsOpen(true);
+                                                        if (onToggle) onToggle(true);
+                                                    }}
+                                                    className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                                        isDarkMode
+                                                            ? 'hover:bg-gray-700'
+                                                            : 'hover:bg-gray-200'
+                                                    } ${
+                                                        activeChat?.id === chat.id
+                                                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                                                            : ''
+                                                    }`}
+                                                >
+                                                    <MdHistory className="mr-1 text-xs" />
+                                                    <span className="text-xs truncate w-full">{chat.title || 'Untitled Chat'}</span>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+
+                                    {(!pinnedChats || pinnedChats.length === 0) &&
+                                     (!recentChats || recentChats.length === 0) && (
+                                        <div className="text-xs text-center py-2 opacity-70">
+                                            No chat history
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Files Tab Compact View */}
+                        {activeTab === 'files' && (
+                            <div className="flex flex-col">
+                                <div className="text-xs py-2 border-t border-b mb-2 mt-2 text-center">
+                                    <div className="font-semibold">Files</div>
+                                    <div className="text-[10px] opacity-70">{uploadedFiles.length} files</div>
+                                </div>
+                                <div className="max-h-60 overflow-y-auto px-1">
+                                    {uploadedFiles.length > 0 ? (
+                                        uploadedFiles.slice(0, 5).map((file, index) => (
+                                            <div
+                                                key={`compact-file-${index}`}
+                                                onClick={() => {
+                                                    if (file.url) {
+                                                        onFileClick(file.url);
+                                                        setIsOpen(true);
+                                                        if (onToggle) onToggle(true);
+                                                    }
+                                                }}
+                                                className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                                    isDarkMode
+                                                        ? 'hover:bg-gray-700'
+                                                        : 'hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                <div className="mr-1 text-sm">
+                                                    {getFileIcon(file.type) === 'pdf' && '📄'}
+                                                    {getFileIcon(file.type) === 'docx' && '📝'}
+                                                    {getFileIcon(file.type) === 'txt' && '📃'}
+                                                    {getFileIcon(file.type) === 'csv' && '📊'}
+                                                    {getFileIcon(file.type) === 'xlsx' && '📑'}
+                                                    {getFileIcon(file.type) === 'img' && '🖼️'}
+                                                    {getFileIcon(file.type) === 'file' && '📎'}
+                                                </div>
+                                                <span className="text-xs truncate w-full">{file.name}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-xs text-center py-2 opacity-70">
+                                            No uploaded files
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Prompts Tab Compact View */}
+                        {activeTab === 'prompts' && (
+                            <div className="flex flex-col">
+                                <div className="text-xs py-2 border-t border-b mb-2 mt-2 text-center">
+                                    <div className="font-semibold">Prompts</div>
+                                    <div className="text-[10px] opacity-70">{savedPrompts.length} saved</div>
+                                </div>
+                                <div className="max-h-60 overflow-y-auto px-1">
+                                    {savedPrompts.map((prompt, index) => (
+                                        <div
+                                            key={`compact-prompt-${index}`}
+                                            onClick={() => {
+                                                onPromptClick(prompt.text);
+                                                setIsOpen(true);
+                                                if (onToggle) onToggle(true);
+                                            }}
+                                            className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                                isDarkMode
+                                                    ? 'hover:bg-gray-700'
+                                                    : 'hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            <MdLightbulb className="mr-1 text-xs" />
+                                            <span className="text-xs truncate w-full">{prompt.title}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Settings Tab Compact View */}
+                        {activeTab === 'settings' && (
+                            <div className="flex flex-col">
+                                <div className="text-xs py-2 border-t border-b mb-2 mt-2 text-center">
+                                    <div className="font-semibold">Settings</div>
+                                </div>
+                                <div className="px-1">
+                                    <div
+                                        onClick={() => {
+                                            setIsOpen(true);
+                                            if (onToggle) onToggle(true);
+                                        }}
+                                        className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                            isDarkMode
+                                                ? 'hover:bg-gray-700'
+                                                : 'hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        <MdPalette className="mr-1 text-xs" />
+                                        <span className="text-xs truncate w-full">Theme</span>
+                                    </div>
+                                    <div
+                                        onClick={() => {
+                                            setIsOpen(true);
+                                            if (onToggle) onToggle(true);
+                                        }}
+                                        className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                            isDarkMode
+                                                ? 'hover:bg-gray-700'
+                                                : 'hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        <MdAccountCircle className="mr-1 text-xs" />
+                                        <span className="text-xs truncate w-full">Account</span>
+                                    </div>
+                                    <Link
+                                        href="/userguide"
+                                        className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                            isDarkMode
+                                                ? 'hover:bg-gray-700'
+                                                : 'hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        <FiHelpCircle className="mr-1 text-xs" />
+                                        <span className="text-xs truncate w-full">Help</span>
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <button
                         onClick={toggleTheme}
-                        className={`p-2 rounded-md mb-4 ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
+                        className={`p-2 rounded-md mb-4 ${isDarkMode
+                            ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
+                            : 'bg-gray-200 hover:bg-gray-300 border border-gray-300'}`}
                         aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                         title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
                     >

@@ -33,41 +33,57 @@
             "ResultPath": "$.statusUpdate",
             "Next": "ValidateFileAndScan"
         },
-        "ValidateFileAndScan": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "Parameters": {
-                "FunctionName": "${FileValidationLambdaArn}",
-                "Payload": {
-                    "s3Bucket.$": "$.s3Bucket",
-                    "s3Key.$": "$.s3Key",
-                    "fileType.$": "$.fileType",
-                    "documentId.$": "$.documentId"
-                }
-            },
-            "TimeoutSeconds": 120,
-            "Retry": [
-                {
-                    "ErrorEquals": [
-                        "States.TaskFailed"
-                    ],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 2.0
-                }
-            ],
-            "Catch": [
-                {
-                    "ErrorEquals": [
-                        "States.ALL"
-                    ],
-                    "ResultPath": "$.error",
-                    "Next": "HandleValidationError"
-                }
-            ],
-            "OutputPath": "$.Payload",
-            "Next": "UpdateStatusValidated"
+      "ValidateFileAndScan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+            "FunctionName": "arn:aws:lambda:us-east-1:361769603480:function:aseekbot-api-dev-file-validation",
+            "Payload": {
+                "s3Bucket.$": "$.s3Bucket",
+                "s3Key.$": "$.s3Key",
+                "fileType.$": "$.fileType",
+                "documentId.$": "$.documentId"
+            }
         },
+        "TimeoutSeconds": 120,
+        "Retry": [
+            {
+                "ErrorEquals": [
+                    "States.TaskFailed"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 3,
+                "BackoffRate": 2
+            }
+        ],
+        "Catch": [
+            {
+                "ErrorEquals": [
+                    "States.ALL"
+                ],
+                "ResultPath": "$.error",
+                "Next": "HandleValidationError"
+            }
+        ],
+        "ResultPath": "$.validationResult",
+        "Next": "ExtractValidationResult"
+    },
+    "ExtractValidationResult": {
+        "Type": "Pass",
+        "Parameters": {
+            "documentId.$": "$.documentId",
+            "userId.$": "$.userId",
+            "s3Bucket.$": "$.s3Bucket",
+            "s3Key.$": "$.s3Key",
+            "fileType.$": "$.fileType",
+            "isMultipleDocuments.$": "$.isMultipleDocuments",
+            "processId.$": "$.processId",
+            "startTime.$": "$.startTime",
+            "statusUpdate.$": "$.statusUpdate",
+            "extractedValidationResult.$": "$.validationResult.Payload.validationResult"
+        },
+        "Next": "UpdateStatusValidated"
+    },
         "UpdateStatusValidated": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
@@ -95,52 +111,32 @@
             },
             "Next": "UpdateStatusFailed"
         },
-        "DetermineFileType": {
-            "Type": "Choice",
-            "Choices": [
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "pdf",
-                    "Next": "ExtractPdfText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "tiff",
-                    "Next": "ExtractPdfText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "jpg",
-                    "Next": "ExtractPdfText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "jpeg",
-                    "Next": "ExtractPdfText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "png",
-                    "Next": "ExtractPdfText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "docx",
-                    "Next": "ExtractDocxText"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "xlsx",
-                    "Next": "ExtractXlsxData"
-                },
-                {
-                    "Variable": "$.fileType",
-                    "StringEquals": "csv",
-                    "Next": "ExtractCsvData"
-                }
-            ],
-            "Default": "HandleUnsupportedFileType"
+"DetermineFileType": {
+    "Type": "Choice",
+    "Choices": [
+        {
+            "Variable": "$.extractedValidationResult.isTextractSupported",
+            "BooleanEquals": true,
+            "Next": "ExtractWithTextract"
         },
+        {
+            "Variable": "$.fileType",
+            "StringEquals": "docx",
+            "Next": "ExtractDocxText"
+        },
+        {
+            "Variable": "$.fileType",
+            "StringEquals": "xlsx",
+            "Next": "ExtractXlsxData"
+        },
+        {
+            "Variable": "$.fileType",
+            "StringEquals": "csv",
+            "Next": "ExtractCsvData"
+        }
+    ],
+    "Default": "HandleUnsupportedFileType"
+},
         "ExtractPdfText": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
