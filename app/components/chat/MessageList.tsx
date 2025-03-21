@@ -1,48 +1,62 @@
+// Enhanced MessageList.tsx
 "use client";
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiRefreshCw, FiXCircle } from 'react-icons/fi';
+import { FaRobot, FaUser } from 'react-icons/fa';
 import Message from '../Message';
 import { MessageType, MultimediaData } from '../../types/shared';
+import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 
-const TypingIndicator = ({ isDarkMode, isAsync = false }: { isDarkMode: boolean, isAsync?: boolean }) => {
-  return (
-    <div className={`p-3 rounded-lg inline-flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-      <div className="font-bold text-sm mr-2">AseekBot {isAsync ? '(Processing)' : ''}</div>
-      <div className="flex space-x-1">
-        <motion.div
-          className={`w-1.5 h-1.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
-          animate={{ y: [0, -3, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8, delay: 0 }}
-        />
-        <motion.div
-          className={`w-1.5 h-1.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
-          animate={{ y: [0, -3, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
-        />
-        <motion.div
-          className={`w-1.5 h-1.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
-          animate={{ y: [0, -3, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }}
-        />
-      </div>
+// Enhanced Empty State Component
+const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className={`flex flex-col items-center justify-center p-8 rounded-xl shadow-lg mx-auto my-12 max-w-md
+      ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'}`}
+  >
+    <div className={`p-4 rounded-full mb-4 ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+      <FaRobot className={`text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
     </div>
-  );
-};
+    <h2 className="text-2xl font-bold mb-3">Welcome to AseekBot!</h2>
+    <p className="text-center mb-6">I'm your AI assistant for data center procurement. How can I help you today?</p>
+    <motion.div
+      initial={{ scale: 1 }}
+      animate={{
+        scale: [1, 1.03, 1],
+        transition: {
+          repeat: Infinity,
+          repeatType: "mirror",
+          duration: 2,
+          ease: "easeInOut"
+        }
+      }}
+      className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-200 text-blue-800'}
+        font-medium text-sm`}
+    >
+      Try asking me a question to get started
+    </motion.div>
+  </motion.div>
+);
 
-const ProgressBar = ({ progress, isDarkMode }: { progress: number; isDarkMode: boolean }) => {
+// Enhanced Progress Bar with animation
+const EnhancedProgressBar = ({ progress, isDarkMode }: { progress: number; isDarkMode: boolean }) => {
   return (
-    <div className="w-full max-w-[200px] h-1.5 bg-gray-300 rounded-full overflow-hidden mt-1">
+    <div className="w-full max-w-[250px] h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden mt-2 shadow-inner">
       <motion.div
         className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
         initial={{ width: 0 }}
         animate={{ width: `${progress}%` }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.5 }}
       />
     </div>
   );
 };
 
-const AsyncStatusIndicator = ({
+// Enhanced Async Status Indicator with better styling and animations
+const EnhancedAsyncStatusIndicator = ({
   status,
   progress,
   isDarkMode,
@@ -56,26 +70,43 @@ const AsyncStatusIndicator = ({
   onCancel: () => void
 }) => {
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center">
-        <span className={`text-xs mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Status: <span className="font-bold">{status}</span>
-        </span>
-        <button
-          onClick={onRefresh}
-          className={`text-xs px-2 py-1 rounded-md mx-1 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Refresh
-        </button>
-        <button
-          onClick={onCancel}
-          className={`text-xs px-2 py-1 rounded-md ml-1 ${isDarkMode ? 'bg-red-800 text-gray-200' : 'bg-red-200 text-red-700'}`}
-        >
-          Cancel
-        </button>
+    <motion.div
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={`flex flex-col rounded-xl ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'} p-3 shadow-md mt-2`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <span className={`text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            Status: <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{status}</span>
+          </span>
+        </div>
+        <div className="flex space-x-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onRefresh}
+            className={`text-xs px-3 py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-blue-800 text-blue-200 hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+          >
+            <FiRefreshCw className="mr-1.5" size={14} />
+            Refresh
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onCancel}
+            className={`text-xs px-3 py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+          >
+            <FiXCircle className="mr-1.5" size={14} />
+            Cancel
+          </motion.button>
+        </div>
       </div>
-      <ProgressBar progress={progress} isDarkMode={isDarkMode} />
-    </div>
+      <div className="mt-2">
+        <EnhancedProgressBar progress={progress} isDarkMode={isDarkMode} />
+      </div>
+    </motion.div>
   );
 };
 
@@ -119,57 +150,95 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   }, [messages, isThinking, messagesEndRef]);
 
+  // Animation variants for message list
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  // Generate a random offset for each message (for subtle layout animation)
+  const getRandomOffset = () => {
+    return (Math.random() * 10 - 5); // Random number between -5 and 5
+  };
+
   return (
-    <div className="flex flex-col space-y-4">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={container}
+      className="flex flex-col space-y-6 px-1"
+    >
       {messages.length === 0 ? (
-        <div className={`text-center p-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          <h2 className="text-xl font-semibold mb-2">Welcome to AseekBot!</h2>
-          <p>Start a conversation or ask a question to get started.</p>
-        </div>
+        <EmptyState isDarkMode={isDarkMode} />
       ) : (
-        messages.map((message, index) => (
-          <div id={`message-${message.timestamp}`} key={`${message.timestamp}-${index}`}>
-            <Message
+        <AnimatePresence>
+          {messages.map((message, index) => (
+            <motion.div
               key={`${message.timestamp}-${index}`}
-              message={message}
-              isDarkMode={isDarkMode}
-              onMultimediaClick={openMultimedia}
-              onReact={(reaction) => handleReaction(index, reaction)}
-              onPin={() => handlePinMessage(index)}
-              onDownload={() => {/* No-op download handler */ }}
-              showCitations={true}
-            />
-          </div>
-        ))
+              id={`message-${message.timestamp}`}
+              initial={{ opacity: 0, y: 20, x: message.sender === 'user' ? 5 : -5 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 30,
+                mass: 1,
+                delay: 0.05 * index
+              }}
+              className="message-container"
+            >
+              <Message
+                message={message}
+                isDarkMode={isDarkMode}
+                onMultimediaClick={openMultimedia}
+                onReact={(reaction) => handleReaction(index, reaction)}
+                onPin={() => handlePinMessage(index)}
+                onDownload={() => {/* No-op download handler */ }}
+                showCitations={true}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       )}
 
       {isThinking && (
-        <div className={`flex flex-col ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          <div className="flex items-start space-x-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-              <span className="text-xs font-bold">AB</span>
-            </div>
-            <div className="flex flex-col">
-              <TypingIndicator isDarkMode={isDarkMode} isAsync={isAsyncProcessing} />
-              {isAsyncProcessing && asyncStatus ? (
-                <AsyncStatusIndicator
-                  status={asyncStatus}
-                  progress={asyncProgress || progress}
-                  isDarkMode={isDarkMode}
-                  onRefresh={onRefreshStatus}
-                  onCancel={onCancelRequest}
-                />
-              ) : (
-                progress > 0 && <ProgressBar progress={progress} isDarkMode={isDarkMode} />
-              )}
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className={`flex items-start space-x-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+        >
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+            <FaRobot className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
-        </div>
+
+          <div className="flex flex-col">
+            <EnhancedTypingIndicator isDarkMode={isDarkMode} />
+
+            {isAsyncProcessing && asyncStatus ? (
+              <EnhancedAsyncStatusIndicator
+                status={asyncStatus}
+                progress={asyncProgress || progress}
+                isDarkMode={isDarkMode}
+                onRefresh={onRefreshStatus}
+                onCancel={onCancelRequest}
+              />
+            ) : (
+              progress > 0 && <EnhancedProgressBar progress={progress} isDarkMode={isDarkMode} />
+            )}
+          </div>
+        </motion.div>
       )}
 
       {/* This div is used to scroll to the bottom of the chat */}
       <div ref={messagesEndRef} />
-    </div>
+    </motion.div>
   );
 };
 

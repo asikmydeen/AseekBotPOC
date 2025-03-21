@@ -55,6 +55,7 @@ exports.handler = async (event) => {
       throw new Error(`File type ${detectedFileType} is not supported. Supported types: ${validTypes.join(', ')}`);
     }
 
+    // Return result with validationResult object containing isTextractSupported flag
     return {
       ...event,
       fileType: detectedFileType,

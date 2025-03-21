@@ -65,6 +65,7 @@
                     "Next": "HandleValidationError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusValidated"
         },
         "UpdateStatusValidated": {
@@ -104,6 +105,26 @@
                 },
                 {
                     "Variable": "$.fileType",
+                    "StringEquals": "tiff",
+                    "Next": "ExtractPdfText"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "jpg",
+                    "Next": "ExtractPdfText"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "jpeg",
+                    "Next": "ExtractPdfText"
+                },
+                {
+                    "Variable": "$.fileType",
+                    "StringEquals": "png",
+                    "Next": "ExtractPdfText"
+                },
+                {
+                    "Variable": "$.fileType",
                     "StringEquals": "docx",
                     "Next": "ExtractDocxText"
                 },
@@ -124,7 +145,7 @@
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "Parameters": {
-                "FunctionName": "${TextractPdfLambdaArn}",
+                "FunctionName": "${TextractHandlerLambdaArn}",
                 "Payload": {
                     "s3Bucket.$": "$.s3Bucket",
                     "s3Key.$": "$.s3Key",
@@ -151,6 +172,7 @@
                     "Next": "HandleExtractionError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractDocxText": {
@@ -184,6 +206,7 @@
                     "Next": "HandleExtractionError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractXlsxData": {
@@ -217,6 +240,7 @@
                     "Next": "HandleExtractionError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractCsvData": {
@@ -250,6 +274,7 @@
                     "Next": "HandleExtractionError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "UpdateStatusExtracted": {
@@ -261,7 +286,8 @@
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
                     "status": "TEXT_EXTRACTED",
-                    "message": "Document text successfully extracted."
+                    "message": "Document text successfully extracted.",
+                    "extractedText.$": "$.extractedText"
                 }
             },
             "Next": "AnalyzeContent"
@@ -324,6 +350,7 @@
                     "Next": "HandleAnalysisError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusAnalyzed"
         },
         "UpdateStatusAnalyzed": {
@@ -335,7 +362,8 @@
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
                     "status": "CONTENT_ANALYZED",
-                    "message": "Document content successfully analyzed."
+                    "message": "Document content successfully analyzed.",
+                    "analysisResults.$": "$.analysisResults"
                 }
             },
             "Next": "CheckMultipleDocuments"
@@ -394,6 +422,7 @@
                     "Next": "HandleComparisonError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusCompared"
         },
         "UpdateStatusCompared": {
@@ -405,7 +434,8 @@
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
                     "status": "DOCUMENTS_COMPARED",
-                    "message": "Documents successfully compared."
+                    "message": "Documents successfully compared.",
+                    "comparisonResults.$": "$.comparisonResults"
                 }
             },
             "Next": "GenerateInsights"
@@ -431,7 +461,8 @@
                 "Payload": {
                     "analysisResults.$": "$.analysisResults",
                     "comparisonResults.$": "$.comparisonResults",
-                    "documentId.$": "$.documentId"
+                    "documentId.$": "$.documentId",
+                    "fileType.$": "$.fileType"
                 }
             },
             "TimeoutSeconds": 180,
@@ -454,6 +485,7 @@
                     "Next": "HandleInsightError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusInsightsGenerated"
         },
         "UpdateStatusInsightsGenerated": {
@@ -465,7 +497,8 @@
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
                     "status": "INSIGHTS_GENERATED",
-                    "message": "Document insights successfully generated."
+                    "message": "Document insights successfully generated.",
+                    "insights.$": "$.insights"
                 }
             },
             "Next": "StoreResults"
@@ -493,7 +526,10 @@
                     "analysisResults.$": "$.analysisResults",
                     "comparisonResults.$": "$.comparisonResults",
                     "documentId.$": "$.documentId",
-                    "userId.$": "$.userId"
+                    "userId.$": "$.userId",
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "fileType.$": "$.fileType"
                 }
             },
             "TimeoutSeconds": 120,
@@ -516,6 +552,7 @@
                     "Next": "HandleStorageError"
                 }
             ],
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusCompleted"
         },
         "HandleStorageError": {
