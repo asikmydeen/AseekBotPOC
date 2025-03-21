@@ -31,6 +31,14 @@ exports.handler = async (event) => {
     // Add optional fields if they exist
     if (resultLocation) item.resultLocation = resultLocation;
 
+    // Store insights if available
+    if (event.insights) {
+      console.log('Insights data found:', JSON.stringify(event.insights, null, 2));
+      item.insights = event.insights;
+    } else {
+      console.log('No insights data found in the event');
+    }
+
     // Save original input fields that need to be preserved
     if (event.s3Bucket) item.s3Bucket = event.s3Bucket;
     if (event.s3Key) item.s3Key = event.s3Key;

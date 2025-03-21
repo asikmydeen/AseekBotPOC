@@ -316,56 +316,68 @@ export default function AppSidebar({
                     >
                         <MdAdd size={24} />
                     </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={`p-2 rounded-md ${activeTab === 'history'
-                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
-                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
-                        aria-label="History"
-                        title="History"
-                    >
-                        <MdHistory size={24} />
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('files')}
-                        className={`p-2 rounded-md ${activeTab === 'files'
-                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
-                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
-                        aria-label="Uploaded Files"
-                        title="Uploaded Files"
-                    >
-                        <MdAttachment size={24} />
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('prompts')}
-                        className={`p-2 rounded-md ${activeTab === 'prompts'
-                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
-                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
-                        aria-label="Saved Prompts"
-                        title="Saved Prompts"
-                    >
-                        <MdLightbulb size={24} />
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('settings')}
-                        className={`p-2 rounded-md ${activeTab === 'settings'
-                            ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
-                            : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
-                        aria-label="Settings"
-                        title="Settings"
-                    >
-                        <MdSettings size={24} />
-                    </button>
-                    <Link
-                        href="/userguide"
-                        className={`p-2 rounded-md ${isDarkMode
-                            ? 'text-gray-300 hover:bg-gray-800 border border-gray-700'
-                            : 'text-gray-700 hover:bg-gray-200 border border-gray-200'}`}
-                        aria-label="User Guide"
-                        title="User Guide"
-                    >
-                        <FiHelpCircle size={24} />
-                    </Link>
+
+                    {/* Vertical Quicklinks */}
+                    <div className={`w-full px-2 py-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border-t border-b`}>
+                        <div className="flex flex-col space-y-2">
+                            <button
+                                onClick={() => setActiveTab('history')}
+                                className={`flex items-center p-2 rounded-md w-full ${activeTab === 'history'
+                                    ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                                    : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
+                                aria-label="History"
+                                title="History"
+                            >
+                                <MdHistory size={18} className="mr-2" />
+                                <span className="text-xs">History</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('files')}
+                                className={`flex items-center p-2 rounded-md w-full ${activeTab === 'files'
+                                    ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                                    : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
+                                aria-label="Uploaded Files"
+                                title="Uploaded Files"
+                            >
+                                <MdAttachment size={18} className="mr-2" />
+                                <span className="text-xs">Attachments</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('prompts')}
+                                className={`flex items-center p-2 rounded-md w-full ${activeTab === 'prompts'
+                                    ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                                    : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
+                                aria-label="Saved Prompts"
+                                title="Saved Prompts"
+                            >
+                                <MdLightbulb size={18} className="mr-2" />
+                                <span className="text-xs">Saved Prompts</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('settings')}
+                                className={`flex items-center p-2 rounded-md w-full ${activeTab === 'settings'
+                                    ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')
+                                    : (isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200')}`}
+                                aria-label="Settings"
+                                title="Settings"
+                            >
+                                <MdSettings size={18} className="mr-2" />
+                                <span className="text-xs">Settings</span>
+                            </button>
+                            <Link
+                                href="/userguide"
+                                className={`flex items-center p-2 rounded-md w-full ${isDarkMode
+                                    ? 'text-gray-300 hover:bg-gray-800'
+                                    : 'text-gray-700 hover:bg-gray-200'}`}
+                                aria-label="User Guide"
+                                title="User Guide"
+                            >
+                                <FiHelpCircle size={18} className="mr-2" />
+                                <span className="text-xs">Help</span>
+                            </Link>
+                        </div>
+                    </div>
+
                     <div className="grow"></div>
 
                     {/* Compact view of active tab content */}

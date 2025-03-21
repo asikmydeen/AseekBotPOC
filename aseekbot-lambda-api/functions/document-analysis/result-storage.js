@@ -49,6 +49,7 @@ exports.handler = async (event) => {
 
         return {
             ...event,
+            insights: event.insights || "Insights not available",
             resultLocation: s3Key
         };
     } catch (error) {

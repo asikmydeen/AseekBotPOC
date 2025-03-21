@@ -101,8 +101,41 @@ async function getStatusHandler(req, res, next) {
                     if (sfnResult.output) {
                         try {
                             const outputData = JSON.parse(sfnResult.output);
+
+                            // Log the entire outputData structure for debugging
+                            console.log('Step Functions output data structure:', JSON.stringify(outputData, null, 2));
+
+                            // Improved insights field handling with multiple checks
+                            let insightsValue = null;
+
+                            // Check 1: Nested in outputData.statusUpdate.Payload.insights
+                            if (outputData.statusUpdate && outputData.statusUpdate.Payload && outputData.statusUpdate.Payload.insights) {
+                                console.log('Found insights in outputData.statusUpdate.Payload.insights');
+                                insightsValue = outputData.statusUpdate.Payload.insights;
+                            }
+                            // Check 2: Direct outputData.insights
+                            else if (outputData.insights) {
+                                console.log('Found insights directly in outputData.insights');
+                                insightsValue = outputData.insights;
+                            }
+                            // Check 3: Nested in outputData.result.insights
+                            else if (outputData.result && outputData.result.insights) {
+                                console.log('Found insights in outputData.result.insights');
+                                insightsValue = outputData.result.insights;
+                            }
+                            // Check 4: Already in statusItem.insights
+                            else if (statusItem.insights) {
+                                console.log('Using existing insights from statusItem.insights');
+                                insightsValue = statusItem.insights;
+                            }
+                            // Fallback
+                            else {
+                                console.warn('Warning: Insights field is missing in all expected locations');
+                                insightsValue = 'Insights not available';
+                            }
+
                             statusItem.result = {
-                                insights: outputData.insights,
+                                insights: insightsValue,
                                 documentAnalysis: {
                                     completed: true,
                                     timestamp: new Date().toISOString()

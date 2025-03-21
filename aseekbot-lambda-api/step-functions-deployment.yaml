@@ -562,6 +562,7 @@ Resources:
                   "s3Key.$": "$.s3Key",
                   "fileType.$": "$.fileType",
                   "resultLocation.$": "$.storageResult.Payload.resultLocation",
+                  "insights.$": "$.storageResult.Payload.insights",
                   "status": "COMPLETED",
                   "message": "Document analysis workflow completed successfully."
                 }

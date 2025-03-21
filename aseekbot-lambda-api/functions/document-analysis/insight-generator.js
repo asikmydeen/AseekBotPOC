@@ -1,4 +1,6 @@
 // functions/document-analysis/insight-generator.js
+const { invokeBedrockAgent } = require('../../utils/invokeBedrockAgent');
+
 exports.handler = async (event) => {
     console.log('Generating insights', JSON.stringify(event, null, 2));
 
@@ -13,7 +15,7 @@ exports.handler = async (event) => {
         const prices = analysisResults?.entities?.prices || [];
         const keyFindings = analysisResults?.keyFindings || [];
 
-        // Generate a summary
+        // Generate a summary using rule-based approach as fallback
         let summary = `This ${docType} `;
 
         if (vendors.length > 0) {
@@ -88,12 +90,69 @@ exports.handler = async (event) => {
             nextSteps = 'Gather additional vendor information and specifications';
         }
 
-        // Prepare insights object
+        // Construct a prompt for Bedrock agent
+        const prompt = `
+        Generate actionable business insights for a document with the following details:
+
+        Document Type: ${docType}
+        Document ID: ${documentId}
+        File Type: ${fileType}
+        Sentiment: ${sentiment}
+
+        Key Findings: ${JSON.stringify(keyFindings)}
+
+        Entities:
+        - Vendors: ${JSON.stringify(vendors)}
+        - Products: ${JSON.stringify(products)}
+        - Prices: ${JSON.stringify(prices)}
+
+        Please provide:
+        1. A concise summary of the document
+        2. Key points to consider
+        3. Specific recommendations based on the document content
+        4. Suggested next steps
+        `;
+
+        // Call Bedrock agent to generate insights
+        const bedrockResponse = await invokeBedrockAgent(prompt, documentId, {
+            region: process.env.AWS_REGION,
+            agentId: process.env.BEDROCK_AGENT_ID,
+            agentAliasId: process.env.BEDROCK_AGENT_ALIAS_ID
+        });
+
+        // Parse Bedrock response
+        let bedrockInsights = {};
+        try {
+            if (bedrockResponse && bedrockResponse.completion) {
+                // Log the raw completion from Bedrock for debugging
+                console.log('Bedrock raw completion:', bedrockResponse.completion);
+
+                // Try to parse structured data if available
+                try {
+                    bedrockInsights = JSON.parse(bedrockResponse.completion);
+                } catch (parseError) {
+                    // If not JSON, use the text as summary
+                    console.log('JSON parsing failed, using raw text as summary. Error:', parseError.message);
+                    console.log('Raw text content type:', typeof bedrockResponse.completion);
+                    bedrockInsights = {
+                        bedrockSummary: bedrockResponse.completion
+                    };
+                }
+            } else {
+                console.log('Bedrock response missing or has no completion property:', bedrockResponse);
+            }
+        } catch (parseError) {
+            console.warn('Error parsing Bedrock response:', parseError);
+            console.log('Bedrock response that caused error:', JSON.stringify(bedrockResponse, null, 2));
+        }
+
+        // Prepare insights object, combining rule-based and Bedrock insights
         const insights = {
-            summary,
-            keyPoints,
-            recommendations,
-            nextSteps,
+            summary: bedrockInsights.summary || summary,
+            keyPoints: bedrockInsights.keyPoints || keyPoints,
+            recommendations: bedrockInsights.recommendations || recommendations,
+            nextSteps: bedrockInsights.nextSteps || nextSteps,
+            bedrockInsights: bedrockResponse?.completion ? bedrockResponse.completion : null,
             sourceDocument: {
                 type: fileType,
                 documentId
@@ -112,7 +171,8 @@ exports.handler = async (event) => {
         return {
             ...event,
             insights,
-            insightsTimestamp: new Date().toISOString()
+            insightsTimestamp: new Date().toISOString(),
+            bedrockResponse: bedrockResponse || null
         };
     } catch (error) {
         console.error('Error generating insights:', error);
