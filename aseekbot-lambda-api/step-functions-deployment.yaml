@@ -134,7 +134,7 @@ Resources:
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
               "Parameters": {
-                "FunctionName": "${TextractHandlerLambdaArn}",
+                "FunctionName": "arn:aws:lambda:us-east-1:361769603480:function:aseekbot-api-dev-textract-handler",
                 "Payload": {
                   "s3Bucket.$": "$.s3Bucket",
                   "s3Key.$": "$.s3Key",

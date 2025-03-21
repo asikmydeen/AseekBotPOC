@@ -362,7 +362,7 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
 
     return (
         <div id={id} className={`mb-8 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-            <div className={`flex items-start gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex items-start gap-2 ${message.sender === 'user' ? 'flex-row-reverse justify-start' : 'flex-row'}`}>
                 {/* Avatar for bot or user */}
                 <div className={`flex-shrink-0 ${message.sender === 'user' ? 'ml-2' : 'mr-2'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${message.sender === 'user'
@@ -381,13 +381,13 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.01 }}
                     transition={{ duration: 0.3 }}
-                    className={`inline-block p-4 rounded-xl max-w-2xl shadow-md hover:shadow-lg ${message.sender === 'user'
-                        ? isDarkMode
-                            ? 'bg-gradient-to-br from-gray-800 to-gray-900 text-white border border-gray-700'
-                            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border border-gray-200'
-                        : isDarkMode
-                            ? 'bg-gradient-to-br from-[#1E3A8A] to-[#1E40AF] text-white border border-[#2563EB]'
-                            : 'bg-gradient-to-br from-[#3B82F6] to-[#60A5FA] text-white border border-[#93C5FD]'
+                    className={`inline-block p-4 rounded-xl max-w-2xl shadow-md hover:shadow-lg overflow-hidden break-words ${message.sender === 'user'
+                            ? isDarkMode
+                                ? 'bg-gradient-to-br from-gray-800 to-gray-900 text-white border border-gray-700 text-left'
+                                : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border border-gray-200 text-left'
+                            : isDarkMode
+                                ? 'bg-gradient-to-br from-[#1E3A8A] to-[#1E40AF] text-white border border-[#2563EB]'
+                                : 'bg-gradient-to-br from-[#3B82F6] to-[#60A5FA] text-white border border-[#93C5FD]'
                         }`}
                 >
                     {isTyping ? (
@@ -401,10 +401,11 @@ function Message({ message, onMultimediaClick, onReact, onPin, onDownload, isDar
                         </div>
                     ) : (
                         <div
-                            className={`text-base leading-relaxed prose max-w-none ${isDarkMode ? 'prose-invert text-gray-200' : 'text-gray-900'}
-                prose-a:${isDarkMode ? 'text-[#93C5FD]' : 'text-[#1E40AF]'}
-                prose-img:max-w-full prose-img:rounded-md prose-img:my-2
-              `}
+                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden ${isDarkMode ? 'prose-invert text-gray-200' : 'text-gray-900'}
+                            prose-a:${isDarkMode ? 'text-[#93C5FD]' : 'text-[#1E40AF]'}
+                            prose-img:max-w-full prose-img:rounded-md prose-img:my-2
+                            prose-pre:max-w-full prose-pre:overflow-x-auto
+                            `}
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
                         />
                     )}

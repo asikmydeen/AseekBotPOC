@@ -6,7 +6,12 @@ export const LAMBDA_ENDPOINTS = {
   uploadFile: `${API_BASE_URL}/uploadFile`,
   deleteFile: `${API_BASE_URL}/deleteFile`,
   createTicket: `${API_BASE_URL}/createTicket`,
-  quickLink: `${API_BASE_URL}/quickLink`
+  quickLink: `${API_BASE_URL}/quickLink`,
+
+  // New endpoints for async processing
+  startProcessing: `${API_BASE_URL}/startProcessing`,
+  checkStatus: `${API_BASE_URL}/checkStatus`,
+  workerProcessor: `${API_BASE_URL}/workerProcessor`
 };
 
 // Also define the necessary interfaces here for better organization
@@ -35,6 +40,9 @@ export interface ApiResponse {
   data?: unknown;
   error?: string;
   message?: string;
+  requestId?: string;
+  progress?: number;
+  result?: any;
 }
 
 // Helper function for error handling

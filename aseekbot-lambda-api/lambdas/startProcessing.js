@@ -37,13 +37,14 @@ app.use((req, res, next) => {
     console.log('- Path:', req.path);
     console.log('- Headers:', JSON.stringify(req.headers));
     console.log('- Body type:', typeof req.body);
+    console.log('- Body:', JSON.stringify(req.body, null, 2));
     next();
 });
 
 app.post('*', async (req, res) => {
     try {
         // Extract request data
-        const { message, history, s3Files, sessionId } = req.body;
+        const { message, history, s3Files, sessionId, documentAnalysis: explicitDocAnalysis } = req.body;
 
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });
@@ -52,17 +53,25 @@ app.post('*', async (req, res) => {
         // Generate a unique request ID
         const requestId = uuidv4();
         const timestamp = new Date().toISOString();
+        const sessionIdentifier = sessionId || `session-${Date.now()}`;
+
+        // Determine if this should be a document analysis request
+        const hasFiles = s3Files && Array.isArray(s3Files) && s3Files.length > 0;
+        const isDocumentAnalysis = explicitDocAnalysis || hasFiles;
+
+        console.log(`Request type detection: hasFiles=${hasFiles}, explicitDocAnalysis=${explicitDocAnalysis}, isDocumentAnalysis=${isDocumentAnalysis}`);
 
         // Create status record in DynamoDB
         const statusItem = {
             requestId,
-            sessionId: sessionId || `session-${Date.now()}`,
+            sessionId: sessionIdentifier,
             status: 'QUEUED',
             message,
             timestamp,
             progress: 0,
             createdAt: timestamp,
-            updatedAt: timestamp
+            updatedAt: timestamp,
+            isDocumentAnalysis: isDocumentAnalysis
         };
 
         await docClient.send(new PutCommand({
@@ -70,33 +79,52 @@ app.post('*', async (req, res) => {
             Item: statusItem
         }));
 
+        // Process S3 file references if present
+        let processedS3Files = [];
+        if (hasFiles) {
+            processedS3Files = s3Files.map(file => ({
+                name: file.name,
+                s3Url: file.s3Url,
+                mimeType: file.mimeType || file.type || 'application/octet-stream',
+                // Use CODE_INTERPRETER instead of DOCUMENT_ANALYSIS for Bedrock compatibility
+                useCase: "CODE_INTERPRETER"
+            }));
+            console.log('Processed S3 files:', JSON.stringify(processedS3Files, null, 2));
+        }
+
         // Send message to SQS
+        const messageBody = {
+            requestId,
+            message,
+            history: history || [],
+            s3Files: processedS3Files,
+            sessionId: sessionIdentifier,
+            documentAnalysis: isDocumentAnalysis
+        };
+
         await sqsClient.send(new SendMessageCommand({
             QueueUrl: process.env.SQS_QUEUE_URL,
-            MessageBody: JSON.stringify({
-                requestId,
-                message,
-                history: history || [],
-                s3Files: s3Files || [],
-                sessionId: sessionId || `session-${Date.now()}`
-            }),
+            MessageBody: JSON.stringify(messageBody),
             MessageAttributes: {
                 RequestType: {
                     DataType: 'String',
-                    StringValue: 'CHAT_MESSAGE'
+                    StringValue: isDocumentAnalysis ? 'DOCUMENT_ANALYSIS' : 'CHAT_MESSAGE'
                 }
             }
         }));
 
-        console.log(`Request ${requestId} queued successfully`);
+        console.log(`Request ${requestId} queued successfully (Document analysis: ${isDocumentAnalysis})`);
 
         // Return immediate response with request ID
         return res.json({
             requestId,
             status: 'QUEUED',
-            message: 'Your request has been queued for processing',
+            message: isDocumentAnalysis
+                ? 'Your document is being analyzed. Please check the status endpoint for updates.'
+                : 'Your request has been queued for processing',
             timestamp,
-            progress: 0
+            progress: 0,
+            isDocumentAnalysis
         });
     } catch (error) {
         console.error('Error processing request:', error);

@@ -15,9 +15,16 @@ export async function processChatMessage(
 ): Promise<ApiResponse> {
   try {
     // Check if we should use the new async API for better handling
-    if (message.length > 500 || (attachments && attachments.length > 0)) {
-      return await startAsyncChatProcessing(message, history, attachments);
-    }
+   // Check if we should use the new async API for better handling
+if (message.length > 500 || (attachments && attachments.length > 0)) {
+  // If there are attachments, use document analysis workflow
+  if (attachments && attachments.length > 0) {
+    return await startAsyncDocumentAnalysis(attachments, message);
+  } else {
+    // Just a long message with no attachments, use regular async processing
+    return await startAsyncChatProcessing(message, history);
+  }
+}
 
     // Original implementation for simpler requests
     const payload: any = {
@@ -127,9 +134,9 @@ export async function startAsyncDocumentAnalysis(
         name: file.name,
         s3Url: file.url || file.fileUrl,
         mimeType: file.type || 'application/octet-stream',
-        useCase: "DOCUMENT_ANALYSIS"
+        useCase: "CODE_INTERPRETER"  // Changed from DOCUMENT_ANALYSIS
       })),
-      requestType: 'DOCUMENT_ANALYSIS'
+      documentAnalysis: true  // This is crucial for the backend to identify it as document analysis
     };
 
     const response = await fetch(LAMBDA_ENDPOINTS.startProcessing, {
