@@ -27,8 +27,28 @@ export default function Providers({ children }: ProviderProps) {
         }
     }, [pathname, router]);
 
+    // Set up theme preference detection
+    useEffect(() => {
+        // Only run on client side
+        if (typeof window === 'undefined') return;
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('aseekbot-theme');
+
+        // If no saved preference, check for system preference
+        if (!savedTheme) {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // Default to light theme regardless of system preference (per requirements)
+            localStorage.setItem('aseekbot-theme', 'light');
+        }
+
+        // Apply the theme class to document
+        const isDarkMode = savedTheme === 'dark';
+        document.documentElement.classList.toggle('dark', isDarkMode);
+    }, []);
+
     return (
-        <ThemeProvider initialDarkMode={true}>
+        <ThemeProvider initialDarkMode={false}>
             <ChatHistoryProvider>
                 {children}
             </ChatHistoryProvider>

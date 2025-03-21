@@ -8,11 +8,10 @@
             "Parameters": {
                 "FunctionName": "${InitProcessLambdaArn}",
                 "Payload": {
-                    "input.$": "$",
-                    "timestamp.$": "$$.Execution.StartTime"
+                    "input.$": "$"
                 }
             },
-            "ResultPath": "$.processData",
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusStarted"
         },
         "UpdateStatusStarted": {
@@ -30,7 +29,7 @@
                     "message": "Document analysis process has started."
                 }
             },
-            "ResultPath": "$.statusUpdate",
+            "OutputPath": "$.Payload",
             "Next": "ValidateFileAndScan"
         },
         "ValidateFileAndScan": {
@@ -45,6 +44,7 @@
                     "documentId.$": "$.documentId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 120,
             "Retry": [
                 {
@@ -65,7 +65,6 @@
                     "Next": "HandleValidationError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusValidated"
         },
         "UpdateStatusValidated": {
@@ -76,10 +75,14 @@
                 "Payload": {
                     "documentId.$": "$.documentId",
                     "userId.$": "$.userId",
+                    "s3Bucket.$": "$.s3Bucket",
+                    "s3Key.$": "$.s3Key",
+                    "fileType.$": "$.fileType",
                     "status": "VALIDATED",
                     "message": "Document validated and scanned successfully."
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "DetermineFileType"
         },
         "HandleValidationError": {
@@ -93,6 +96,7 @@
                     "errorType": "ValidationError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "DetermineFileType": {
@@ -100,48 +104,48 @@
             "Choices": [
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "pdf",
-                    "Next": "ExtractPdfText"
+                    "StringMatches": "pdf",
+                    "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "tiff",
-                    "Next": "ExtractPdfText"
+                    "StringMatches": "jpg",
+                    "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "jpg",
-                    "Next": "ExtractPdfText"
+                    "StringMatches": "jpeg",
+                    "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "jpeg",
-                    "Next": "ExtractPdfText"
+                    "StringMatches": "png",
+                    "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "png",
-                    "Next": "ExtractPdfText"
+                    "StringMatches": "tiff",
+                    "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "docx",
+                    "StringMatches": "docx",
                     "Next": "ExtractDocxText"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "xlsx",
+                    "StringMatches": "xlsx",
                     "Next": "ExtractXlsxData"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringEquals": "csv",
+                    "StringMatches": "csv",
                     "Next": "ExtractCsvData"
                 }
             ],
             "Default": "HandleUnsupportedFileType"
         },
-        "ExtractPdfText": {
+        "ExtractWithTextract": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "Parameters": {
@@ -149,9 +153,11 @@
                 "Payload": {
                     "s3Bucket.$": "$.s3Bucket",
                     "s3Key.$": "$.s3Key",
-                    "documentId.$": "$.documentId"
+                    "documentId.$": "$.documentId",
+                    "fileType.$": "$.fileType"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 300,
             "Retry": [
                 {
@@ -172,7 +178,6 @@
                     "Next": "HandleExtractionError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractDocxText": {
@@ -186,6 +191,7 @@
                     "documentId.$": "$.documentId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 180,
             "Retry": [
                 {
@@ -206,7 +212,6 @@
                     "Next": "HandleExtractionError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractXlsxData": {
@@ -220,6 +225,7 @@
                     "documentId.$": "$.documentId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 180,
             "Retry": [
                 {
@@ -240,7 +246,6 @@
                     "Next": "HandleExtractionError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "ExtractCsvData": {
@@ -254,6 +259,7 @@
                     "documentId.$": "$.documentId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 120,
             "Retry": [
                 {
@@ -274,7 +280,6 @@
                     "Next": "HandleExtractionError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusExtracted"
         },
         "UpdateStatusExtracted": {
@@ -290,6 +295,7 @@
                     "extractedText.$": "$.extractedText"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "AnalyzeContent"
         },
         "HandleExtractionError": {
@@ -303,6 +309,7 @@
                     "errorType": "ExtractionError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "HandleUnsupportedFileType": {
@@ -316,6 +323,7 @@
                     "errorType": "UnsupportedFileType"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "AnalyzeContent": {
@@ -330,6 +338,7 @@
                     "modelType": "BEDROCK_CLAUDE"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 300,
             "Retry": [
                 {
@@ -350,7 +359,6 @@
                     "Next": "HandleAnalysisError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusAnalyzed"
         },
         "UpdateStatusAnalyzed": {
@@ -366,6 +374,7 @@
                     "analysisResults.$": "$.analysisResults"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "CheckMultipleDocuments"
         },
         "HandleAnalysisError": {
@@ -379,6 +388,7 @@
                     "errorType": "AnalysisError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "CheckMultipleDocuments": {
@@ -402,6 +412,7 @@
                     "documentId.$": "$.documentId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 300,
             "Retry": [
                 {
@@ -422,7 +433,6 @@
                     "Next": "HandleComparisonError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusCompared"
         },
         "UpdateStatusCompared": {
@@ -438,6 +448,7 @@
                     "comparisonResults.$": "$.comparisonResults"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "GenerateInsights"
         },
         "HandleComparisonError": {
@@ -451,6 +462,7 @@
                     "errorType": "ComparisonError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "GenerateInsights": {
@@ -465,6 +477,7 @@
                     "fileType.$": "$.fileType"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 180,
             "Retry": [
                 {
@@ -485,7 +498,6 @@
                     "Next": "HandleInsightError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusInsightsGenerated"
         },
         "UpdateStatusInsightsGenerated": {
@@ -501,6 +513,7 @@
                     "insights.$": "$.insights"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "StoreResults"
         },
         "HandleInsightError": {
@@ -514,6 +527,7 @@
                     "errorType": "InsightError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "StoreResults": {
@@ -526,12 +540,10 @@
                     "analysisResults.$": "$.analysisResults",
                     "comparisonResults.$": "$.comparisonResults",
                     "documentId.$": "$.documentId",
-                    "userId.$": "$.userId",
-                    "s3Bucket.$": "$.s3Bucket",
-                    "s3Key.$": "$.s3Key",
-                    "fileType.$": "$.fileType"
+                    "userId.$": "$.userId"
                 }
             },
+            "OutputPath": "$.Payload",
             "TimeoutSeconds": 120,
             "Retry": [
                 {
@@ -552,7 +564,6 @@
                     "Next": "HandleStorageError"
                 }
             ],
-            "OutputPath": "$.Payload",
             "Next": "UpdateStatusCompleted"
         },
         "HandleStorageError": {
@@ -566,6 +577,7 @@
                     "errorType": "StorageError"
                 }
             },
+            "OutputPath": "$.Payload",
             "Next": "UpdateStatusFailed"
         },
         "UpdateStatusCompleted": {

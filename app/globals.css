@@ -3,8 +3,53 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-light: 79, 70, 229; /* indigo-500 */
+  --primary-dark: 99, 102, 241; /* indigo-400 */
+  --bg-light: 255, 255, 255;
+  --bg-dark: 17, 24, 39; /* gray-900 */
+  --text-light: 17, 24, 39; /* gray-900 */
+  --text-dark: 243, 244, 246; /* gray-100 */
+}
+
 body {
   @apply font-sans;
+}
+
+/* Message highlight animation */
+@keyframes highlight-animation {
+  0% {
+    background-color: rgba(var(--primary-light), 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.dark {
+  @keyframes highlight-animation {
+    0% {
+      background-color: rgba(var(--primary-dark), 0.3);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+}
+
+.highlight-message {
+  animation: highlight-animation 2s ease-out;
+  @apply rounded-lg;
+}
+
+.dark .highlight-message {
+  animation: highlight-animation 2s ease-out;
+  box-shadow: 0 0 8px rgba(var(--primary-dark), 0.6);
+}
+
+.light .highlight-message {
+  animation: highlight-animation 2s ease-out;
+  box-shadow: 0 0 8px rgba(var(--primary-light), 0.3);
 }
 
 /* Add custom table styling */
@@ -26,16 +71,16 @@ body {
 
 /* Dark mode specific styles */
 .dark .prose th {
-  @apply border-gray-600 bg-gray-700 text-gray-200;
+  @apply border-indigo-800 bg-indigo-900/50 text-indigo-100;
 }
 
 .dark .prose td {
-  @apply border-gray-600 text-gray-200;
+  @apply border-slate-700 text-slate-200;
 }
 
 /* Light mode specific styles */
 .light .prose th {
-  @apply border-gray-300 bg-gray-200 text-gray-800;
+  @apply border-gray-300 bg-indigo-100 text-indigo-900;
 }
 
 .light .prose td {
@@ -48,11 +93,11 @@ body {
 }
 
 .dark .sidebar-section {
-  @apply border-gray-700;
+  @apply border-indigo-900;
 }
 
 .light .sidebar-section {
-  @apply border-gray-300;
+  @apply border-indigo-200;
 }
 
 .sidebar-section:last-child {
@@ -61,11 +106,11 @@ body {
 
 /* Active navigation state */
 .active {
-  @apply bg-blue-500 bg-opacity-20 border-l-4 border-blue-500 font-semibold;
+  @apply bg-indigo-500 bg-opacity-20 border-l-4 border-indigo-500 font-semibold;
 }
 
 .dark .active {
-  @apply bg-blue-900 bg-opacity-30;
+  @apply bg-indigo-900 bg-opacity-30;
 }
 
 /* Sidebar container styling for layering */
@@ -74,7 +119,7 @@ body {
 }
 
 .dark .sidebar-container {
-  @apply bg-gray-900 shadow-lg shadow-gray-950;
+  @apply bg-slate-900 shadow-lg shadow-slate-950;
 }
 
 .light .sidebar-container {
@@ -87,39 +132,12 @@ body {
 }
 
 .dark .chat-sidebar {
-  @apply bg-gray-800;
+  @apply bg-slate-800;
 }
 
 .light .chat-sidebar {
   @apply bg-white;
 }
-
-/* Message highlight animation */
-@keyframes highlight-animation {
-  0% {
-    background-color: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-.highlight-message {
-  animation: highlight-animation 2s ease-out;
-  @apply rounded-lg;
-}
-
-.dark .highlight-message {
-  animation: highlight-animation 2s ease-out;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
-.light .highlight-message {
-  animation: highlight-animation 2s ease-out;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-}
-
-/* Add these styles to your globals.css file */
 
 /* Message content styling */
 .prose {
@@ -228,6 +246,24 @@ body {
 /* Fix for very long URLs or unbroken strings */
 .prose a {
   word-break: break-all;
+}
+
+/* Input field focus effect */
+textarea:focus, input:focus {
+  @apply ring-2 ring-indigo-500 ring-opacity-50 outline-none;
+}
+
+.dark textarea:focus, .dark input:focus {
+  @apply ring-2 ring-indigo-400 ring-opacity-60 outline-none;
+}
+
+/* Add animation to message bubbles */
+.message-transition {
+  transition: all 0.3s ease;
+}
+
+.message-container:hover .message-bubble {
+  transform: translateY(-2px);
 }
 
 /* Media queries for responsive behavior */
