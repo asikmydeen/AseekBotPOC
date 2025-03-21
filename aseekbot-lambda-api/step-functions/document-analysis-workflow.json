@@ -104,42 +104,42 @@
             "Choices": [
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "pdf",
+                    "StringEquals": "pdf",
                     "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "jpg",
+                    "StringEquals": "tiff",
                     "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "jpeg",
+                    "StringEquals": "jpg",
                     "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "png",
+                    "StringEquals": "jpeg",
                     "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "tiff",
+                    "StringEquals": "png",
                     "Next": "ExtractWithTextract"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "docx",
+                    "StringEquals": "docx",
                     "Next": "ExtractDocxText"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "xlsx",
+                    "StringEquals": "xlsx",
                     "Next": "ExtractXlsxData"
                 },
                 {
                     "Variable": "$.fileType",
-                    "StringMatches": "csv",
+                    "StringEquals": "csv",
                     "Next": "ExtractCsvData"
                 }
             ],
