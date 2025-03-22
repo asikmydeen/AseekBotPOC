@@ -9,25 +9,30 @@ import {
 
 // Original API functions
 export async function processChatMessage(
-message: string, history: ChatHistoryItem[], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
+message: string,
+history: ChatHistoryItem[],
+attachments?: any[],
+chatSessionId?: string): Promise<ApiResponse> {
   try {
     // Check if we should use the new async API for better handling
-   // Check if we should use the new async API for better handling
-if (message.length > 500 || (attachments && attachments.length > 0)) {
-  // If there are attachments, use document analysis workflow
-  if (attachments && attachments.length > 0) {
-    return await startAsyncDocumentAnalysis(attachments, message, chatSessionId || '');
-  } else {
-    // Just a long message with no attachments, use regular async processing
-    return await startAsyncChatProcessing(message, history, undefined, chatSessionId || '');
-  }
-}
+    if (message.length > 500 || (attachments && attachments.length > 0)) {
+      // If there are attachments, use document analysis workflow
+      if (attachments && attachments.length > 0) {
+        return await startAsyncDocumentAnalysis(attachments, message, chatSessionId || '');
+      } else {
+        // Just a long message with no attachments, use regular async processing
+        return await startAsyncChatProcessing(message, history, undefined, chatSessionId || '');
+      }
+    }
+
+    // Use the provided chatSessionId or create a new one if none exists
+    const sessionId = chatSessionId || `session-${Date.now()}`;
 
     // Original implementation for simpler requests
     const payload: any = {
       message: message,
       history: history,
-      sessionId: `session-${Date.now()}`,
+      sessionId: sessionId, // Use the existing or new session ID
       userId: 'test-user'
     };
 
@@ -59,7 +64,9 @@ if (message.length > 500 || (attachments && attachments.length > 0)) {
     console.error('Error in processChatMessage:', error);
     throw error;
   }
-}export async function startAsyncChatProcessing(
+}
+
+export async function startAsyncChatProcessing(
 message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     const sessionId = `session-${Date.now()}`;
