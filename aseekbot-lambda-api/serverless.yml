@@ -30,6 +30,8 @@ provider:
         - s3:GetObject
         - s3:PutObject
         - s3:DeleteObject
+      # Make sure the S3 bucket name is correctly set in environment variables
+      # If using presigned URLs, ensure the S3 bucket has proper CORS configuration
       Resource: "arn:aws:s3:::${env:AWS_S3_BUCKET_NAME}/*"
     - Effect: Allow
       Action:
@@ -116,38 +118,11 @@ functions:
       - http:
           path: downloadFile
           method: post
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-            allowMethods:
-              - POST
-              - OPTIONS
+          cors: true
       - http:
           path: files/download
           method: any
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-            allowMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
+          cors: true
   createTicket:
     handler: lambdas/createTicket.handler
     layers:
@@ -366,16 +341,46 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
+          - AttributeName: chatId
+            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
           - AttributeName: createdAt
             KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: ChatIdIndex
+            KeySchema:
+              - AttributeName: chatId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
 
     # DynamoDB Table for user files tracking
+    # Note: If you're creating the S3 bucket through this template,
+    # you should use the following configuration instead:
+    # MyS3Bucket:
+    #   Type: AWS::S3::Bucket
+    #   Properties:
+    #     BucketName: ${env:AWS_S3_BUCKET_NAME}
+    #     CorsConfiguration:
+    #       CorsRules:
+    #         - AllowedHeaders:
+    #             - '*'
+    #           AllowedMethods:
+    #             - GET
+    #             - PUT
+    #             - POST
+    #             - HEAD
+    #           AllowedOrigins:
+    #             - '*'  # Restrict to your application domains in production
+    #           MaxAge: 3000
+
     UserFilesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -396,6 +401,8 @@ resources:
 
 custom:
   cors:
+    # This configures API Gateway CORS, but S3 bucket needs its own CORS configuration
+    # If you're experiencing CORS issues with presigned URLs, check your S3 bucket CORS settings
     allowOrigin: '*'
     allowHeaders:
       - Content-Type

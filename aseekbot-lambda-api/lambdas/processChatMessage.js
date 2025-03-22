@@ -4,7 +4,7 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { invokeBedrockAgent } = require('../utils/invokeBedrockAgent');
 const { handleApiError } = require('../utils/apiErrorHandler');
 
@@ -40,10 +40,103 @@ const STATUS_TABLE = process.env.REQUEST_STATUS_TABLE || 'RequestStatus';
 const USER_INTERACTIONS_TABLE = process.env.USER_INTERACTIONS_TABLE || 'UserInteractions';
 
 /**
+ * Gets the message order for a new message in a chat
+ * This function queries the UserInteractions table to find the highest message order
+ * for a given chatId, then returns the next number in sequence.
+ *
+ * @param {string} chatId - The chat ID to query
+ * @returns {Promise<number>} - The next message order (count + 1)
+ */
+const getNextMessageOrder = async (chatId) => {
+  if (!chatId) {
+    console.error('CRITICAL ERROR: Attempted to get message order with null or undefined chatId');
+    return 1; // Default to 1 as fallback, but this should never happen
+  }
+
+  try {
+    console.log(`Getting next message order for chatId: ${chatId}`);
+
+    // First try using the GSI for efficient querying
+    try {
+      const queryParams = {
+        TableName: USER_INTERACTIONS_TABLE,
+        IndexName: 'chatId-timestamp-index',
+        KeyConditionExpression: 'chatId = :chatId',
+        ExpressionAttributeValues: {
+          ':chatId': chatId
+        },
+        Select: 'COUNT'
+      };
+
+      const result = await docClient.send(new QueryCommand(queryParams));
+      const messageOrder = (result.Count || 0) + 1;
+      console.log(`Next message order for chatId ${chatId}: ${messageOrder} (via GSI)`);
+      return messageOrder;
+    } catch (gsiError) {
+      // If the primary GSI fails, try an alternative approach
+      console.warn(`GSI query failed for chatId ${chatId}: ${gsiError.message}. Trying alternative approach...`);
+
+      try {
+        // Try a different index if available
+        const altQueryParams = {
+          TableName: USER_INTERACTIONS_TABLE,
+          IndexName: 'chatId-index', // Try alternative index name
+          KeyConditionExpression: 'chatId = :chatId',
+          ExpressionAttributeValues: {
+            ':chatId': chatId
+          }
+        };
+
+        const altResult = await docClient.send(new QueryCommand(altQueryParams));
+        const messageOrder = (altResult.Items?.length || 0) + 1;
+        console.log(`Next message order for chatId ${chatId}: ${messageOrder} (via alternative GSI)`);
+        return messageOrder;
+      } catch (altError) {
+        // If all GSI approaches fail, try a scan as last resort
+        console.warn(`Alternative GSI query failed for chatId ${chatId}: ${altError.message}. Trying scan fallback...`);
+
+        try {
+          // Last resort: scan the table with a filter (less efficient but works as backup)
+          const scanParams = {
+            TableName: USER_INTERACTIONS_TABLE,
+            FilterExpression: 'chatId = :chatId',
+            ExpressionAttributeValues: {
+              ':chatId': chatId
+            }
+          };
+
+          const scanResult = await docClient.send(new ScanCommand(scanParams));
+          const messageOrder = (scanResult.Items?.length || 0) + 1;
+          console.log(`Next message order for chatId ${chatId}: ${messageOrder} (via table scan - less efficient)`);
+          return messageOrder;
+        } catch (scanError) {
+          console.error(`All methods to get message order for chatId ${chatId} failed:`, scanError);
+          throw scanError; // Pass to outer catch block
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`Error getting message order for chatId ${chatId}:`, error);
+    console.log(`Defaulting to message order 1 for chatId ${chatId}`);
+    // Default to 1 if there's an error (e.g., if the GSI doesn't exist yet)
+    return 1;
+  }
+};
+
+/**
  * Records a user interaction in the UserInteractions DynamoDB table
+ *
+ * This function stores user interactions with consistent chat context:
+ * - Uses chatId to group related messages in the same conversation
+ * - Maintains messageOrder to preserve the sequence of messages
+ * - Links interactions to sessions for user context persistence
+ *
  * @param {Object} params - Parameters for the interaction
  * @param {string} params.userId - User ID
  * @param {string} params.sessionId - Session ID
+ * @param {string} params.chatId - Chat ID for grouping messages in the same conversation
+ * @param {string} params.chatSessionId - Chat Session ID for grouping all messages in a single chat session
+ * @param {number} params.messageOrder - Order of the message in the chat (sequential)
  * @param {string} params.query - User's query/prompt
  * @param {string} [params.response] - System response (if available)
  * @param {boolean} [params.isDocumentAnalysis] - Whether this is a document analysis interaction
@@ -52,13 +145,16 @@ const USER_INTERACTIONS_TABLE = process.env.USER_INTERACTIONS_TABLE || 'UserInte
  */
 const recordUserInteraction = async (params) => {
   try {
-    const { userId, sessionId, query, response, isDocumentAnalysis, metadata = {} } = params;
+    const { userId, sessionId, chatId, chatSessionId, messageOrder, query, response, isDocumentAnalysis, metadata = {} } = params;
 
     const item = {
       userId,
       timestamp: Date.now(),
       createdAt: new Date().toISOString(),
       sessionId,
+      chatId,
+      chatSessionId,
+      messageOrder,
       query,
       response: response || null,
       isDocumentAnalysis: !!isDocumentAnalysis,
@@ -106,10 +202,33 @@ app.post('*', upload.array('files'), async (req, res) => {
     const prompt = req.body.message;
     let sessionId = req.body.sessionId || `session-${Date.now()}`;
     const userId = req.body.userId || 'test-user';
+
+    // Extract chatSessionId from request body - for tracking entire chat sessions
+    const chatSessionId = req.body.chatSessionId || `chat-session-${Date.now()}`;
+
+    // Extract chatId from request body - CRITICAL for conversation continuity
+    const providedChatId = req.body.chatId;
+
+    // Log warning if chatId is missing - this helps diagnose frontend issues
+    if (!providedChatId) {
+      console.warn('WARNING: No chatId provided in request. This may cause conversation fragmentation.');
+      console.warn('Request details:', {
+        path: req.path,
+        userId,
+        sessionId,
+        hasMessage: !!prompt,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Always use the provided chatId, only generate as last resort
+    const chatId = providedChatId || `chat-${Date.now()}-${uuidv4().substring(0, 8)}`;
     const requestId = uuidv4();
 
     console.log('Processing message:', prompt);
     console.log('Session ID:', sessionId);
+    console.log('Chat ID:', chatId, providedChatId ? '(from request)' : '(NEWLY GENERATED - conversation continuity at risk)');
+    console.log('Chat Session ID:', chatSessionId);
     console.log('User ID:', userId);
 
     if (!prompt) {
@@ -199,26 +318,41 @@ app.post('*', upload.array('files'), async (req, res) => {
 
       console.log(`Document analysis request ${requestId} queued successfully`);
 
-      // Record the user interaction
+      // Get the next message order for this chat - using the persistent chatId
+      const messageOrder = await getNextMessageOrder(chatId);
+      console.log(`Determined message order: ${messageOrder} for document analysis with chatId: ${chatId}`);
+
+      // Record the user interaction with the persistent chatId
       await recordUserInteraction({
         userId,
         sessionId,
+        chatId,
+        chatSessionId,
+        messageOrder,
         query: prompt,
         isDocumentAnalysis: true,
         metadata: {
           requestId,
           status: 'QUEUED',
-          fileCount: s3FileInfos.length
+          fileCount: s3FileInfos.length,
+          providedChatId: !!providedChatId // Track if chatId was provided for diagnostics
         }
       });
 
-      // Return immediate response with request ID
+      console.log(`Recorded document analysis request with chatId: ${chatId}, messageOrder: ${messageOrder}`);
+
+      // Include chatId in the response for client reference
+
+      // Return immediate response with request ID and chatId
       return res.json({
         requestId,
         status: 'QUEUED',
         message: 'Your document is being analyzed. Please check the status endpoint for updates.',
         timestamp: new Date().toISOString(),
-        progress: 0
+        progress: 0,
+        chatId: chatId, // Include chatId in the response for client reference
+        chatSessionId: chatSessionId, // Include chatSessionId in the response for client reference
+        messageOrder: messageOrder // Include messageOrder in the response for client reference
       });
     } else {
       // For regular chat without documents, process directly
@@ -239,21 +373,41 @@ app.post('*', upload.array('files'), async (req, res) => {
         userId: userId
       });
 
-      // Record the user interaction
+      // Use the session ID from the response if available
+      const finalSessionId = response.sessionId || sessionId;
+
+      // CRITICAL: We must use the same chatId that was extracted earlier in the request
+      // This ensures conversation continuity in the database
+      console.log(`Using persistent chatId for message ordering: ${chatId}`);
+
+      // Get the next message order for this chat
+      const messageOrder = await getNextMessageOrder(chatId);
+      console.log(`Determined message order: ${messageOrder} for chatId: ${chatId}`);
+
+      // Record the user interaction with the persistent chatId
       await recordUserInteraction({
         userId,
-        sessionId: response.sessionId || sessionId,
+        sessionId: finalSessionId,
+        chatId: chatId, // Use the persistent chatId, not generating a new one
+        chatSessionId, // Include the chat session ID for grouping all messages in a session
+        messageOrder,
         query: prompt,
         response: response.completion,
         isDocumentAnalysis: false,
         metadata: {
-          hasAttachments: binaryFiles.length > 0 || s3FileInfos.length > 0
+          hasAttachments: binaryFiles.length > 0 || s3FileInfos.length > 0,
+          providedChatId: !!providedChatId // Track if chatId was provided for diagnostics
         }
       });
+
+      console.log(`Recorded chat message with chatId: ${chatId}, messageOrder: ${messageOrder}`);
 
       return res.json({
         message: response.completion,
         sessionId: response.sessionId,
+        chatId: chatId, // Return the persistent chatId in the response for client reference
+        chatSessionId: chatSessionId, // Return the chat session ID in the response for client reference
+        messageOrder: messageOrder, // Return the message order for client reference
         timestamp: new Date().toISOString(),
       });
     }

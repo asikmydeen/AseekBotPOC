@@ -19,6 +19,20 @@ export const LAMBDA_ENDPOINTS = {
 export interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  chatId: string; // REQUIRED: Identifies which conversation this message belongs to
+  messageOrder?: number; // Position of this message in the conversation sequence
+  timestamp?: string; // When this message was created
+}
+
+// Interface for chat message requests
+export interface ChatMessageRequest {
+  message: string;
+  chatHistory?: ChatHistoryItem[];
+  chatId: string; // REQUIRED: Must be passed for ALL messages to maintain conversation continuity
+  fileIds?: string[];
+  sessionId?: string; // Optional session identifier
+  chatSessionId?: string; // REQUIRED: Identifies which chat session this message belongs to (common for all messages in a session)
+  userId?: string; // Optional user identifier
 }
 
 export interface TicketDetails {
@@ -31,6 +45,7 @@ export interface TicketDetails {
 }
 
 export interface ApiResponse {
+  url: ApiResponse;
   subject?: any;
   createdAt?: string;
   ticketId?: string;
@@ -44,6 +59,10 @@ export interface ApiResponse {
   requestId?: string;
   progress?: number;
   result?: any;
+  chatId: string; // REQUIRED: Identifies which chat conversation this response belongs to
+  messageOrder?: number; // Indicates the position of this message in the conversation sequence
+  sessionId?: string; // Session identifier for tracking user sessions (this is the chatSessionId)
+  chatSessionId?: string; // Alias for sessionId - identifies the entire chat session (common across all messages in a session)
 }
 
 // Helper function for error handling
@@ -70,4 +89,41 @@ export function extractS3KeyFromUrl(fileUrl: string): string {
   }
 
   throw new Error('Unable to extract file key from URL');
+}
+
+/**
+ * Helper function to ensure chat continuity by preserving chatId
+ *
+ * This function helps maintain conversation context by ensuring the same
+ * chatId is used for all messages in a conversation thread.
+ *
+ * IMPORTANT: The frontend MUST store and reuse this chatId for all messages
+ * in the same conversation to ensure proper grouping in DynamoDB.
+ * Store this value in localStorage and include it with every message
+ * in the same chat session.
+ *
+ * NOTE: For tracking entire chat sessions across multiple chatIds, use chatSessionId
+ * which should be common for all messages in a single chat session and stored in
+ * localStorage for the duration of the session.
+ *
+ * @param existingChatId - The current chatId from ongoing conversation (if any)
+ * @param response - The API response which may contain a new chatId
+ * @returns The chatId to use for subsequent requests
+ */
+export function preserveChatContinuity(existingChatId: string | undefined, response: ApiResponse): string {
+  // If we already have a chatId, keep using it for conversation continuity
+  if (existingChatId) {
+    return existingChatId;
+  }
+
+  // Otherwise use the chatId from the response (which the backend generated)
+  if (response.chatId) {
+    return response.chatId;
+  }
+
+  // If no chatId is available, generate a fallback (though this should rarely happen)
+  // This generated chatId MUST be stored and reused for all subsequent messages in this conversation
+  const newChatId = `chat-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+  console.warn('Generated new chatId as fallback. This should be stored and reused for the entire conversation:', newChatId);
+  return newChatId;
 }

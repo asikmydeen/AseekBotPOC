@@ -7,9 +7,12 @@ import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysi
 import { MessageType, MultimediaData } from '../types/shared';
 import { useAsyncProcessing } from './useAsyncProcessing';
 
+// Define the ChatHistoryItem interface again in useChatMessages.ts to match the import
 interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  chatId: string; // Add the missing property
+  chatSessionId?: string; // Add chatSessionId property
 }
 
 interface UseChatMessagesProps {
@@ -25,6 +28,25 @@ export default function useChatMessages({
   onMessagesUpdate,
   initialMessages = []
 }: UseChatMessagesProps) {
+  // Get or create a chat session ID that persists for the entire chat session
+  const [chatSessionId] = useState<string>(() => {
+    // Try to get existing chatSessionId from localStorage
+    const storedSessionId = typeof window !== 'undefined' ? localStorage.getItem('chatSessionId') : null;
+
+    if (storedSessionId) {
+      return storedSessionId;
+    }
+
+    // Create a new chatSessionId if none exists
+    const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+
+    // Store in localStorage for persistence across page refreshes
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatSessionId', newSessionId);
+    }
+
+    return newSessionId;
+  });
   const [messages, setMessages] = useState<MessageType[]>(() => {
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
@@ -34,11 +56,12 @@ export default function useChatMessages({
         sender: 'bot',
         text: 'Hello! I\'m AseekBot, your AI assistant. How can I help you today?',
         timestamp: new Date().toISOString(),
-        suggestions: ['How can you help me?']
+        suggestions: ['How can you help me?'],
+        chatId: Date.now().toString(),
+        chatSessionId: chatSessionId
       }
     ];
   });
-
   const [isThinking, setIsThinking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,7 +125,9 @@ export default function useChatMessages({
           timestamp: status.result.timestamp || new Date().toISOString(),
           suggestions: status.result.suggestions || [],
           multimedia: status.result.multimedia,
-          report: status.result.report
+          report: status.result.report,
+          chatId: '',
+          chatSessionId: chatSessionId
         };
 
         // Add attachments if they exist
@@ -128,7 +153,9 @@ export default function useChatMessages({
           sender: 'bot',
           text: `**Error**: ${errorMessage}`,
           timestamp: new Date().toISOString(),
-          isError: true
+          isError: true,
+          chatId: '',
+          chatSessionId: chatSessionId
         };
 
         safeUpdateMessages(prev => [...prev, errorBotMessage]);
@@ -152,7 +179,9 @@ export default function useChatMessages({
           sender: 'bot',
           text: `**Error**: ${errorMessage}`,
           timestamp: new Date().toISOString(),
-          isError: true
+          isError: true,
+          chatId: '',
+          chatSessionId: chatSessionId
         };
 
         safeUpdateMessages(prev => [...prev, errorBotMessage]);
@@ -212,11 +241,13 @@ export default function useChatMessages({
 
   // Convert MessageType to ChatHistoryItem for API
   const convertToChatHistoryItem = (message: MessageType): ChatHistoryItem => {
-    return {
-      role: message.sender === 'user' ? 'user' : 'assistant',
-      content: message.text || ''
-    };
+  return {
+    role: message.sender === 'user' ? 'user' : 'assistant',
+    content: message.text || '',
+    chatId: message.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+    chatSessionId: message.chatSessionId || chatSessionId
   };
+};
 
   // Enhanced sendMessage that supports async processing with better error handling
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
@@ -257,7 +288,9 @@ export default function useChatMessages({
       sender: 'user',
       text: userMessageText,
       timestamp: new Date().toISOString(),
-      attachments: userAttachments
+      attachments: userAttachments,
+      chatId: '',
+      chatSessionId: chatSessionId
     };
 
     safeUpdateMessages(prev => [...prev, userMessage]);
@@ -283,10 +316,10 @@ export default function useChatMessages({
 
         if (isDocumentAnalysis && isFileUpload) {
           // Start document analysis workflow
-          response = await startAsyncDocumentAnalysis(attachments!, text);
+          response = await startAsyncDocumentAnalysis(attachments!, text, chatSessionId);
         } else {
           // Start async chat processing
-          response = await startAsyncChatProcessing(text, chatHistory, attachments);
+          response = await startAsyncChatProcessing(text, chatHistory, attachments, chatSessionId);
         }
 
         if (response.requestId) {
@@ -334,7 +367,7 @@ export default function useChatMessages({
         }, 300);
 
         // Call the API
-        const response = await processChatMessage(text, chatHistory, attachments);
+        const response = await processChatMessage(text, chatHistory, attachments, chatSessionId);
 
         if (progressInterval.current) {
           clearInterval(progressInterval.current);
@@ -365,7 +398,9 @@ export default function useChatMessages({
             suggestions: (response as any).suggestions || (response as any).data?.suggestions || [],
             multimedia: (response as any).multimedia || (response as any).data?.multimedia,
             report: (response as any).report || (response as any).data?.report,
-            triggerTicket: shouldTriggerTicket
+            triggerTicket: shouldTriggerTicket,
+            chatId: '',
+            chatSessionId: chatSessionId
           };
 
           // Add attachments if they exist in the response
@@ -418,7 +453,9 @@ export default function useChatMessages({
         text: formattedErrorMsg,
         timestamp: new Date().toISOString(),
         suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined,
-        isError: true
+        isError: true,
+        chatId: '',
+        chatSessionId: chatSessionId
       };
 
       safeUpdateMessages(prev => [...prev, errorMessage]);

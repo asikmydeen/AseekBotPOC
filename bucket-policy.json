@@ -9,6 +9,21 @@
       },
       "Action": "s3:GetObject",
       "Resource": "arn:aws:s3:::aseekbot-frontend-useast1/*"
+    },
+    {
+      "Sid": "AllowCORSAccess",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aseek-bot-uploads",
+        "arn:aws:s3:::aseek-bot-uploads/*"
+      ]
     }
   ]
 }

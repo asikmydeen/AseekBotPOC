@@ -1,0 +1,74 @@
+service: aseekbot
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    CHAT_HISTORY_TABLE: ${self:service}-chat-history-${self:provider.stage}
+    OPENAI_API_KEY: ${ssm:/aseekbot/${self:provider.stage}/openai-api-key~true}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchWriteItem
+          Resource:
+            - !GetAtt ChatHistoryTable.Arn
+            - !Join ['', [!GetAtt ChatHistoryTable.Arn, '/index/*']]
+
+functions:
+  processChatMessage:
+    handler: lambdas/processChatMessage.handler
+    events:
+      - http:
+          path: chat/process
+          method: post
+          cors: true
+  startProcessing:
+    handler: lambdas/startProcessing.handler
+    events:
+      - http:
+          path: chat/start
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    ChatHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.CHAT_HISTORY_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: messageId
+            AttributeType: S
+          - AttributeName: chatId
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: messageId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: ChatIdIndex
+            KeySchema:
+              - AttributeName: chatId
+                KeyType: HASH
+              - AttributeName: timestamp
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL

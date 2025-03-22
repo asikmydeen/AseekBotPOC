@@ -9,10 +9,7 @@ import {
 
 // Original API functions
 export async function processChatMessage(
-  message: string,
-  history: ChatHistoryItem[],
-  attachments?: any[]
-): Promise<ApiResponse> {
+message: string, history: ChatHistoryItem[], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     // Check if we should use the new async API for better handling
    // Check if we should use the new async API for better handling
@@ -66,10 +63,7 @@ if (message.length > 500 || (attachments && attachments.length > 0)) {
 
 // New async processing functions
 export async function startAsyncChatProcessing(
-  message: string,
-  history: ChatHistoryItem[] = [],
-  attachments?: any[]
-): Promise<ApiResponse> {
+message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     const sessionId = `session-${Date.now()}`;
 
@@ -118,9 +112,7 @@ export async function startAsyncChatProcessing(
 }
 
 export async function startAsyncDocumentAnalysis(
-  files: any[],
-  message: string = 'Please analyze these documents'
-): Promise<ApiResponse> {
+files: any[], message: string = 'Please analyze these documents', chatSessionId: string): Promise<ApiResponse> {
   try {
     if (!files || !files.length) {
       throw new Error('No files provided for analysis');
@@ -330,8 +322,15 @@ export async function downloadFileApi(fileUrl: string): Promise<ApiResponse> {
       throw new Error(errorData.error || 'Failed to generate download link');
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Handle different response formats
+    return {
+      fileUrl: data.url || data.fileUrl || (typeof data === 'string' ? data : null),
+      ...data
+    };
   } catch (error) {
-    handleClientError(error, 'download file');
+    console.error('Error downloading file:', error);
+    throw error;
   }
 }

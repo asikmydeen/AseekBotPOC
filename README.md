@@ -4,7 +4,7 @@ AseekBot is an AI-powered chatbot application designed to streamline data center
 
 ## Features
 
-- **Intelligent Chat Interface**: Natural conversation with AI-powered responses
+- **Intelligent Chat Interface**: Natural conversation with AI-powered responses with persistent chat history
 - **Document Analysis**: Upload and analyze procurement documents and bid specifications
 - **Multi-format Support**: Process various file formats including PDF, DOCX, XLSX, CSV
 - **Ticket Creation**: Generate support tickets directly from conversations
@@ -17,7 +17,7 @@ The application uses a serverless architecture built on AWS:
 
 - **Frontend**: Next.js React application (static site)
 - **Backend**: AWS Lambda functions for API endpoints
-- **Storage**: Amazon S3 for file storage
+- **Storage**: Amazon S3 for file storage, DynamoDB for chat history persistence
 - **Content Delivery**: CloudFront CDN for global performance
 - **AI Integration**: Amazon Bedrock for AI capabilities
 - **API Gateway**: Manages API endpoints for the Lambda functions
@@ -183,6 +183,8 @@ export const LAMBDA_ENDPOINTS = {
 export interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  chatId?: string;
+  messageOrder?: number;
 }
 
 export interface TicketDetails {
@@ -230,13 +232,19 @@ import {
 export async function processChatMessage(
   message: string,
   history: ChatHistoryItem[],
-  attachments?: File[]
+  attachments?: File[],
+  chatId?: string
 ): Promise<ApiResponse> {
   try {
     // Create form data
     const formData = new FormData();
     formData.append('message', message);
     formData.append('history', JSON.stringify(history));
+
+    // Include chatId if it exists (for continuing conversations)
+    if (chatId) {
+      formData.append('chatId', chatId);
+    }
 
     // Add file attachments if present
     if (attachments && attachments.length > 0) {
@@ -388,7 +396,97 @@ This generates an `out` directory with static files.
    aws cloudfront list-distributions | grep -A 10 aseekbot
    ```
 
+## Chat Continuity and Persistence
+
+AseekBot maintains chat continuity across user sessions by persisting chat history in both the frontend (localStorage) and backend (DynamoDB). This ensures that conversations can be continued seamlessly, even if the user refreshes the page or returns later.
+
+### Frontend Chat Persistence
+
+The frontend stores chat information in localStorage using the following pattern:
+
+```typescript
+// Store chat history and chatId in localStorage
+const storeChatInLocalStorage = (chatId: string, history: ChatHistoryItem[]) => {
+  // Store the chatId for the current conversation
+  localStorage.setItem('aseekbot_current_chatId', chatId);
+
+  // Store the chat history with the chatId as key
+  localStorage.setItem(`aseekbot_chat_${chatId}`, JSON.stringify(history));
+
+  // Keep track of all conversations
+  const allChats = JSON.parse(localStorage.getItem('aseekbot_all_chats') || '[]');
+  if (!allChats.includes(chatId)) {
+    allChats.push(chatId);
+    localStorage.setItem('aseekbot_all_chats', JSON.stringify(allChats));
+  }
+};
+
+// Retrieve chat history from localStorage
+const getChatFromLocalStorage = (chatId: string): ChatHistoryItem[] => {
+  const chatHistory = localStorage.getItem(`aseekbot_chat_${chatId}`);
+  return chatHistory ? JSON.parse(chatHistory) : [];
+};
+
+// Get current or most recent chatId
+const getCurrentChatId = (): string | null => {
+  return localStorage.getItem('aseekbot_current_chatId');
+};
+```
+
+### Backend Chat Persistence
+
+The backend stores chat messages in DynamoDB with the following schema:
+
+| Field         | Type     | Description                                      |
+|---------------|----------|--------------------------------------------------|
+| chatId        | String   | Unique identifier for the conversation           |
+| messageId     | String   | Unique identifier for each message               |
+| messageOrder  | Number   | Sequential order of messages in the conversation |
+| userId        | String   | User identifier                                  |
+| role          | String   | 'user' or 'assistant'                            |
+| content       | String   | Message content                                  |
+| timestamp     | Number   | Unix timestamp when message was created          |
+| metadata      | Object   | Additional message metadata                      |
+
+When the backend receives a chat message request:
+1. If a `chatId` is provided, it uses that existing chatId
+2. If no `chatId` is provided, it generates a new UUID for the conversation
+3. It queries DynamoDB to determine the next `messageOrder` value for the given `chatId`
+4. It stores both the user message and the assistant's response with sequential `messageOrder` values
+
 ## Testing API Endpoints
+
+### Testing Chat Message Ordering
+To verify that message ordering works correctly:
+
+1. Send an initial message to create a new chat:
+```bash
+curl -X POST \
+  https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev/processChatMessage \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "message": "Initial message",
+    "sessionId": "test-session-123"
+  }'
+```
+
+2. Extract the `chatId` from the response.
+
+3. Send a follow-up message using the same `chatId`:
+```bash
+curl -X POST \
+  https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev/processChatMessage \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "message": "Follow-up message",
+    "sessionId": "test-session-123",
+    "chatId": "chat-id-from-previous-response"
+  }'
+```
+
+4. Verify that the `messageOrder` in the response has incremented (should be 2 for the second message).
+
+5. Continue sending messages with the same `chatId` to verify that `messageOrder` continues to increment correctly.
 
 ### quickLink API
 ```bash
@@ -413,8 +511,48 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
     "message": "Hello, how can you help me?",
-    "sessionId": "test-session-123"
+    "sessionId": "test-session-123",
+    "chatId": "existing-chat-id-456"
   }'
+```
+
+**Note**: When continuing an existing conversation, always include the `chatId` from previous responses to maintain message ordering. The backend will use this existing chatId instead of generating a new one, ensuring that message order increments correctly within the same conversation and is properly stored in DynamoDB.
+
+#### Sample Request/Response for Chat Continuity
+
+**Initial Message (New Conversation):**
+```json
+// Request
+{
+  "message": "Hello, I need help with data center procurement",
+  "sessionId": "user-session-123"
+}
+
+// Response
+{
+  "chatId": "chat-abc-123",
+  "messageOrder": 1,
+  "content": "Hello! I'd be happy to help with your data center procurement needs. What specific information are you looking for?",
+  "timestamp": 1679456789
+}
+```
+
+**Follow-up Message (Continuing Conversation):**
+```json
+// Request
+{
+  "message": "I need to compare server specifications",
+  "sessionId": "user-session-123",
+  "chatId": "chat-abc-123"
+}
+
+// Response
+{
+  "chatId": "chat-abc-123",
+  "messageOrder": 2,
+  "content": "I can help you compare server specifications. Could you provide details about the servers you're considering?",
+  "timestamp": 1679456820
+}
 ```
 
 ### File Download API
@@ -498,6 +636,37 @@ If CloudFront can't access S3 content:
 1. Verify the bucket policy allows the correct CloudFront OAI
 2. Check that objects exist in the S3 bucket with correct paths
 3. Ensure CloudFront is configured with the correct S3 domain name
+4. Configure proper CORS settings for your S3 bucket to allow presigned URL operations:
+
+   **Important Note**: The S3 bucket used for file downloads (`aseek-bot-uploads`) must have its CORS configuration updated separately from the API Gateway CORS setup. This is critical for presigned URL operations to work correctly in browser environments. Use the following command to configure CORS for the uploads bucket:
+
+   ```bash
+   aws s3api put-bucket-cors --bucket aseek-bot-uploads --cors-configuration '{
+     "CORSRules": [
+       {
+         "AllowedHeaders": ["*"],
+         "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+         "AllowedOrigins": ["*"],
+         "ExposeHeaders": ["ETag", "x-amz-meta-custom-header", "x-amz-server-side-encryption", "x-amz-request-id", "x-amz-id-2", "x-amz-checksum-mode"],
+         "MaxAgeSeconds": 3000
+       }
+     ]
+   }'
+   ```
+
+   Note: For production environments, replace the wildcard `"*"` in `AllowedOrigins` with your specific domain(s).
+
+5. Ensure your presigned URL generation code includes necessary parameters to handle CORS requirements, particularly when using the URL in browser environments:
+   ```javascript
+   // Example of proper presigned URL generation with CORS considerations
+   const presignedUrl = s3.getSignedUrl('getObject', {
+     Bucket: 'aseek-bot-uploads',
+     Key: 'path/to/file.ext',
+     Expires: 3600, // URL expiration time in seconds
+   });
+   ```
+
+   If you're experiencing CORS errors when downloading files, make sure both the bucket policy (which allows the necessary actions) and the CORS configuration (which allows cross-origin requests) are properly set up for the `aseek-bot-uploads` bucket.
 
 ### API Gateway Errors
 If Lambda APIs return errors:
@@ -505,6 +674,17 @@ If Lambda APIs return errors:
 1. Check CloudWatch logs for your Lambda functions
 2. Verify proper IAM permissions for Lambda functions
 3. Test API endpoints directly with curl commands
+
+### Chat Message Ordering Issues
+If messages are not maintaining the correct order in conversations:
+
+1. Ensure the frontend is passing the same `chatId` for all messages in a conversation
+2. Verify that the `chatId` from the initial response is being stored in localStorage and reused for subsequent messages
+3. Check that the backend is not generating a new `chatId` when one is already provided
+4. Examine the Lambda logs to confirm the `messageOrder` calculation is using the provided `chatId`
+5. Verify that DynamoDB queries are correctly filtering by the provided `chatId` when determining the next `messageOrder`
+6. Check that the DynamoDB table has the correct indexes set up for efficient querying by `chatId`
+7. Test with explicit `chatId` values using the curl commands in the Testing section
 
 ### Client-Side Routing Issues
 If routes like `/about` return errors when accessed directly:
@@ -518,6 +698,58 @@ If routes like `/about` return errors when accessed directly:
 ```bash
 npm run dev
 ```
+
+### Frontend Chat Implementation
+When implementing chat functionality in the frontend:
+
+1. Store the `chatId` returned from the initial message response in localStorage
+2. Include this `chatId` in all subsequent requests for the same conversation
+3. Example implementation:
+
+```typescript
+// Check if we have an existing chatId in localStorage
+let chatId = localStorage.getItem('aseekbot_current_chatId');
+
+// If no existing chatId, this is a new conversation
+if (!chatId) {
+  const initialResponse = await processChatMessage(message, history);
+  chatId = initialResponse.chatId;
+
+  // Store the new chatId in localStorage
+  localStorage.setItem('aseekbot_current_chatId', chatId);
+
+  // Also store the updated history
+  const updatedHistory = [
+    ...history,
+    { role: 'user', content: message },
+    { role: 'assistant', content: initialResponse.content }
+  ];
+  localStorage.setItem(`aseekbot_chat_${chatId}`, JSON.stringify(updatedHistory));
+} else {
+  // This is a continuing conversation, use the existing chatId
+  const followUpResponse = await processChatMessage(
+    nextMessage,
+    updatedHistory,
+    attachments,
+    chatId  // Pass the stored chatId from localStorage
+  );
+
+  // Update the stored history with the new messages
+  const latestHistory = [
+    ...updatedHistory,
+    { role: 'assistant', content: followUpResponse.content }
+  ];
+  localStorage.setItem(`aseekbot_chat_${chatId}`, JSON.stringify(latestHistory));
+}
+```
+
+This implementation ensures that:
+1. Chat history persists across page refreshes
+2. The same `chatId` is used for all messages in a conversation
+3. The backend can maintain correct message ordering in DynamoDB
+4. Users can continue conversations where they left off
+
+This ensures message ordering is maintained throughout the conversation and prevents the backend from resetting the message counter.
 
 ### Environment Variables
 For local development, create a `.env.local` file with:

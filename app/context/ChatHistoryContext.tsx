@@ -34,7 +34,8 @@ const defaultChat: ChatHistoryEntry = {
     messages: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    pinned: false
+    pinned: false,
+    chatSessionId: ''
 };
 
 const ChatHistoryContext = createContext<ChatHistoryContextProps | undefined>(undefined);

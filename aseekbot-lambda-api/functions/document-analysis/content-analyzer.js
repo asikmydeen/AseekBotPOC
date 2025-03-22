@@ -2,6 +2,8 @@
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 // Initialize S3 client
+// Note: If this code is part of a flow that generates presigned URLs or serves content to browsers,
+// ensure the S3 bucket has proper CORS configuration to allow cross-origin requests
 const s3Client = new S3Client();
 
 /**
@@ -13,12 +15,28 @@ async function getDataFromS3(reference) {
   try {
     console.log(`Retrieving data from S3: ${reference.s3Bucket}/${reference.s3Key}`);
 
+    // Create command with headers that support CORS requirements
+    // This is important if the data retrieved will be served to browsers via presigned URLs
     const command = new GetObjectCommand({
       Bucket: reference.s3Bucket,
-      Key: reference.s3Key
+      Key: reference.s3Key,
+      // The following headers ensure CORS compatibility if needed
+      // x-amz-checksum-mode is included as mentioned in requirements
+      // Note: These headers will be included in presigned URLs generated from this response
+      ResponseHeaderOverrides: {
+        'Access-Control-Allow-Origin': '*', // Restrict to specific origins in production
+        'Access-Control-Allow-Methods': 'GET, HEAD',
+        'Access-Control-Allow-Headers': 'x-amz-checksum-mode,x-amz-checksum-algorithm,Content-Type,Authorization',
+        'Access-Control-Expose-Headers': 'ETag,x-amz-checksum-sha256'
+      }
     });
 
+    // When sending the command, if this data will be used with presigned URLs,
+    // ensure the S3 bucket has CORS configured to allow the necessary headers
     const response = await s3Client.send(command);
+
+    // Note: If presigned URLs are generated elsewhere in the application using this data,
+    // ensure those URLs include the x-amz-checksum-mode header if needed for integrity checks
 
     // Convert stream to text and parse JSON
     const chunks = [];
@@ -30,7 +48,12 @@ async function getDataFromS3(reference) {
 
     return JSON.parse(text);
   } catch (error) {
-    console.error(`Error retrieving data from S3: ${error.message}`);
+    // Log specific error information for CORS-related issues
+    if (error.name === 'CORSError' || error.message.includes('CORS')) {
+      console.error(`CORS error retrieving data from S3: ${error.message}. Ensure the S3 bucket has proper CORS configuration.`);
+    } else {
+      console.error(`Error retrieving data from S3: ${error.message}`);
+    }
     return null;
   }
 }

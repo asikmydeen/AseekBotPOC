@@ -59,6 +59,8 @@ export interface FeedbackData {
 
 // Unified MessageType
 export interface MessageType {
+  chatId: string;
+  chatSessionId: string;
   sender: 'user' | 'bot';
   text: string;
   multimedia?: {

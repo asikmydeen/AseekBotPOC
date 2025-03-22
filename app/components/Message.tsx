@@ -48,8 +48,6 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
     const [currentImage, setCurrentImage] = useState<string | null>(null);
     const [parsedContent, setParsedContent] = useState<string>('');
     const [isHovered, setIsHovered] = useState<boolean>(false);
-    const [previewingFiles, setPreviewingFiles] = useState<Record<string, boolean>>({});
-    const [presignedUrls, setPresignedUrls] = useState<Record<string, string>>({});
 
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -92,147 +90,18 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // Toggle file preview
-    const toggleFilePreview = async (fileId: string, file: any, e: React.MouseEvent) => {
-        e.stopPropagation();
-        const newPreviewState = !previewingFiles[fileId];
-
-        setPreviewingFiles(prev => ({
-            ...prev,
-            [fileId]: newPreviewState
-        }));
-
-        // If we're opening the preview and don't have a presigned URL yet, fetch it
-        if (newPreviewState && !presignedUrls[fileId] && file.url) {
-            try {
-                await fetchPresignedUrl(fileId, file.url);
-            } catch (error) {
-                console.error('Failed to fetch presigned URL for preview:', error);
-            }
-        }
-    };
-
     // Fetch presigned URL for a file
     const fetchPresignedUrl = async (fileId: string, fileUrl: string) => {
         try {
             const result = await downloadFileApi(fileUrl);
-            if (result && result.fileUrl) {
-                setPresignedUrls(prev => ({
-                    ...prev,
-                    [fileId]: result.fileUrl || ''
-                }));                return result.fileUrl;
+            if (result && result.url) {
+                return result.url;
             }
+            throw new Error('No valid URL in response');
         } catch (error) {
             console.error('Error fetching presigned URL:', error);
             throw error;
         }
-    };
-
-    // Render file preview based on file type
-    const renderFilePreview = (file: any) => {
-        if (!file.url) return null;
-
-        const fileId = `${file.name}-${file.size}`;
-        const isPreviewOpen = previewingFiles[fileId];
-
-        if (!isPreviewOpen) return null;
-
-        // Use presigned URL if available, otherwise use original URL
-        const fileUrl = presignedUrls[fileId] || file.url;
-
-        // If we're showing the preview but don't have a presigned URL yet, fetch it
-        if (!presignedUrls[fileId]) {
-            fetchPresignedUrl(fileId, file.url)
-                .catch(err => console.error('Failed to fetch presigned URL for preview:', err));
-        }
-
-        return (
-            <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`mt-2 p-3 rounded-lg ${isDarkMode ? 'dark-bg border dark-border' : 'bg-white border border-gray-200'} overflow-hidden`}
-            >
-                {file.type.includes('pdf') && (
-                    <div className="relative h-96 w-full">
-                        <iframe
-                            src={`${fileUrl}#toolbar=0`}
-                            className="w-full h-full rounded border"
-                            title={file.name}
-                        />
-                        <a
-                            href={fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`absolute top-2 right-2 p-2 rounded-full ${isDarkMode ? 'bg-gray-800 text-blue-400' : 'bg-blue-100 text-blue-700'}`}
-                        >
-                            <FaExternalLinkAlt size={14} />
-                        </a>
-                    </div>
-                )}
-
-                {file.type.includes('image') && (
-                    <div className="flex justify-center">
-                        <img
-                            src={fileUrl}
-                            alt={file.name}
-                            className="max-h-96 max-w-full object-contain rounded"
-                        />
-                    </div>
-                )}
-
-                {(file.type.includes('text') || file.type.includes('txt')) && (
-                    <div className={`p-4 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} max-h-96 overflow-auto`}>
-                        <pre className={`whitespace-pre-wrap break-words text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {/* Text content would be loaded here */}
-                            <div className="flex justify-center items-center h-20">
-                                <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                    Preview available in external viewer
-                                </span>
-                            </div>
-                        </pre>
-                    </div>
-                )}
-
-                {(file.type.includes('excel') || file.type.includes('xlsx') || file.type.includes('xls') || file.type.includes('csv')) && (
-                    <div className={`p-4 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} max-h-96 overflow-auto`}>
-                        <div className="flex justify-center items-center h-20">
-                            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                Spreadsheet preview available in external viewer
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {(file.type.includes('word') || file.type.includes('docx')) && (
-                    <div className={`p-4 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} max-h-96 overflow-auto`}>
-                        <div className="flex justify-center items-center h-20">
-                            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                Document preview available in external viewer
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {!file.type.includes('pdf') &&
-                 !file.type.includes('image') &&
-                 !file.type.includes('text') &&
-                 !file.type.includes('txt') &&
-                 !file.type.includes('excel') &&
-                 !file.type.includes('xlsx') &&
-                 !file.type.includes('xls') &&
-                 !file.type.includes('csv') &&
-                 !file.type.includes('word') &&
-                 !file.type.includes('docx') && (
-                    <div className="flex justify-center items-center h-20">
-                        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                            Preview not available for this file type
-                        </span>
-                    </div>
-                )}
-            </motion.div>
-        );
     };
 
     // Strip indentation from multiline strings
@@ -433,23 +302,16 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     const fileId = `${file.name}-${file.size}`;
 
                                     try {
-                                        // Use cached presigned URL if available
-                                        if (presignedUrls[fileId]) {
-                                            window.open(presignedUrls[fileId], '_blank');
-                                        } else {
-                                            // Otherwise fetch a new one
-                                            const url = await fetchPresignedUrl(fileId, file.url);
-                                            if (url) {
-                                                window.open(url, '_blank');
-                                            }
+                                        const url = await fetchPresignedUrl(fileId, file.url);
+                                        if (typeof url === 'string') {
+                                            window.open(url, '_blank');
                                         }
                                     } catch (err) {
                                         console.error('Failed to open file:', err);
                                         // Fallback to original URL if available
                                         file.url && window.open(file.url, '_blank');
                                     }
-                                }}
-                            >
+                                }}                            >
                                 {getFileIcon(file.type)}
                                 <div className="ml-2 flex-grow min-w-0">
                                     <div className="text-sm font-medium truncate">{file.name}</div>
@@ -463,47 +325,21 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                         whileTap={{ scale: 0.9 }}
                                         className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'
                                             }`}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const fileId = `${file.name}-${file.size}`;
-                                            toggleFilePreview(fileId, file, e);
-                                        }}
-                                        aria-label={previewingFiles[`${file.name}-${file.size}`] ? "Hide preview" : "Preview file"}
-                                        title={previewingFiles[`${file.name}-${file.size}`] ? "Hide preview" : "Preview file"}
-                                    >
-                                        {previewingFiles[`${file.name}-${file.size}`] ? (
-                                            <FaChevronUp size={14} className={isDarkMode ? 'text-blue-400' : 'text-blue-500'} />
-                                        ) : (
-                                            <FaChevronDown size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
-                                        )}
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, color: isDarkMode ? '#3B82F6' : '#2563EB' }}
-                                        whileTap={{ scale: 0.9 }}
-                                        className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'
-                                            }`}
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             const fileId = `${file.name}-${file.size}`;
 
                                             try {
-                                                // Use cached presigned URL if available
-                                                if (presignedUrls[fileId]) {
-                                                    window.open(presignedUrls[fileId], '_blank');
-                                                } else {
-                                                    // Otherwise fetch a new one
-                                                    const url = await fetchPresignedUrl(fileId, file.url);
-                                                    if (url) {
-                                                        window.open(url, '_blank');
-                                                    }
+                                                const url = await fetchPresignedUrl(fileId, file.url);
+                                                if (url && typeof url === 'string') {
+                                                    window.open(url, '_blank');
                                                 }
                                             } catch (err) {
                                                 console.error('Failed to open file:', err);
                                                 // Fallback to original URL if available
                                                 file.url && window.open(file.url, '_blank');
                                             }
-                                        }}
-                                        aria-label="Open file"
+                                        }}                                        aria-label="Open file"
                                         title="Open file"
                                     >
                                         <FaExternalLinkAlt size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
@@ -518,27 +354,19 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                             const fileId = `${file.name}-${file.size}`;
 
                                             try {
-                                                // Use cached presigned URL if available
-                                                if (presignedUrls[fileId]) {
-                                                    window.open(presignedUrls[fileId], '_blank');
-                                                } else {
-                                                    // Otherwise fetch a new one
-                                                    const url = await fetchPresignedUrl(fileId, file.url);
-                                                    if (url) {
-                                                        window.open(url, '_blank');
-                                                    }
+                                                const url = await fetchPresignedUrl(fileId, file.url);
+                                                if (url && typeof url === 'string') {
+                                                    window.open(url, '_blank');
                                                 }
                                             } catch (err) {
                                                 console.error('Download failed', err);
                                             }
-                                        }}
-                                        aria-label="Download file"
+                                        }}                                        aria-label="Download file"
                                         title="Download file"
                                     >
                                         <FaDownload size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
                                     </motion.button>
                                 </div>
-                                {renderFilePreview(file)}
                             </motion.div>
                         ))}
 

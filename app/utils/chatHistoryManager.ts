@@ -3,6 +3,7 @@ import { MessageType } from "../types/shared";
 
 export interface ChatHistoryEntry {
   id: string;
+  chatSessionId: string;
   title: string;
   messages: MessageType[];
   createdAt: string;
@@ -58,8 +59,10 @@ export const saveChat = (chat: ChatHistoryEntry): void => {
 // Start a new chat session
 export const createNewChat = (): ChatHistoryEntry => {
   const timestamp = new Date().toISOString();
+  const sessionId = `session-${Date.now()}`;
   return {
     id: `chat-${Date.now()}`,
+    chatSessionId: sessionId,
     title: `Chat ${new Date().toLocaleString()}`,
     messages: [],
     createdAt: timestamp,

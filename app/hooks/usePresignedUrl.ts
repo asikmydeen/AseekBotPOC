@@ -12,6 +12,7 @@ interface FileAttachment {
 
 /**
  * Custom hook to fetch and manage presigned URLs for file attachments
+ * This hook is used for downloading files. Previously it was also used for file previews.
  * @param fileInput - Either a file attachment object or an S3 key string
  * @param autoFetch - Whether to automatically fetch the URL on mount (default: true)
  * @returns Object containing loading state, error state, presigned URL, and refetch function
@@ -27,12 +28,12 @@ export function usePresignedUrl(
   // Extract the file URL from the input
   const getFileUrl = useCallback((): string | null => {
     if (!fileInput) return null;
-    
+
     // If fileInput is a string, assume it's already an S3 key or URL
     if (typeof fileInput === 'string') {
       return fileInput;
     }
-    
+
     // Otherwise, extract URL from file attachment object
     return fileInput.url || fileInput.fileUrl || null;
   }, [fileInput]);
@@ -47,13 +48,27 @@ export function usePresignedUrl(
 
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await downloadFileApi(fileUrl);
-      
-      if (result && result.fileUrl) {
-        setPresignedUrl(result.fileUrl);
-        return result.fileUrl;
+
+      // Look for URL in multiple possible locations in the response
+      let url: string | null = null;
+      if (result) {
+        if (typeof result === 'object' && 'url' in result) {
+          url = (result as unknown as { url: string }).url;
+        } else if (typeof result === 'object' && 'fileUrl' in result) {
+          url = (result as { fileUrl: string }).fileUrl;
+        } else if (typeof result === 'string') {
+          if ((result as string).includes('http')) {
+            url = result;
+          }
+        }
+      }
+
+      if (url) {
+        setPresignedUrl(url);
+        return url;
       } else {
         throw new Error('Failed to get presigned URL from API');
       }
@@ -64,11 +79,7 @@ export function usePresignedUrl(
     } finally {
       setLoading(false);
     }
-  }, [getFileUrl]);
-
-  // Fetch URL on mount if autoFetch is true
-  useEffect(() => {
-    if (autoFetch && getFileUrl()) {
+  }, [getFileUrl]);  useEffect(() => {    if (autoFetch && getFileUrl()) {
       fetchUrl();
     }
   }, [autoFetch, fetchUrl, getFileUrl]);
