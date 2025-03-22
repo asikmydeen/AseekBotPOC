@@ -15,6 +15,15 @@ const FileActionPrompt: React.FC<FileActionPromptProps> = ({
 
   return (
     <div className="flex flex-wrap gap-3 mb-4">
+      <button
+        onClick={() => handleActionClick('preview-document')}
+        className="px-5 py-2.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:hover:bg-amber-800
+                  text-amber-800 dark:text-amber-100 rounded-full text-sm font-medium
+                  transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md
+                  border-2 border-transparent"
+      >
+        Preview Document
+      </button>
       {showDocumentAnalysisOption && (
         <button
           onClick={() => handleActionClick('document-analysis')}

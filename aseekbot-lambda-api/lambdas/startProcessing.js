@@ -115,6 +115,34 @@ app.post('*', async (req, res) => {
 
         console.log(`Request ${requestId} queued successfully (Document analysis: ${isDocumentAnalysis})`);
 
+        // Record user interaction in DynamoDB
+        try {
+            const userId = req.body.userId || 'anonymous';
+            const userInteraction = {
+                userId,
+                sessionId: sessionIdentifier,
+                requestId,
+                query: message,
+                response: null, // Response not generated yet
+                isDocumentAnalysis,
+                voteUp: 0,
+                voteDown: 0,
+                fileCount: hasFiles ? processedS3Files.length : 0,
+                timestamp: timestamp,
+                createdAt: timestamp
+            };
+
+            await docClient.send(new PutCommand({
+                TableName: process.env.USER_INTERACTIONS_TABLE || 'UserInteractions',
+                Item: userInteraction
+            }));
+
+            console.log(`User interaction recorded for request ${requestId}`);
+        } catch (interactionError) {
+            // Log error but don't block the main operation
+            console.error('Error recording user interaction:', interactionError);
+        }
+
         // Return immediate response with request ID
         return res.json({
             requestId,

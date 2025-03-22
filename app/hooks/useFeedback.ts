@@ -34,25 +34,36 @@ export default function useFeedback() {
   };
 
   /**
-   * Submits user feedback
-   * This can be extended to send feedback to an API endpoint
+   * Submits user feedback to the API with user identification
    */
   const submitFeedback = async () => {
     try {
-      // Log feedback for now - in a real implementation, this would send to an API
-      console.log('Feedback submitted:', feedback);
+      // Include userId with the feedback data
+      const feedbackWithUser = {
+        ...feedback,
+        userId: 'test-user', // Using placeholder userId as required
+        timestamp: new Date().toISOString()
+      };
 
-      // Here you would typically make an API call to submit the feedback
-      // await fetch('/api/feedback', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(feedback)
-      // });
+      console.log('Submitting feedback:', feedbackWithUser);
+
+      // Make an API call to submit the feedback
+      const response = await fetch('/api/recordUserInteraction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'feedback',
+          userId: 'test-user',
+          data: feedbackWithUser
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit feedback: ${response.statusText}`);
+      }
 
       // Close the form after successful submission
       closeFeedbackForm();
-
-      // You could add a success notification here
 
       return true;
     } catch (error) {

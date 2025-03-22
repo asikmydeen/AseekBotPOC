@@ -417,6 +417,19 @@ curl -X POST \
   }'
 ```
 
+### File Download API
+```bash
+curl -X GET \
+  "https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev/files/download?fileKey=path/to/file.ext"
+```
+
+Response format:
+```json
+{
+  "url": "https://s3-presigned-url-for-download..."
+}
+```
+
 ### File Upload API
 ```bash
 curl -X POST \
@@ -452,6 +465,20 @@ echo "Frontend deployment complete!"
 ```
 
 ## Troubleshooting
+
+### File Download Issues
+When using the downloadFile Lambda function:
+
+1. The Lambda returns a JSON response with the presigned URL in the `url` property: `{ "url": "https://s3-presigned-url..." }`
+2. Client-side code should extract this URL from the response object:
+   ```javascript
+   // Example of extracting the URL from the Lambda response
+   const response = await API.get('files', '/download', {
+     queryStringParameters: { fileKey: 'path/to/file.ext' }
+   });
+   const presignedUrl = response.url;
+   ```
+3. Do not attempt to use the entire response object as the URL - this will cause signature validation errors
 
 ### CORS Issues
 If you encounter CORS errors when the frontend calls Lambda APIs:

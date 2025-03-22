@@ -30,7 +30,8 @@ if (message.length > 500 || (attachments && attachments.length > 0)) {
     const payload: any = {
       message: message,
       history: history,
-      sessionId: `session-${Date.now()}`
+      sessionId: `session-${Date.now()}`,
+      userId: 'test-user'
     };
 
     // Add S3 file references if attachments are present
@@ -76,7 +77,8 @@ export async function startAsyncChatProcessing(
     const payload: any = {
       message,
       sessionId,
-      history
+      history,
+      userId: 'test-user'
     };
 
     // Add S3 file references if attachments are present
@@ -130,6 +132,7 @@ export async function startAsyncDocumentAnalysis(
     const payload: any = {
       message,
       sessionId,
+      userId: 'test-user',
       s3Files: files.map(file => ({
         name: file.name,
         s3Url: file.url || file.fileUrl,
@@ -181,7 +184,7 @@ export async function checkRequestStatus(requestId: string): Promise<ApiResponse
 }
 
 // Existing API functions with minimal changes
-export async function uploadFileApi(file: File, sessionId?: string): Promise<ApiResponse> {
+export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<ApiResponse> {
   try {
     if (!file) {
       throw new Error('No file provided');
@@ -193,6 +196,8 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
     if (sessionId) {
       formData.append('sessionId', sessionId);
     }
+
+    formData.append('userId', 'test-user');
 
     const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
       method: 'POST',
@@ -216,10 +221,16 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
       throw new Error('Invalid ticket details');
     }
 
+    // Add userId to the ticket details
+    const ticketWithUser = {
+      ...ticketDetails,
+      userId: 'test-user'
+    };
+
     const response = await fetch(LAMBDA_ENDPOINTS.createTicket, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ticketDetails),
+      body: JSON.stringify(ticketWithUser),
     });
 
     if (!response.ok) {
@@ -242,7 +253,7 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
     const response = await fetch(LAMBDA_ENDPOINTS.quickLink, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, parameter }),
+      body: JSON.stringify({ action, parameter, userId: 'test-user' }),
     });
 
     if (!response.ok) {
@@ -256,6 +267,30 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
   }
 }
 
+// Helper function to extract S3 key from a file URL
+function extractS3KeyFromUrl(fileUrl: string): string {
+  if (!fileUrl) {
+    throw new Error('Invalid file URL');
+  }
+
+  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
+  if (fileUrl.includes('amazonaws.com/')) {
+    const s3Key = fileUrl.split('amazonaws.com/')[1];
+    if (!s3Key) {
+      throw new Error('Invalid file URL format');
+    }
+    return s3Key;
+  }
+  // Fallback if it's already a partial path
+  else if (fileUrl.includes('/')) {
+    return fileUrl;
+  }
+  // If it's just the key itself
+  else {
+    return fileUrl;
+  }
+}
+
 export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   try {
     const s3Key = fileUrl.split('.amazonaws.com/')[1];
@@ -266,7 +301,7 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ s3Key })
+      body: JSON.stringify({ s3Key, userId: 'test-user' })
     });
 
     if (!response.ok) {
@@ -277,5 +312,26 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     return await response.json();
   } catch (error) {
     handleClientError(error, 'delete file');
+  }
+}
+
+export async function downloadFileApi(fileUrl: string): Promise<ApiResponse> {
+  try {
+    const fileKey = extractS3KeyFromUrl(fileUrl);
+
+    const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileKey, userId: 'test-user' })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate download link');
+    }
+
+    return await response.json();
+  } catch (error) {
+    handleClientError(error, 'download file');
   }
 }

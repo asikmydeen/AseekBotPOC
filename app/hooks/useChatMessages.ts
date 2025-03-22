@@ -248,6 +248,7 @@ export default function useChatMessages({
           name: file.name,
           size: file.size,
           type: file.type,
+          contentType: file.type,
           url: file.url || file.fileUrl || ''
         }))
       : undefined;
@@ -422,8 +423,8 @@ export default function useChatMessages({
 
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages, safeUpdateMessages]);
 
+  }, [messages, safeUpdateMessages]);
   // Function to cancel ongoing async request - critical for preventing infinite loops
   const cancelAsyncRequest = useCallback(() => {
     // Mark the request as cancelled

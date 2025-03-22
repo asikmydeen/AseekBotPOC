@@ -27,6 +27,7 @@ export interface ImageData {
 export type MultimediaData = VideoData | GraphData | ImageData;
 
 export interface FileAttachment {
+  contentType: any;
   name: string;
   size: number;
   type: string;

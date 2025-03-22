@@ -77,7 +77,7 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
             });
 
             // Call the upload API
-            const uploadResult = await uploadFileApi(file, sessionId);
+            const uploadResult = await uploadFileApi(file, sessionId, 'test-user');
 
             console.log(`File ${file.name} uploaded:`, uploadResult);
 

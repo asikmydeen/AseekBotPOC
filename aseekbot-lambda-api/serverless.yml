@@ -49,6 +49,8 @@ provider:
       Resource:
         - "arn:aws:dynamodb:${self:provider.region}:*:table/DocumentAnalysisStatus"
         - "arn:aws:dynamodb:${self:provider.region}:*:table/RequestStatus"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/UserInteractions"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/UserFiles"
     - Effect: Allow
       Action:
         - textract:DetectDocumentText
@@ -95,6 +97,8 @@ functions:
           path: uploadFile
           method: post
           cors: true
+    environment:
+      USER_FILES_TABLE: !Ref UserFilesTable
   deleteFile:
     handler: lambdas/deleteFile.handler
     layers:
@@ -104,6 +108,46 @@ functions:
           path: deleteFile
           method: post
           cors: true
+  downloadFile:
+    handler: lambdas/downloadFile.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - http:
+          path: downloadFile
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+            allowMethods:
+              - POST
+              - OPTIONS
+      - http:
+          path: files/download
+          method: any
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+            allowMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
   createTicket:
     handler: lambdas/createTicket.handler
     layers:
@@ -147,6 +191,7 @@ functions:
     environment:
       SQS_QUEUE_URL: !Ref ProcessingQueue
       REQUEST_STATUS_TABLE: !Ref RequestStatusTable
+      USER_INTERACTIONS_TABLE: !Ref UserInteractionsTable
 
   workerProcessor:
     handler: lambdas/workerProcessor.handler
@@ -175,6 +220,34 @@ functions:
     timeout: 29
     environment:
       REQUEST_STATUS_TABLE: !Ref RequestStatusTable
+
+  recordUserInteraction:
+    handler: lambdas/recordUserInteraction.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - http:
+          path: recordUserInteraction
+          method: post
+          cors: true
+    memorySize: 256
+    timeout: 29
+    environment:
+      USER_INTERACTIONS_TABLE: !Ref UserInteractionsTable
+
+  getUserFiles:
+    handler: lambdas/getUserFiles.handler
+    layers:
+      - {Ref: AwsSdkLayerLambdaLayer}
+    events:
+      - http:
+          path: getUserFiles
+          method: post
+          cors: true
+    memorySize: 256
+    timeout: 29
+    environment:
+      USER_FILES_TABLE: !Ref UserFilesTable
 
   # Existing document analysis functions
   initProcess:
@@ -279,6 +352,44 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+    # DynamoDB Table for user interactions tracking
+    UserInteractionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserInteractions
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+    # DynamoDB Table for user files tracking
+    UserFilesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserFiles
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: fileKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: fileKey
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES

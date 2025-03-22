@@ -7,6 +7,7 @@ export const LAMBDA_ENDPOINTS = {
   deleteFile: `${API_BASE_URL}/deleteFile`,
   createTicket: `${API_BASE_URL}/createTicket`,
   quickLink: `${API_BASE_URL}/quickLink`,
+  downloadFile: `${API_BASE_URL}/files/download`, // Updated path to match API Gateway configuration
 
   // New endpoints for async processing
   startProcessing: `${API_BASE_URL}/startProcessing`,
@@ -50,4 +51,23 @@ export function handleClientError(error: unknown, operation: string): never {
   const errorObj = error as Error;
   console.error(`Error ${operation}:`, errorObj);
   throw new Error(`Failed to ${operation}. Please try again.`);
+}
+
+// Helper function to extract S3 key from file URL
+export function extractS3KeyFromUrl(fileUrl: string): string {
+  if (!fileUrl) {
+    throw new Error('Invalid file URL');
+  }
+
+  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
+  if (fileUrl.includes('amazonaws.com/')) {
+    return fileUrl.split('amazonaws.com/')[1];
+  }
+  // Handle CloudFront or custom domain URLs
+  else if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+    // Assume it's already a partial path or key
+    return fileUrl;
+  }
+
+  throw new Error('Unable to extract file key from URL');
 }

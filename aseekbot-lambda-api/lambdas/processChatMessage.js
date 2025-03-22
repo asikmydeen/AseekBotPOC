@@ -35,8 +35,54 @@ const sqsClient = new SQSClient();
 const dynamoClient = new DynamoDBClient();
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-// Status table name
+// Table names
 const STATUS_TABLE = process.env.REQUEST_STATUS_TABLE || 'RequestStatus';
+const USER_INTERACTIONS_TABLE = process.env.USER_INTERACTIONS_TABLE || 'UserInteractions';
+
+/**
+ * Records a user interaction in the UserInteractions DynamoDB table
+ * @param {Object} params - Parameters for the interaction
+ * @param {string} params.userId - User ID
+ * @param {string} params.sessionId - Session ID
+ * @param {string} params.query - User's query/prompt
+ * @param {string} [params.response] - System response (if available)
+ * @param {boolean} [params.isDocumentAnalysis] - Whether this is a document analysis interaction
+ * @param {Object} [params.metadata] - Additional metadata about the interaction
+ * @returns {Promise<Object>} - The result of the DynamoDB put operation
+ */
+const recordUserInteraction = async (params) => {
+  try {
+    const { userId, sessionId, query, response, isDocumentAnalysis, metadata = {} } = params;
+
+    const item = {
+      userId,
+      timestamp: Date.now(),
+      createdAt: new Date().toISOString(),
+      sessionId,
+      query,
+      response: response || null,
+      isDocumentAnalysis: !!isDocumentAnalysis,
+      voteUp: 0,
+      voteDown: 0,
+      feedback: null,
+      ...metadata
+    };
+
+    console.log('Recording user interaction:', JSON.stringify(item, null, 2));
+
+    const result = await docClient.send(new PutCommand({
+      TableName: USER_INTERACTIONS_TABLE,
+      Item: item
+    }));
+
+    console.log('User interaction recorded successfully');
+    return result;
+  } catch (error) {
+    console.error('Error recording user interaction:', error);
+    // Don't throw the error to prevent blocking the main flow
+    return null;
+  }
+};
 
 // Add debugging middleware
 app.use((req, res, next) => {
@@ -59,10 +105,12 @@ app.post('*', upload.array('files'), async (req, res) => {
 
     const prompt = req.body.message;
     let sessionId = req.body.sessionId || `session-${Date.now()}`;
+    const userId = req.body.userId || 'test-user';
     const requestId = uuidv4();
 
     console.log('Processing message:', prompt);
     console.log('Session ID:', sessionId);
+    console.log('User ID:', userId);
 
     if (!prompt) {
       return res.status(400).json({ error: 'Message content is required' });
@@ -114,6 +162,7 @@ app.post('*', upload.array('files'), async (req, res) => {
       const statusItem = {
         requestId,
         sessionId,
+        userId,
         status: 'QUEUED',
         message: prompt,
         timestamp: new Date().toISOString(),
@@ -137,6 +186,7 @@ app.post('*', upload.array('files'), async (req, res) => {
           history: [],
           s3Files: s3FileInfos,
           sessionId,
+          userId,
           documentAnalysis: true
         }),
         MessageAttributes: {
@@ -148,6 +198,19 @@ app.post('*', upload.array('files'), async (req, res) => {
       }));
 
       console.log(`Document analysis request ${requestId} queued successfully`);
+
+      // Record the user interaction
+      await recordUserInteraction({
+        userId,
+        sessionId,
+        query: prompt,
+        isDocumentAnalysis: true,
+        metadata: {
+          requestId,
+          status: 'QUEUED',
+          fileCount: s3FileInfos.length
+        }
+      });
 
       // Return immediate response with request ID
       return res.json({
@@ -172,7 +235,20 @@ app.post('*', upload.array('files'), async (req, res) => {
         s3Files: s3FileInfos.length > 0 ? s3FileInfos : undefined,
         agentId: process.env.BEDROCK_AGENT_ID || '7FDALECWCL',
         agentAliasId: process.env.BEDROCK_AGENT_ALIAS_ID || '11OBDAVIQQ',
-        region: process.env.AWS_REGION || 'us-east-1'
+        region: process.env.AWS_REGION || 'us-east-1',
+        userId: userId
+      });
+
+      // Record the user interaction
+      await recordUserInteraction({
+        userId,
+        sessionId: response.sessionId || sessionId,
+        query: prompt,
+        response: response.completion,
+        isDocumentAnalysis: false,
+        metadata: {
+          hasAttachments: binaryFiles.length > 0 || s3FileInfos.length > 0
+        }
       });
 
       return res.json({
