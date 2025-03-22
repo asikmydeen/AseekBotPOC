@@ -16,10 +16,10 @@ message: string, history: ChatHistoryItem[], attachments?: any[], chatSessionId?
 if (message.length > 500 || (attachments && attachments.length > 0)) {
   // If there are attachments, use document analysis workflow
   if (attachments && attachments.length > 0) {
-    return await startAsyncDocumentAnalysis(attachments, message);
+    return await startAsyncDocumentAnalysis(attachments, message, chatSessionId || '');
   } else {
     // Just a long message with no attachments, use regular async processing
-    return await startAsyncChatProcessing(message, history);
+    return await startAsyncChatProcessing(message, history, undefined, chatSessionId || '');
   }
 }
 
@@ -59,10 +59,7 @@ if (message.length > 500 || (attachments && attachments.length > 0)) {
     console.error('Error in processChatMessage:', error);
     throw error;
   }
-}
-
-// New async processing functions
-export async function startAsyncChatProcessing(
+}export async function startAsyncChatProcessing(
 message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     const sessionId = `session-${Date.now()}`;
