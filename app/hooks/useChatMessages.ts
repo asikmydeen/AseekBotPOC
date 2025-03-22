@@ -87,10 +87,18 @@ export default function useChatMessages({
         setCurrentRequestId(null);
         setIsAsyncProcessing(false);
 
+        // If insights exist in the result, build a text to display insights summary and key information
+        let botText = status.result.message || 'Processing complete';
+        if (status.result.insights) {
+          const insights = status.result.insights;
+          // For example, display summary and nextSteps. Customize the text formatting as needed.
+          botText = `Document Analysis Insights:\nSummary: ${insights.summary}\nKey Points: ${insights.keyPoints.join(', ')}\nRecommendations: ${insights.recommendations.join(', ')}\nNext Steps: ${insights.nextSteps}`;
+        }
+
         // Create bot message from response
         const botMessage: MessageType = {
           sender: 'bot',
-          text: status.result.message || 'Processing complete',
+          text: botText,
           timestamp: status.result.timestamp || new Date().toISOString(),
           suggestions: status.result.suggestions || [],
           multimedia: status.result.multimedia,
