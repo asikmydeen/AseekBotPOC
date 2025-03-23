@@ -9,11 +9,12 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 
 export interface ApiStackProps extends cdk.NestedStackProps {
+  stackName?: string;
   s3Bucket: s3.Bucket;
-  requestStatusTable: dynamodb.Table;
-  documentAnalysisStatusTable: dynamodb.Table;
-  userInteractionsTable: dynamodb.Table;
-  userFilesTable: dynamodb.Table;
+  requestStatusTable: dynamodb.ITable;           // Change from Table to ITable
+  documentAnalysisStatusTable: dynamodb.ITable;  // Change from Table to ITable
+  userInteractionsTable: dynamodb.ITable;        // Change from Table to ITable
+  userFilesTable: dynamodb.ITable;               // Change from Table to ITable
   processingQueue: sqs.Queue;
   documentAnalysisStateMachine: sfn.StateMachine;
 }
@@ -249,39 +250,30 @@ export class ApiStack extends cdk.NestedStack {
       // Create API endpoints
       const createTicketResource = api.root.addResource('createTicket');
       createTicketResource.addMethod('POST', new apigateway.LambdaIntegration(createTicketFunction));
-      createTicketResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(createTicketFunction));
 
       const processChatMessageResource = api.root.addResource('processChatMessage');
       processChatMessageResource.addMethod('POST', new apigateway.LambdaIntegration(processChatMessageFunction));
-      processChatMessageResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(processChatMessageFunction));
 
       const uploadFileResource = api.root.addResource('uploadFile');
       uploadFileResource.addMethod('POST', new apigateway.LambdaIntegration(uploadFileFunction));
-      uploadFileResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(uploadFileFunction));
 
       const deleteFileResource = api.root.addResource('deleteFile');
       deleteFileResource.addMethod('POST', new apigateway.LambdaIntegration(deleteFileFunction));
-      deleteFileResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(deleteFileFunction));
 
       const downloadFileResource = api.root.addResource('downloadFile');
       downloadFileResource.addMethod('POST', new apigateway.LambdaIntegration(downloadFileFunction));
-      downloadFileResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(downloadFileFunction));
 
       const quickLinkResource = api.root.addResource('quickLink');
       quickLinkResource.addMethod('POST', new apigateway.LambdaIntegration(quickLinkFunction));
-      quickLinkResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(quickLinkFunction));
 
       const startProcessingResource = api.root.addResource('startProcessing');
       startProcessingResource.addMethod('POST', new apigateway.LambdaIntegration(startProcessingFunction));
-      startProcessingResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(startProcessingFunction));
 
       const recordUserInteractionResource = api.root.addResource('recordUserInteraction');
       recordUserInteractionResource.addMethod('POST', new apigateway.LambdaIntegration(recordUserInteractionFunction));
-      recordUserInteractionResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(recordUserInteractionFunction));
 
       const getUserFilesResource = api.root.addResource('getUserFiles');
       getUserFilesResource.addMethod('POST', new apigateway.LambdaIntegration(getUserFilesFunction));
-      getUserFilesResource.addMethod('OPTIONS', new apigateway.LambdaIntegration(getUserFilesFunction));
 
       // Handle paths with proxy parameters
       const documentAnalysisResource = api.root.addResource('document-analysis');

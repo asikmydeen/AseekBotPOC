@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import AppSidebar from './components/AppSidebar';
 import { useChatHistory } from './context/ChatHistoryContext';
+import { getUserFilesApi } from './api/advancedApi';
 
 // Dynamically import ChatInterface with SSR disabled
 const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').then(mod => mod.default), {
@@ -115,6 +116,28 @@ function ChatApp() {
       lastMessagesRef.current = JSON.stringify(activeChat.messages || []);
     }
   }, [activeChat?.id]);
+
+  // Fetch user files on component mount
+  useEffect(() => {
+    async function fetchFiles() {
+      try {
+        const filesResponse = await getUserFilesApi();
+        // Check if response has data and no errors
+        if (filesResponse && filesResponse.data && !filesResponse.error) {
+          setUploadedFiles(filesResponse.data);
+        } else {
+          // If there's an error or data is undefined, set empty array
+          console.warn('No valid files data received:',
+            filesResponse?.error || 'Data property missing');
+          setUploadedFiles([]);
+        }
+      } catch (error) {
+        console.error('Error fetching user files:', error);
+        setUploadedFiles([]);
+      }
+    }
+    fetchFiles();
+  }, []);
 
   return (
     <div className="flex h-screen w-full">

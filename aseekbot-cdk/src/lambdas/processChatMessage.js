@@ -193,6 +193,9 @@ app.use((req, res, next) => {
 
 // Main route handler with error handling
 app.post('*', upload.array('files'), async (req, res) => {
+
+  console.log('Request received(Testing):', JSON.stringify(req.body, null, 2)); // Log the request body
+
   try {
     // Ensure CORS headers are set for this response
     res.header('Access-Control-Allow-Origin', '*');

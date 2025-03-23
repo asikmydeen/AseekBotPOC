@@ -8,6 +8,7 @@ export const LAMBDA_ENDPOINTS = {
   createTicket: `${API_BASE_URL}/createTicket`,
   quickLink: `${API_BASE_URL}/quickLink`,
   downloadFile: `${API_BASE_URL}/files/download`, // Updated path to match API Gateway configuration
+  getUserFiles: `${API_BASE_URL}/getUserFiles`,
 
   // New endpoints for async processing
   startProcessing: `${API_BASE_URL}/startProcessing`,

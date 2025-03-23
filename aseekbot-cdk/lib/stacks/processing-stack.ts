@@ -10,11 +10,12 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 
 export interface ProcessingStackProps extends cdk.NestedStackProps {
+    stackName?: string;
     s3Bucket: s3.Bucket;
-    requestStatusTable: dynamodb.Table;
-    documentAnalysisStatusTable: dynamodb.Table;
-    userInteractionsTable: dynamodb.Table;
-    userFilesTable: dynamodb.Table;
+    requestStatusTable: dynamodb.ITable;           // Change from Table to ITable
+    documentAnalysisStatusTable: dynamodb.ITable;  // Change from Table to ITable
+    userInteractionsTable: dynamodb.ITable;        // Change from Table to ITable
+    userFilesTable: dynamodb.ITable;               // Change from Table to ITable
 }
 
 export class ProcessingStack extends cdk.NestedStack {

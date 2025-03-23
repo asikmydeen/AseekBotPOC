@@ -12,10 +12,15 @@ export class AseekbotCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: AseekbotCdkStackProps) {
     super(scope, id, props);
 
+    // Determine whether to create tables based on environment variable
+    const createTables = process.env.CREATE_TABLES === 'true';
+    console.log(`Creating tables: ${createTables ? 'Yes' : 'No (using existing tables)'}`);
+
     // Create the storage stack first as it contains resources needed by other stacks
     const storageStack = new StorageStack(this, 'StorageStack', {
       ...props,
       stackName: 'AseekbotStorageStack',
+      createTables: process.env.CREATE_TABLES === 'true', // Control table creation
     });
 
     // Create the processing stack which depends on storage resources

@@ -338,3 +338,63 @@ export async function downloadFileApi(fileUrl: string): Promise<ApiResponse> {
     throw error;
   }
 }
+
+export async function getUserFilesApi(): Promise<ApiResponse> {
+  try {
+    const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'test-user' })
+    });
+
+    // Log response details for debugging
+    console.log(`getUserFilesApi response status: ${response.status}`);
+    console.log(`getUserFilesApi content-type: ${response.headers.get('content-type')}`);
+
+    // Get response as text first
+    const responseText = await response.text();
+
+    // Handle non-OK responses
+    if (!response.ok) {
+      console.error(`Error response from getUserFiles: ${responseText}`);
+
+      // Try to parse as JSON if it looks like JSON
+      if (responseText.trim().startsWith('{')) {
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.error || 'Failed to fetch user files');
+        } catch (parseError) {
+          console.error('Failed to parse error response as JSON:', parseError);
+        }
+      }
+
+      // If we couldn't parse as JSON or it's not JSON, throw with the text
+      throw new Error(`Failed to fetch user files: ${responseText.substring(0, 100)}...`);
+    }
+
+    // For successful responses, try to parse as JSON
+    try {
+      if (!responseText.trim()) {
+        console.warn('getUserFilesApi: Empty response received');
+        return { data: [] };
+      }
+
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse successful response as JSON:', parseError);
+      console.error('Response preview:', responseText.substring(0, 100));
+      return {
+        data: [],
+        error: 'Invalid JSON response from server',
+        rawResponse: responseText.substring(0, 200) // Include part of the raw response for debugging
+      };
+    }
+  } catch (error) {
+    console.error('Error in getUserFilesApi:', error);
+    // Return a default object instead of throwing to avoid breaking the UI
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Unknown error fetching user files'
+    };
+  }
+}
