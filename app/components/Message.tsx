@@ -693,12 +693,12 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     whileTap="tap"
                                     onClick={() => onReact('thumbs-up')}
                                     className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-up'
-                                            ? isDarkMode
-                                                ? 'dark-success-bg dark-success'
-                                                : 'bg-green-100 text-green-600'
-                                            : isDarkMode
-                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                                        ? isDarkMode
+                                            ? 'dark-success-bg text-white' // Changed 'dark-success' to 'text-white' for better contrast
+                                            : 'bg-green-100 text-green-600'
+                                        : isDarkMode
+                                            ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
+                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                                         }`}
                                     aria-label="Thumbs up"
                                     aria-pressed={message.reaction === 'thumbs-up'}
@@ -713,12 +713,12 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     whileTap="tap"
                                     onClick={() => onReact('thumbs-down')}
                                     className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-down'
-                                            ? isDarkMode
-                                                ? 'dark-error-bg dark-error'
-                                                : 'bg-red-100 text-red-600'
-                                            : isDarkMode
-                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                                        ? isDarkMode
+                                            ? 'dark-error-bg text-white' // Changed 'dark-error' to 'text-white' for better contrast
+                                            : 'bg-red-100 text-red-600'
+                                        : isDarkMode
+                                            ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
+                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                                         }`}
                                     aria-label="Thumbs down"
                                     aria-pressed={message.reaction === 'thumbs-down'}
@@ -734,7 +734,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                     onClick={onPin}
                                     className={`p-2 rounded-full transition-colors ${message.pinned
                                             ? isDarkMode
-                                                ? 'dark-primary-bg dark-primary'
+                                                ? 'dark-primary-bg text-white' // Changed 'dark-primary' to 'text-white' for better contrast
                                                 : 'bg-blue-100 text-blue-600'
                                             : isDarkMode
                                                 ? 'dark-bg dark-text hover:dark-hover hover:dark-text'

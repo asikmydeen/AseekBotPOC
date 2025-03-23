@@ -27,8 +27,8 @@
   /* Accent colors for dark mode */
   --dark-primary: #82bef7;    /* Slightly darker primary accent */
   --dark-secondary: #c685d3;  /* Slightly darker secondary accent */
-  --dark-success: #73b976;    /* Slightly darker success state */
-  --dark-error: #e06666;      /* Slightly darker error state */
+  --dark-success: #00ff0d;    /* Slightly darker success state */
+  --dark-error: #ff0000;      /* Slightly darker error state */
   --dark-warning: #ffa726;    /* Slightly darker warning state */
   --dark-info: #5aaaf0;       /* Slightly darker info state */
 }
