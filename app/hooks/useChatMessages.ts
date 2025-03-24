@@ -6,6 +6,11 @@ import { stripIndent } from '../utils/helpers';
 import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis, checkRequestStatus } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
 import { useAsyncProcessing } from './useAsyncProcessing';
+import {
+  isDocumentAnalysisResponse,
+  createDocumentAnalysisMessage,
+  logDocumentAnalysisResponse
+} from '../utils/documentAnalysisUtils';
 
 // Define the ChatHistoryItem interface again in useChatMessages.ts to match the import
 interface ChatHistoryItem {
@@ -104,6 +109,10 @@ export default function useChatMessages({
       // When processing completes, add the bot message
       if (status.status === 'COMPLETED' && status.result) {
         console.log('Status update received:', status);
+
+        // Log document analysis response for debugging
+        logDocumentAnalysisResponse(status);
+
         setIsThinking(false);
         setProgress(100);  // Set to 100% when completed
 
@@ -111,32 +120,41 @@ export default function useChatMessages({
         setCurrentRequestId(null);
         setIsAsyncProcessing(false);
 
-        // If insights exist in the result, build a text to display insights summary and key information
-        let botText = status.result.message || 'Processing complete';
-        if (status.result.insights) {
-          const insights = status.result.insights;
-          // For example, display summary and nextSteps. Customize the text formatting as needed.
-          botText = `Document Analysis Insights:\nSummary: ${insights.summary || 'N/A'}\nKey Points: ${Array.isArray(insights.keyPoints) ? insights.keyPoints.join(', ') : 'N/A'}\nRecommendations: ${Array.isArray(insights.recommendations) ? insights.recommendations.join(', ') : 'N/A'}\nNext Steps: ${insights.nextSteps || 'N/A'}`;
+        // Check if this is a document analysis response
+        if (isDocumentAnalysisResponse(status)) {
+          console.log('Processing document analysis response with insights:', status.result.insights);
+
+          // Create a formatted message for document analysis
+          const botMessage = createDocumentAnalysisMessage(status, chatSessionId);
+
+          // Log created message for debugging
+          console.log('Created document analysis message:', botMessage);
+
+          // Add the message to the chat
+          safeUpdateMessages(prev => [...prev, botMessage]);
+        } else {
+          // Handle regular message response
+          let botText = status.result.message || 'Processing complete';
+
+          // Create bot message from response
+          const botMessage: MessageType = {
+            sender: 'bot',
+            text: botText,
+            timestamp: status.result.timestamp || new Date().toISOString(),
+            suggestions: status.result.suggestions || [],
+            multimedia: status.result.multimedia,
+            report: status.result.report,
+            chatId: status.requestId || '',
+            chatSessionId: chatSessionId
+          };
+
+          // Add attachments if they exist
+          if (status.result.attachments) {
+            botMessage.attachments = status.result.attachments;
+          }
+
+          safeUpdateMessages(prev => [...prev, botMessage]);
         }
-
-        // Create bot message from response
-        const botMessage: MessageType = {
-          sender: 'bot',
-          text: botText,
-          timestamp: status.result.timestamp || new Date().toISOString(),
-          suggestions: status.result.suggestions || [],
-          multimedia: status.result.multimedia,
-          report: status.result.report,
-          chatId: status.requestId || '',  // Use requestId if available
-          chatSessionId: chatSessionId
-        };
-
-        // Add attachments if they exist
-        if (status.result.attachments) {
-          botMessage.attachments = status.result.attachments;
-        }
-
-        safeUpdateMessages(prev => [...prev, botMessage]);
 
         // Scroll to the bottom to show the new message
         if (messagesEndRef.current) {
@@ -144,7 +162,7 @@ export default function useChatMessages({
         }
       }
 
-      // Handle errors
+      // Handle error condition (keep existing error handling)
       if (status.status === 'FAILED') {
         setIsThinking(false);
         setProgress(0);

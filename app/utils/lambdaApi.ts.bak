@@ -1,5 +1,11 @@
 // app/utils/lambdaApi.ts
-export const API_BASE_URL = 'https://c9mue0raqh.execute-api.us-east-1.amazonaws.com/dev';
+// Determine if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Use different base URLs depending on the environment
+export const API_BASE_URL = isDevelopment
+  ? 'http://localhost:3001/api'  // Point to the separate proxy server
+  : 'https://api-dev-ammydeen.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
   processChatMessage: `${API_BASE_URL}/processChatMessage`,
@@ -8,6 +14,7 @@ export const LAMBDA_ENDPOINTS = {
   createTicket: `${API_BASE_URL}/createTicket`,
   quickLink: `${API_BASE_URL}/quickLink`,
   downloadFile: `${API_BASE_URL}/files/download`, // Updated path to match API Gateway configuration
+  getUserFiles: `${API_BASE_URL}/getUserFiles`,
 
   // New endpoints for async processing
   startProcessing: `${API_BASE_URL}/startProcessing`,
@@ -45,7 +52,7 @@ export interface TicketDetails {
 }
 
 export interface ApiResponse {
-  url: ApiResponse;
+  url: string;
   subject?: any;
   createdAt?: string;
   ticketId?: string;
@@ -53,7 +60,7 @@ export interface ApiResponse {
   fileUrl?: string;
   fileId?: string | undefined;
   success?: boolean;
-  data?: unknown;
+  data?: any[];
   error?: string;
   message?: string;
   requestId?: string;

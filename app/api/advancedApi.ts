@@ -179,7 +179,17 @@ export async function checkRequestStatus(requestId: string): Promise<ApiResponse
       throw new Error(errorData.error || 'Failed to check request status');
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // Add special processing for document analysis responses
+    if (result.result && result.result.insights) {
+      console.log('Document analysis insights found:', result.result.insights);
+
+      // Add special processing for document analysis if needed
+      // You might want to format the insights here for better display
+    }
+
+    return result;
   } catch (error) {
     console.error(`Error checking status for request ${requestId}:`, error);
     throw error;

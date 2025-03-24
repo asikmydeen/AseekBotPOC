@@ -399,7 +399,6 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
         };
 
         const cleanedContent = stripIndent(report.content);
-
         const htmlContent = marked.parse(cleanedContent, options) as string;
 
         const handleDownload = () => {
@@ -457,8 +456,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setShowCitationPanel(!showCitationPanel)}
                                 className={`p-2 rounded-full ${isDarkMode
-                                        ? `bg-gray-700 ${showCitationPanel ? 'text-blue-400' : 'text-gray-300'} hover:bg-gray-600`
-                                        : `bg-gray-200 ${showCitationPanel ? 'text-blue-600' : 'text-gray-600'} hover:bg-gray-300`
+                                    ? `bg-gray-700 ${showCitationPanel ? 'text-blue-400' : 'text-gray-300'} hover:bg-gray-600`
+                                    : `bg-gray-200 ${showCitationPanel ? 'text-blue-600' : 'text-gray-600'} hover:bg-gray-300`
                                     }`}
                                 aria-label="Toggle citations"
                                 aria-expanded={showCitationPanel}
@@ -534,7 +533,6 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                 )}
             </motion.div>
         );
-
     };
     return (
         <div id={id} className={`mb-8 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
