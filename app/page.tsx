@@ -141,14 +141,14 @@ function ChatApp() {
   }, []);
 
   return (
-    <div className="flex h-screen w-full">
+    <main id="main-content" role="main" className="flex h-screen w-full">
       <AppSidebar
         uploadedFiles={uploadedFiles}
         onFileClick={handleFileClick}
         onPromptClick={handlePromptClick}
         onToggle={toggleSidebar}
       />
-      <div className={`flex-1 h-screen ${sidebarOpen ? 'ml-[300px]' : 'ml-[60px]'} transition-all duration-300`}>
+      <div className={`flex-1 h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-[300px] ml-0' : 'md:ml-[60px] ml-0'}`}>
         {isChatLoading ? (
           <div className="flex items-center justify-center h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -166,7 +166,7 @@ function ChatApp() {
           />
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

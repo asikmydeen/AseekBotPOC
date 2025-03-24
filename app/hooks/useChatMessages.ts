@@ -103,8 +103,9 @@ export default function useChatMessages({
 
       // When processing completes, add the bot message
       if (status.status === 'COMPLETED' && status.result) {
+        console.log('Status update received:', status);
         setIsThinking(false);
-        setProgress(0);
+        setProgress(100);  // Set to 100% when completed
 
         // Clear request ID after processing
         setCurrentRequestId(null);
@@ -115,7 +116,7 @@ export default function useChatMessages({
         if (status.result.insights) {
           const insights = status.result.insights;
           // For example, display summary and nextSteps. Customize the text formatting as needed.
-          botText = `Document Analysis Insights:\nSummary: ${insights.summary}\nKey Points: ${insights.keyPoints.join(', ')}\nRecommendations: ${insights.recommendations.join(', ')}\nNext Steps: ${insights.nextSteps}`;
+          botText = `Document Analysis Insights:\nSummary: ${insights.summary || 'N/A'}\nKey Points: ${Array.isArray(insights.keyPoints) ? insights.keyPoints.join(', ') : 'N/A'}\nRecommendations: ${Array.isArray(insights.recommendations) ? insights.recommendations.join(', ') : 'N/A'}\nNext Steps: ${insights.nextSteps || 'N/A'}`;
         }
 
         // Create bot message from response
@@ -126,7 +127,7 @@ export default function useChatMessages({
           suggestions: status.result.suggestions || [],
           multimedia: status.result.multimedia,
           report: status.result.report,
-          chatId: '',
+          chatId: status.requestId || '',  // Use requestId if available
           chatSessionId: chatSessionId
         };
 
@@ -136,6 +137,11 @@ export default function useChatMessages({
         }
 
         safeUpdateMessages(prev => [...prev, botMessage]);
+
+        // Scroll to the bottom to show the new message
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
       }
 
       // Handle errors

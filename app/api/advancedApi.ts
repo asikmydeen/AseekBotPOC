@@ -7,6 +7,9 @@ import {
   handleClientError
 } from '../utils/lambdaApi';
 
+// Placeholder for user ID - can be replaced with actual user ID when integrating with user management
+const TEST_USER_ID = 'test-user';
+
 // Original API functions
 export async function processChatMessage(
 message: string,
@@ -33,7 +36,7 @@ chatSessionId?: string): Promise<ApiResponse> {
       message: message,
       history: history,
       sessionId: sessionId, // Use the existing or new session ID
-      userId: 'test-user'
+      userId: TEST_USER_ID
     };
 
     // Add S3 file references if attachments are present
@@ -67,7 +70,7 @@ chatSessionId?: string): Promise<ApiResponse> {
 }
 
 export async function startAsyncChatProcessing(
-message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
+  message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     const sessionId = `session-${Date.now()}`;
 
@@ -76,7 +79,9 @@ message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessi
       message,
       sessionId,
       history,
-      userId: 'test-user'
+      userId: TEST_USER_ID,
+      // Add chatId to the payload - this was missing
+      chatId: chatSessionId || `chat-${Date.now()}`
     };
 
     // Add S3 file references if attachments are present
@@ -116,7 +121,7 @@ message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessi
 }
 
 export async function startAsyncDocumentAnalysis(
-files: any[], message: string = 'Please analyze these documents', chatSessionId: string): Promise<ApiResponse> {
+  files: any[], message: string = 'Please analyze these documents', chatSessionId: string): Promise<ApiResponse> {
   try {
     if (!files || !files.length) {
       throw new Error('No files provided for analysis');
@@ -128,7 +133,9 @@ files: any[], message: string = 'Please analyze these documents', chatSessionId:
     const payload: any = {
       message,
       sessionId,
-      userId: 'test-user',
+      userId: TEST_USER_ID,
+      // Add chatId to the payload - this was missing
+      chatId: chatSessionId || `chat-${Date.now()}`,
       s3Files: files.map(file => ({
         name: file.name,
         s3Url: file.url || file.fileUrl,
@@ -165,7 +172,7 @@ files: any[], message: string = 'Please analyze these documents', chatSessionId:
 
 export async function checkRequestStatus(requestId: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/status/${requestId}`);
+    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/${requestId}`);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -193,7 +200,7 @@ export async function uploadFileApi(file: File, sessionId?: string, p0?: string)
       formData.append('sessionId', sessionId);
     }
 
-    formData.append('userId', 'test-user');
+    formData.append('userId', TEST_USER_ID);
 
     const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
       method: 'POST',
@@ -220,7 +227,7 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
     // Add userId to the ticket details
     const ticketWithUser = {
       ...ticketDetails,
-      userId: 'test-user'
+      userId: TEST_USER_ID
     };
 
     const response = await fetch(LAMBDA_ENDPOINTS.createTicket, {
@@ -249,7 +256,7 @@ export async function quickLinkApi(action: string, parameter: string): Promise<A
     const response = await fetch(LAMBDA_ENDPOINTS.quickLink, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, parameter, userId: 'test-user' }),
+      body: JSON.stringify({ action, parameter, userId: TEST_USER_ID }),
     });
 
     if (!response.ok) {
@@ -297,7 +304,7 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ s3Key, userId: 'test-user' })
+      body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
     });
 
     if (!response.ok) {
@@ -318,7 +325,7 @@ export async function downloadFileApi(fileUrl: string): Promise<ApiResponse> {
     const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileKey, userId: 'test-user' })
+      body: JSON.stringify({ fileKey, userId: TEST_USER_ID })
     });
 
     if (!response.ok) {
@@ -344,7 +351,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'test-user' })
+      body: JSON.stringify({ userId: TEST_USER_ID })
     });
 
     // Log response details for debugging

@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { checkStatus } from '../utils/asyncApi';
 
+// Helper function to determine if a status is more advanced than another
+const isStatusAdvanced = (currentStatus: string, newStatus: string): boolean => {
+  const statusOrder = {
+    'QUEUED': 0,
+    'PROCESSING': 1,
+    'COMPLETED': 2,
+    'FAILED': 2 // Same level as COMPLETED since both are terminal states
+  };
+
+  return (statusOrder[currentStatus as keyof typeof statusOrder] || 0) >=
+         (statusOrder[newStatus as keyof typeof statusOrder] || 0);
+};
+
 export interface AsyncProcessingResult {
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   requestId: string;
@@ -70,8 +83,11 @@ export function useAsyncProcessing(
 
       setLastStatusResponse(response);
 
-      // Update state based on response
-      setStatus(response.status);
+      // Update state based on response, but don't downgrade status
+      // Only update status if the new status is more advanced or equal to current
+      if (!isStatusAdvanced(status, response.status)) {
+        setStatus(response.status);
+      }
       setProgress(response.progress || 0);
 
       if (response.status === 'COMPLETED' && response.result) {
@@ -90,6 +106,7 @@ export function useAsyncProcessing(
 
       // Call the status change callback if provided
       if (onStatusChange) {
+        console.debug('[useAsyncProcessing] Calling onStatusChange with status:', response.status, 'and data:', response);
         onStatusChange(response);
       }
 
@@ -126,7 +143,10 @@ export function useAsyncProcessing(
 
     setIsLoading(true);
     setResult(null);
-    setStatus('QUEUED');
+    // Only set status to QUEUED if we don't have a status yet or if we're starting fresh
+    if (!status || status === 'COMPLETED' || status === 'FAILED') {
+      setStatus('QUEUED');
+    }
     setProgress(0);
 
     // Initial check
@@ -136,6 +156,11 @@ export function useAsyncProcessing(
       // If it's already completed or failed, don't start polling
       if (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED') {
         return;
+      }
+
+      // Update status based on initial response if more advanced
+      if (!isStatusAdvanced(status, initialResponse.status)) {
+        setStatus(initialResponse.status);
       }
 
       // Start polling

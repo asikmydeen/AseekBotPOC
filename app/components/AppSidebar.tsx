@@ -1,6 +1,6 @@
 // app/components/AppSidebar.tsx
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -44,9 +44,46 @@ export default function AppSidebar({
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
+    const [isMobile, setIsMobile] = useState(false);
 
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+
+
+    // Default to closed on mobile, open on larger screens
+    const [isOpen, setIsOpen] = useState<boolean>(() => {
+        // Check if window is available (client-side)
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 768; // md breakpoint
+        }
+        return true;
+    });
     const [activeTab, setActiveTab] = useState<string>('history');
+
+
+    // Add effect to handle resize events
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640 && isOpen) { // sm breakpoint
+                setIsOpen(false);
+                if (onToggle) onToggle(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isOpen, onToggle]);
+
+    // Add useEffect to check window width after component mount
+    useEffect(() => {
+        // This only runs on the client
+        setIsMobile(window.innerWidth < 768);
+
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const savedPrompts = [
         { title: 'Bid Document Analysis', text: 'Perform bid document analysis for Project Alpha' },
@@ -57,8 +94,8 @@ export default function AppSidebar({
     ];
 
     const sidebarVariants = {
-        open: { width: '300px', opacity: 1 },
-        closed: { width: '60px', opacity: 1 }
+        open: { width: 'var(--sidebar-width-open, 300px)', opacity: 1 },
+        closed: { width: 'var(--sidebar-width-closed, 60px)', opacity: 1 }
     };
 
     const toggleSidebar = () => {
@@ -68,6 +105,14 @@ export default function AppSidebar({
             onToggle(newIsOpen);
         }
     };
+
+    const sidebarOverlay = isOpen && isMobile ? (
+        <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={toggleSidebar}
+            aria-hidden="true"
+        />
+    ) : null;
 
     const handleNewChat = () => {
         createChat();
@@ -97,12 +142,20 @@ export default function AppSidebar({
     };
 
     return (
-        <motion.div
-            className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'bg-white text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50`}
+        <>
+            {sidebarOverlay}
+            <motion.div
+            className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'bg-white text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50
+                        ${!isOpen && 'sm:w-16 md:w-16'}
+                        ${isOpen && 'sm:w-full md:w-72 lg:w-80'}`}
             initial={false}
             animate={isOpen ? 'open' : 'closed'}
             variants={sidebarVariants}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{
+                '--sidebar-width-open': 'min(100vw, 300px)',
+                '--sidebar-width-closed': '60px'
+            } as React.CSSProperties}
         >
             {/* Sidebar Header */}
             <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'dark-border' : 'border-gray-200'}`}>
@@ -169,7 +222,7 @@ export default function AppSidebar({
             )}
 
             {/* Sidebar Content */}
-            <div className="h-[calc(100vh-112px)] overflow-y-auto p-4">
+            <div className="h-[calc(100vh-112px)] overflow-y-auto p-2 sm:p-3 md:p-4">
                 {isOpen && activeTab === 'history' && (
                     <HistoryList isDarkMode={isDarkMode} />
                 )}
@@ -185,7 +238,7 @@ export default function AppSidebar({
                                 {uploadedFiles.map((file, index) => (
                                     <div
                                         key={`file-${index}`}
-                                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
+                                        className={`p-2 md:p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
                                             ? 'dark-card-bg hover:bg-gray-700'
                                             : 'bg-gray-100 hover:bg-gray-200'
                                             }`}
@@ -227,7 +280,7 @@ export default function AppSidebar({
                             {savedPrompts.map((prompt, index) => (
                                 <div
                                     key={`prompt-${index}`}
-                                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
+                                    className={`p-2 md:p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
                                         ? 'dark-card-bg hover:bg-gray-700'
                                         : 'bg-gray-100 hover:bg-gray-200'
                                         }`}
@@ -248,7 +301,7 @@ export default function AppSidebar({
                             <h3 className="font-semibold text-lg">Settings</h3>
                         </div>
                         <div className="space-y-4">
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
+                            <div className={`p-2 md:p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Theme</p>
                                 <div className="flex items-center">
                                     <button
@@ -264,7 +317,7 @@ export default function AppSidebar({
                                 </div>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
+                            <div className={`p-2 md:p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Account</p>
                                 <div className="flex items-center">
                                     <div className={`p-2 rounded-full ${isDarkMode ? 'dark-active' : 'bg-white border border-gray-300'} mr-3`}>
@@ -277,7 +330,7 @@ export default function AppSidebar({
                                 </div>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
+                            <div className={`p-2 md:p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">Help</p>
                                 <Link
                                     href="/userguide"
@@ -291,7 +344,7 @@ export default function AppSidebar({
                                 </Link>
                             </div>
 
-                            <div className={`p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
+                            <div className={`p-2 md:p-3 rounded-lg ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'}`}>
                                 <p className="text-sm font-medium mb-2">About</p>
                                 <div className="text-xs text-gray-500">
                                     <p className="mb-1">AseekBot v1.0.0</p>
@@ -592,6 +645,7 @@ export default function AppSidebar({
                     </button>
                 </div>
             )}
-        </motion.div>
+            </motion.div>
+        </>
     );
 }

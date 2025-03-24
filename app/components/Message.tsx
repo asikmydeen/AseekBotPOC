@@ -26,6 +26,7 @@ import {
     FaExternalLinkAlt
 } from 'react-icons/fa';
 import { MessageType, MultimediaData } from '../types/shared';
+import UserThumbnail from './UserThumbnail';
 
 interface MessageProps {
     message: MessageType;
@@ -553,7 +554,11 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                             }`}
                     >
                         {message.sender === 'user' ? (
-                            <FaUser className={`${isDarkMode ? 'dark-text' : 'text-gray-600'}`} />
+                            <UserThumbnail
+                                userId={message.userId || 'test-user'}
+                                size={20}
+                                className={`${isDarkMode ? 'dark-text' : 'text-gray-600'}`}
+                            />
                         ) : (
                             <FaRobot className={`${isDarkMode ? 'dark-primary' : 'text-blue-600'}`} />
                         )}
@@ -777,6 +782,7 @@ export default React.memo(EnhancedMessage, (prevProps, nextProps) => {
         prevProps.showCitations === nextProps.showCitations &&
         JSON.stringify(prevProps.message.multimedia) === JSON.stringify(nextProps.message.multimedia) &&
         prevAttachmentsStr === nextAttachmentsStr &&
-        prevProps.id === nextProps.id
+        prevProps.id === nextProps.id &&
+        prevProps.message.userId === nextProps.message.userId
     );
 });

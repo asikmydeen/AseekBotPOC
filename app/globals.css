@@ -76,7 +76,7 @@ body {
 
 /* Sidebar container styling for layering */
 .sidebar-container {
-  @apply shadow-md;
+  @apply shadow-md transition-all duration-200;
 }
 
 .dark .sidebar-container {
@@ -204,6 +204,14 @@ body {
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  transition: padding 0.2s ease;
+}
+
+/* Responsive message bubbles */
+@media (max-width: 640px) {
+  .message-bubble {
+    border-radius: 0.375rem;
+  }
 }
 
 /* Fix for long unbreakable strings */
@@ -270,6 +278,7 @@ body {
 }
 
 /* Media queries for responsive behavior */
+/* Small devices (phones, 640px and below) */
 @media (max-width: 640px) {
   .prose pre {
     font-size: 0.875rem;
@@ -279,9 +288,115 @@ body {
   .prose table {
     font-size: 0.875rem;
   }
+
+  /* Improved typography for mobile */
+  .prose h1 {
+    font-size: 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose h2 {
+    font-size: 1.25rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose h3, .prose h4 {
+    font-size: 1.125rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Adjust message bubbles for mobile */
+  .message-bubble {
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+  }
+
+  /* Reduce padding for sidebar elements */
+  .sidebar-section {
+    @apply py-1 px-2;
+  }
+}
+
+/* Medium devices (tablets, 768px and below) */
+@media (max-width: 768px) {
+  /* Sidebar adjustments for tablets */
+  .sidebar-container {
+    @apply w-full max-w-[250px];
+  }
+
+  /* Adjust image thumbnails for tablets */
+  .image-thumbnail {
+    max-width: 90%;
+  }
+
+  /* Adjust spacing for better tablet experience */
+  .prose {
+    padding: 0.5rem;
+  }
+}
+
+/* Large devices (small laptops, 1024px and below) */
+@media (max-width: 1024px) {
+  /* Optimize layout for smaller screens but not tiny */
+  .sidebar-container {
+    @apply shadow-sm;
+  }
+
+  /* Slightly reduce font size for better fit */
+  .prose p, .prose li {
+    font-size: 0.95rem;
+  }
 }
 
 /* Attachment background styling */
 .attachment-bg-light {
   background-color: var(--attachment-bg-light);
+}
+
+/* Responsive layout helpers */
+.mobile-only {
+  @apply hidden;
+}
+
+.desktop-only {
+  @apply block;
+}
+
+@media (max-width: 640px) {
+  .mobile-only {
+    @apply block;
+  }
+
+  .desktop-only {
+    @apply hidden;
+  }
+}
+
+/* Responsive spacing utilities */
+@media (max-width: 640px) {
+  .mobile-p-2 {
+    padding: 0.5rem;
+  }
+
+  .mobile-m-1 {
+    margin: 0.25rem;
+  }
+
+  .mobile-gap-1 {
+    gap: 0.25rem;
+  }
+}
+
+/* Responsive flex direction utility */
+.flex-responsive {
+  @apply flex flex-row;
+}
+
+@media (max-width: 640px) {
+  .flex-responsive {
+    @apply flex-col;
+  }
 }

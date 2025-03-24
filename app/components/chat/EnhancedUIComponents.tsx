@@ -76,7 +76,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   };
 
   return (
-    <div className="relative w-full mt-2">
+    <div className="relative w-full mt-2 px-1 sm:px-0">
       <motion.div
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -93,7 +93,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             onBlur={() => setIsFocused(false)}
             placeholder={isThinking ? "AseekBot is thinking..." : "Type your message here..."}
             disabled={isThinking}
-            className={`w-full p-4 pr-24 rounded-2xl resize-none transition-all duration-300 focus:outline-none ${
+            className={`w-full p-3 sm:p-4 pr-16 sm:pr-24 rounded-2xl resize-none transition-all duration-300 focus:outline-none text-sm sm:text-base ${
               isDarkMode
                 ? 'dark-bg dark-text dark-border focus:ring-2 focus:ring-blue-500 dark-placeholder'
                 : 'bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-600 placeholder-gray-500'
@@ -107,13 +107,13 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             }}
           />
 
-          <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+          <div className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 flex items-center space-x-1 sm:space-x-2">
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onFileUploadClick}
-              className={`p-3 rounded-full transition-colors ${
+              className={`p-2 sm:p-3 rounded-full transition-colors ${
                 isDarkMode
                   ? 'dark-text-secondary hover:dark-text dark-bg-secondary hover:dark-bg-hover'
                   : 'text-gray-600 hover:text-gray-800 bg-gray-200 hover:bg-gray-300'
@@ -133,7 +133,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               animate={inputValue.trim() && !isThinking ? "active" : "inactive"}
               whileHover={{ scale: inputValue.trim() && !isThinking ? 1.05 : 1 }}
               whileTap={{ scale: inputValue.trim() && !isThinking ? 0.95 : 1 }}
-              className={`p-3 rounded-full transition-all duration-300 ${
+              className={`p-2 sm:p-3 rounded-full transition-all duration-300 ${
                 !inputValue.trim() || isThinking
                   ? isDarkMode
                     ? 'dark-bg dark-text-disabled cursor-not-allowed'
@@ -144,11 +144,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               }`}
               aria-label="Send message"
             >
-              {isThinking ? (
-                <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-white" />
-              ) : (
-                <FiSend size={20} />
-              )}
+              <FiSend size={20} />
             </motion.button>
           </div>
         </form>
@@ -196,12 +192,12 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="w-full mb-4"
+      className="w-full max-w-full mb-4 px-2 sm:px-0"
     >
       {uploadedFiles.length === 0 ? (
         <div
           {...getRootProps()}
-          className={`border-3 border-dashed rounded-2xl p-8 mb-4 text-center cursor-pointer transition-all duration-300
+          className={`border-3 border-dashed rounded-2xl p-4 sm:p-6 md:p-8 mb-4 text-center cursor-pointer transition-all duration-300
             ${isDarkMode
               ? isDragActive
                 ? 'border-blue-400 bg-blue-900/20 shadow-inner shadow-blue-900/20'
@@ -217,24 +213,24 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             animate={isDragActive ? { scale: [1, 1.05, 1] } : { scale: 1 }}
             transition={{ duration: 0.5, repeat: isDragActive ? Infinity : 0 }}
           >
-            <FiUploadCloud className={`mx-auto h-16 w-16 mb-4 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            <p className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            <FiUploadCloud className={`mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-2 sm:mb-4 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <p className={`text-base sm:text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
               {isDragActive ? 'Drop files here...' : 'Drag and drop files here, or click to select files'}
             </p>
-            <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className={`text-xs sm:text-sm mt-1 sm:mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG
             </p>
           </motion.div>
         </div>
       ) : (
         <motion.div
-          className={`rounded-2xl p-6 mb-4 ${isDarkMode ? 'bg-gray-750 shadow-xl' : 'bg-gray-50 shadow-lg'}`}
+          className={`rounded-2xl p-3 sm:p-4 md:p-6 mb-4 ${isDarkMode ? 'bg-gray-750 shadow-xl' : 'bg-gray-50 shadow-lg'}`}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+            <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
               {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
             </h3>
 
@@ -250,26 +246,36 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             )}
           </div>
 
-          <div className="grid gap-3 mb-4 max-h-60 overflow-y-auto pr-2">
+          <div className="grid gap-2 sm:gap-3 mb-3 sm:mb-4 max-h-40 sm:max-h-60 overflow-y-auto pr-1 sm:pr-2">
             {uploadedFiles.map((file, index) => (
               <motion.div
                 key={`${file.name}-${index}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
-                className={`flex items-center justify-between p-3 rounded-xl ${
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-xl ${
                   isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50'
                 } shadow-md transition-all duration-200`}
               >
                 <div className="flex items-center">
-                  <FiFile className={`mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} size={24} />
+                  <FiFile className={`mr-2 sm:mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} size={20} />
                   <div>
-                    <p className={`font-medium truncate max-w-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                    <p className={`font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-xs text-sm sm:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {file.name}
                     </p>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {formatFileSize(file.size)}
-                    </p>
+                    <div className="flex items-center">
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {formatFileSize(file.size)}
+                      </p>
+                      {file.status === 'uploading' && (
+                        <div className="flex items-center ml-2">
+                          <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin mr-1 border-blue-500" />
+                          <span className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>
+                            {file.progress ? `${Math.round(file.progress)}%` : 'Uploading...'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <motion.button
@@ -287,12 +293,12 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('analyze')}
-              className={`py-2.5 px-6 rounded-xl text-sm font-medium shadow-md ${
+              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
                 isDarkMode
                   ? 'bg-blue-600 hover:bg-blue-500 text-white'
                   : 'bg-blue-500 hover:bg-blue-600 text-white'
@@ -306,7 +312,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('send')}
-              className={`py-2.5 px-6 rounded-xl text-sm font-medium shadow-md ${
+              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
                 isDarkMode
                   ? 'bg-green-600 hover:bg-green-500 text-white'
                   : 'bg-green-500 hover:bg-green-600 text-white'
@@ -320,7 +326,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('cancel')}
-              className={`py-2.5 px-6 rounded-xl text-sm font-medium shadow-md ${
+              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
                 isDarkMode
                   ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
                   : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
@@ -427,10 +433,10 @@ const messageAnimations = {
 // Enhanced Typing Indicator
 const EnhancedTypingIndicator = ({ isDarkMode }: { isDarkMode: boolean }) => {
   return (
-    <div className={`p-4 rounded-2xl inline-flex items-center ${
+    <div className={`p-3 sm:p-4 rounded-2xl inline-flex items-center ${
       isDarkMode ? 'bg-gray-800 shadow-lg shadow-gray-900/50' : 'bg-white shadow-lg shadow-gray-200/50'
     }`}>
-      <div className="font-semibold text-sm mr-3">AseekBot is thinking</div>
+      <div className="font-semibold text-xs sm:text-sm mr-2 sm:mr-3">AseekBot is thinking</div>
       <div className="flex space-x-1.5">
         <motion.div
           variants={messageAnimations.typingIndicator}

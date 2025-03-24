@@ -109,11 +109,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
               }`}
             aria-label="Send message"
           >
-            {isThinking ? (
-              <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin border-white" />
-            ) : (
-              <MdSend size={20} />
-            )}
+            <MdSend size={20} />
           </button>
         </div>
       </form>

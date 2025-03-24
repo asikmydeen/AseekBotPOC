@@ -389,7 +389,7 @@ function ChatInterfaceComponent({
                     exportChat={exportChatAsPDF}
                 />
 
-                <div className={`flex-1 overflow-y-auto p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-white'} rounded-lg shadow-inner mx-2 my-2`}>
+                <div className={`flex-1 overflow-y-auto overscroll-contain p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-50'} rounded-lg shadow-inner mx-2 my-2`}>
                     <MessageList
                         messages={filteredMessages}
                         isThinking={isThinking}

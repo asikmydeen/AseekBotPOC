@@ -129,7 +129,7 @@ export async function startDocumentAnalysis(
  */
 export async function checkStatus(requestId: string): Promise<StatusResponse> {
   try {
-    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/status/${requestId}`);
+    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/${requestId}`);
 
     if (!response.ok) {
       const errorData = await response.json();

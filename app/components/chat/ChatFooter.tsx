@@ -92,72 +92,57 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   const lastBotMessage = [...messages].reverse().find(msg => msg.sender === 'bot');
   const suggestions = lastBotMessage?.suggestions || [];
 
-  // Render the async processing status info
-  const renderAsyncProcessingInfo = () => {
-    if (!isAsyncProcessing) return null;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.3 }}
-        className={`flex items-center justify-center py-2 px-4 rounded-lg text-sm ${isDarkMode ? 'dark-info-bg dark-info-text' : 'bg-blue-50 text-blue-700'
-          } mb-3 shadow-md`}
-      >
-        <FiClock className="mr-2" />
-        <span>Processing request: {Math.round(asyncProgress)}%</span>
-        <div className="ml-3 flex items-center">
-          <FiRefreshCw className="animate-spin mr-1" />
-        </div>
-      </motion.div>
-    );
-  };
 
   // Render different footer components based on context
   const renderFooterContent = () => {
     // When showing ticket form
     if (showTicketForm) {
       return (
-        <TicketForm
-          ticketDetails={ticketDetails}
-          ticketStep={ticketStep}
-          setTicketStep={setTicketStep}
-          setTicketDetails={setTicketDetails}
-          createTicket={createTicket}
-          closeTicketForm={closeTicketForm}
-          isDarkMode={isDarkMode}
-        />
+        <div className="w-full max-w-full overflow-x-hidden">
+          <TicketForm
+            ticketDetails={ticketDetails}
+            ticketStep={ticketStep}
+            setTicketStep={setTicketStep}
+            setTicketDetails={setTicketDetails}
+            createTicket={createTicket}
+            closeTicketForm={closeTicketForm}
+            isDarkMode={isDarkMode}
+          />
+        </div>
       );
     }
 
     // When showing feedback form
     if (showFeedbackForm) {
       return (
-        <FeedbackForm
-          feedback={feedback}
-          setFeedback={setFeedback}
-          submitFeedback={submitFeedback}
-          closeFeedbackForm={closeFeedbackForm}
-          isDarkMode={isDarkMode}
-        />
+        <div className="w-full max-w-full overflow-x-hidden">
+          <FeedbackForm
+            feedback={feedback}
+            setFeedback={setFeedback}
+            submitFeedback={submitFeedback}
+            closeFeedbackForm={closeFeedbackForm}
+            isDarkMode={isDarkMode}
+          />
+        </div>
       );
     }
 
     // When showing file upload section
     if (showFileDropzone) {
       return (
-        <EnhancedFileDropzone
-          getRootProps={getRootProps}
-          getInputProps={getInputProps}
-          isDragActive={isDragActive}
-          isDarkMode={isDarkMode}
-          uploadedFiles={uploadedFiles}
-          removeFile={removeFile}
-          isUploading={isUploading}
-          progress={progress}
-          handleFileAction={handleFileAction}
-        />
+        <div className="w-full max-w-full overflow-x-hidden">
+          <EnhancedFileDropzone
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            isDragActive={isDragActive}
+            isDarkMode={isDarkMode}
+            uploadedFiles={uploadedFiles}
+            removeFile={removeFile}
+            isUploading={isUploading}
+            progress={progress}
+            handleFileAction={handleFileAction}
+          />
+        </div>
       );
     }
 
@@ -170,17 +155,17 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.3 }}
-            className="mb-3"
+            className="mb-2 sm:mb-3"
           >
-            <div className="flex justify-between items-center mb-2">
-              <h3 className={`text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-600'}`}>
+            <div className="flex flex-wrap justify-between items-center mb-1 sm:mb-2">
+              <h3 className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-600'}`}>
                 Suggested replies
               </h3>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowSuggestions(false)}
-                className={`text-xs px-2 py-1 rounded-md ${isDarkMode ? 'dark-text-secondary hover:dark-text hover:dark-bg-hover' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md ${isDarkMode ? 'dark-text-secondary hover:dark-text hover:dark-bg-hover' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
               >
                 Hide
               </motion.button>
@@ -197,27 +182,26 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   };
 
   return (
-    <div className={`px-4 pt-2 pb-4 border-t ${isDarkMode ? 'dark-border dark-bg' : 'border-gray-200 bg-white'}`}>
-      {/* Async processing status indicator */}
-      {isThinking && isAsyncProcessing && renderAsyncProcessingInfo()}
-
+    <div className={`px-2 sm:px-4 pt-2 pb-3 sm:pb-4 border-t ${isDarkMode ? 'dark-border dark-bg' : 'border-gray-200 bg-white'}`}>
       {/* Main content based on state */}
       <AnimatePresence mode="wait">
         {renderFooterContent()}
       </AnimatePresence>
 
       {/* Enhanced Chat Input */}
-      <EnhancedChatInput
-        onSubmit={handleInputSubmit}
-        isThinking={isThinking}
-        isDarkMode={isDarkMode}
-        onFileUploadClick={toggleFileDropzone}
-        showFileDropzone={showFileDropzone}
-        onInputChange={handleInputChange}
-        initialValue={pendingInput || ''}
-        inputRef={inputRef}
-        hasUploadedFiles={uploadedFiles.length > 0}
-      />
+      <div className="w-full">
+        <EnhancedChatInput
+          onSubmit={handleInputSubmit}
+          isThinking={isThinking}
+          isDarkMode={isDarkMode}
+          onFileUploadClick={toggleFileDropzone}
+          showFileDropzone={showFileDropzone}
+          onInputChange={handleInputChange}
+          initialValue={pendingInput || ''}
+          inputRef={inputRef}
+          hasUploadedFiles={uploadedFiles.length > 0}
+        />
+      </div>
     </div>
   );
 };
