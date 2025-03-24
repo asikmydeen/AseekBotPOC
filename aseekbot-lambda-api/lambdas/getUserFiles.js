@@ -13,12 +13,12 @@ const URL_EXPIRATION = process.env.URL_EXPIRATION || 3600; // Default 1 hour
 exports.handler = async (event) => {
   try {
     console.log('Event received:', JSON.stringify(event));
-    
+
     // Extract userId from the event
-    const userId = event.queryStringParameters?.userId || 
-                   event.pathParameters?.userId || 
+    const userId = event.queryStringParameters?.userId ||
+                   event.pathParameters?.userId ||
                    JSON.parse(event.body || '{}').userId;
-    
+
     if (!userId) {
       return {
         statusCode: 400,
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: 'userId is required' })
       };
     }
-    
+
     // Query DynamoDB for files belonging to the user
     const params = {
       TableName: USER_FILES_TABLE,
@@ -39,28 +39,28 @@ exports.handler = async (event) => {
         ':userId': userId
       }
     };
-    
+
     const result = await dynamodb.query(params).promise();
-    
+
     // Generate presigned URLs for each file
     const files = await Promise.all(result.Items.map(async (file) => {
       const presignedUrl = await s3.getSignedUrlPromise('getObject', {
         Bucket: S3_BUCKET,
-        Key: file.s3Key,
+        Key: file.fileKey,
         Expires: parseInt(URL_EXPIRATION)
       });
-      
+
       return {
         fileId: file.fileId,
         fileName: file.fileName,
-        s3Key: file.s3Key,
+        fileKey: file.fileKey,
         uploadDate: file.uploadDate,
         fileSize: file.fileSize,
         fileType: file.fileType,
         presignedUrl
       };
     }));
-    
+
     // Return the response
     return {
       statusCode: 200,
@@ -70,14 +70,15 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Credentials': true
       },
       body: JSON.stringify({
-        files,
-        count: files.length
+        data: files,
+        url: "",
+        chatId: "getUserFiles-success"
       })
     };
-    
+
   } catch (error) {
     console.error('Error retrieving user files:', error);
-    
+
     return {
       statusCode: 500,
       headers: {

@@ -124,7 +124,8 @@ function ChatApp() {
         const filesResponse = await getUserFilesApi();
         // Check if response has data and no errors
         if (filesResponse && filesResponse.data && !filesResponse.error) {
-          setUploadedFiles(filesResponse.data);
+          const filesArray = Array.isArray(filesResponse.data) ? filesResponse.data : [];
+          setUploadedFiles(filesArray);
         } else {
           // If there's an error or data is undefined, set empty array
           console.warn('No valid files data received:',

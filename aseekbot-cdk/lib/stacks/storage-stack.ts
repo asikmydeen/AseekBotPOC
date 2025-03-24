@@ -2,13 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as customResources from 'aws-cdk-lib/custom-resources';
 
 export interface StorageStackProps extends cdk.NestedStackProps {
   stackName?: string;
-  createTables?: boolean; // Add a prop to control table creation
-  importBucket?: boolean; // Add this property
-  bucketName?: string;    // Add this property
+  createTables?: boolean;
+  importBucket?: boolean;
+  bucketName?: string;
 }
 
 export class StorageStack extends cdk.NestedStack {
@@ -23,17 +22,46 @@ export class StorageStack extends cdk.NestedStack {
     super(scope, id, props);
 
     // Check if we should import the bucket
-    const importBucket = props?.importBucket ?? false;
+    const importBucket = props?.importBucket ?? process.env.IMPORT_BUCKET === 'true';
     const bucketName = props?.bucketName || process.env.AWS_S3_BUCKET_NAME || `aseekbot-files-${this.account}-${this.region}`;
+
+    console.log(`Storage Stack - Import bucket: ${importBucket}, Bucket name: ${bucketName}`);
 
     if (importBucket) {
       // Import existing S3 bucket
       console.log(`Importing existing S3 bucket: ${bucketName}`);
       this.s3Bucket = s3.Bucket.fromBucketName(
         this,
-        'AseekbotBucket',
+        'ImportedAseekbotBucket',
         bucketName
       );
+
+      // Apply CORS to the existing bucket using custom resources if necessary
+      new cdk.CustomResource(this, 'BucketCorsCustomResource', {
+        serviceToken: this.createCorsLambdaFunction(bucketName).functionArn,
+        properties: {
+          BucketName: bucketName,
+          CorsConfiguration: JSON.stringify({
+            CORSRules: [
+              {
+                AllowedHeaders: ['*'],
+                AllowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
+                AllowedOrigins: ['*'],
+                ExposeHeaders: [
+                  'ETag',
+                  'x-amz-meta-custom-header',
+                  'x-amz-server-side-encryption',
+                  'x-amz-request-id',
+                  'x-amz-id-2',
+                  'Date'
+                ],
+                MaxAgeSeconds: 3600
+              }
+            ]
+          })
+        }
+      });
+
     } else {
       // Create S3 bucket for file storage with CORS configuration
       console.log(`Creating new S3 bucket: ${bucketName}`);
@@ -52,9 +80,18 @@ export class StorageStack extends cdk.NestedStack {
               s3.HttpMethods.PUT,
               s3.HttpMethods.POST,
               s3.HttpMethods.HEAD,
+              s3.HttpMethods.DELETE,
             ],
             allowedOrigins: ['*'],
-            maxAge: 3000,
+            exposedHeaders: [
+              'ETag',
+              'x-amz-meta-custom-header',
+              'x-amz-server-side-encryption',
+              'x-amz-request-id',
+              'x-amz-id-2',
+              'Date'
+            ],
+            maxAge: 3600,
           },
         ],
         encryption: s3.BucketEncryption.S3_MANAGED,
@@ -62,8 +99,8 @@ export class StorageStack extends cdk.NestedStack {
     }
 
     // Check if we should create tables or import existing ones
-    const createTables = props?.createTables ?? false;
-    console.log(`Creating tables: ${createTables ? 'Yes' : 'No (using existing tables)'}`);
+    const createTables = props?.createTables ?? process.env.CREATE_TABLES === 'true';
+    console.log(`Storage Stack - Creating tables: ${createTables ? 'Yes' : 'No (using existing tables)'}`);
 
     if (createTables) {
       // Create new DynamoDB tables
@@ -128,27 +165,83 @@ export class StorageStack extends cdk.NestedStack {
       console.log('Importing existing DynamoDB tables');
       this.requestStatusTable = dynamodb.Table.fromTableName(
         this,
-        'RequestStatusTable',
+        'ImportedRequestStatusTable',
         'RequestStatus'
       );
 
       this.documentAnalysisStatusTable = dynamodb.Table.fromTableName(
         this,
-        'DocumentAnalysisStatusTable',
+        'ImportedDocumentAnalysisStatusTable',
         'DocumentAnalysisStatus'
       );
 
       this.userInteractionsTable = dynamodb.Table.fromTableName(
         this,
-        'UserInteractionsTable',
+        'ImportedUserInteractionsTable',
         'UserInteractions'
       );
 
       this.userFilesTable = dynamodb.Table.fromTableName(
         this,
-        'UserFilesTable',
+        'ImportedUserFilesTable',
         'UserFiles'
       );
     }
+  }
+
+  // Helper method to create a Lambda function for applying CORS to existing buckets
+  private createCorsLambdaFunction(bucketName: string) {
+    const lambda = new cdk.aws_lambda.Function(this, 'BucketCorsLambda', {
+      runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: cdk.aws_lambda.Code.fromInline(`
+const AWS = require('aws-sdk');
+const response = require('cfn-response');
+
+exports.handler = async (event, context) => {
+  console.log('Event:', JSON.stringify(event, null, 2));
+
+  try {
+    // Only process Create or Update events
+    if (event.RequestType === 'Delete') {
+      await response.send(event, context, response.SUCCESS, {});
+      return;
+    }
+
+    const s3 = new AWS.S3();
+    const bucketName = event.ResourceProperties.BucketName;
+    const corsConfig = JSON.parse(event.ResourceProperties.CorsConfiguration);
+
+    console.log(\`Applying CORS configuration to bucket: \${bucketName}\`);
+    console.log('CORS Config:', JSON.stringify(corsConfig, null, 2));
+
+    await s3.putBucketCors({
+      Bucket: bucketName,
+      CORSConfiguration: corsConfig
+    }).promise();
+
+    console.log('CORS configuration applied successfully');
+    await response.send(event, context, response.SUCCESS, {
+      BucketName: bucketName,
+      Message: 'CORS configuration applied successfully'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    await response.send(event, context, response.FAILED, {
+      Error: error.message
+    });
+  }
+};
+      `),
+      timeout: cdk.Duration.seconds(30),
+    });
+
+    // Add permissions to modify S3 bucket CORS
+    lambda.addToRolePolicy(new cdk.aws_iam.PolicyStatement({
+      actions: ['s3:PutBucketCors', 's3:GetBucketCors'],
+      resources: [`arn:aws:s3:::${bucketName}`],
+    }));
+
+    return lambda;
   }
 }

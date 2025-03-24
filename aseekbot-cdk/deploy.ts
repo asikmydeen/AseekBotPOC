@@ -79,12 +79,24 @@ async function deploy() {
   // Set environment variables
   process.env.ENVIRONMENT = environment;
 
+  // Check for IMPORT_BUCKET and CREATE_TABLES env vars
+  const importBucket = process.env.IMPORT_BUCKET === 'true';
+  const createTables = process.env.CREATE_TABLES === 'true';
+
+  console.log(`Deployment configuration:
+    Environment: ${environment}
+    Import bucket: ${importBucket ? 'Yes' : 'No'}
+    Create tables: ${createTables ? 'Yes' : 'No'}
+  `);
+
   // Different settings based on environment
   if (environment === 'dev') {
     process.env.AWS_S3_BUCKET_NAME = `aseekbot-files-${environment}`;
   } else if (environment === 'prod') {
     process.env.AWS_S3_BUCKET_NAME = 'aseekbot-files';
   }
+
+  console.log(`Using S3 bucket: ${process.env.AWS_S3_BUCKET_NAME}`);
 
   // Run cdk commands
   try {
@@ -109,6 +121,9 @@ async function deploy() {
 
     // Add deployment options
     deployCommand += ' --require-approval never';
+
+    // Pass through environment variables
+    deployCommand = `IMPORT_BUCKET=${importBucket} CREATE_TABLES=${createTables} ${deployCommand}`;
 
     console.log(`Deploying ${stackToDeploy} stack to ${environment} environment...`);
     console.log(`Running command: ${deployCommand}`);

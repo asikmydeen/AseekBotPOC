@@ -376,17 +376,36 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     try {
       if (!responseText.trim()) {
         console.warn('getUserFilesApi: Empty response received');
-        return { data: [] };
+        return {
+          data: [],
+          url: '',
+          chatId: 'getUserFiles-default',
+          error: 'Empty response received.'
+        };
       }
 
-      return JSON.parse(responseText);
+      const parsedResponse = JSON.parse(responseText);
+      // Ensure data is always an array
+      const filesData = Array.isArray(parsedResponse.data)
+        ? parsedResponse.data
+        : (parsedResponse.data ? [parsedResponse.data] : []);
+
+      // Ensure the response has all required ApiResponse properties
+      return {
+        ...parsedResponse,
+        data: filesData,
+        url: parsedResponse.url || '',
+        chatId: parsedResponse.chatId || 'getUserFiles-success'
+      };
     } catch (parseError) {
       console.error('Failed to parse successful response as JSON:', parseError);
       console.error('Response preview:', responseText.substring(0, 100));
+      const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
       return {
         data: [],
-        error: 'Invalid JSON response from server',
-        rawResponse: responseText.substring(0, 200) // Include part of the raw response for debugging
+        error: `Failed to parse successful response as JSON: ${errorMessage}`,
+        url: '',
+        chatId: 'getUserFiles-parseError'
       };
     }
   } catch (error) {
@@ -394,7 +413,9 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     // Return a default object instead of throwing to avoid breaking the UI
     return {
       data: [],
-      error: error instanceof Error ? error.message : 'Unknown error fetching user files'
+      error: error instanceof Error ? error.message : 'Unknown error fetching user files',
+      url: '',
+      chatId: 'getUserFiles-error'
     };
   }
 }

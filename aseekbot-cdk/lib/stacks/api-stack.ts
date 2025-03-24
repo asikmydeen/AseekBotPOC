@@ -10,11 +10,11 @@ import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 
 export interface ApiStackProps extends cdk.NestedStackProps {
   stackName?: string;
-  s3Bucket: s3.Bucket;
-  requestStatusTable: dynamodb.ITable;           // Change from Table to ITable
-  documentAnalysisStatusTable: dynamodb.ITable;  // Change from Table to ITable
-  userInteractionsTable: dynamodb.ITable;        // Change from Table to ITable
-  userFilesTable: dynamodb.ITable;               // Change from Table to ITable
+  s3Bucket: s3.IBucket;
+  requestStatusTable: dynamodb.ITable;
+  documentAnalysisStatusTable: dynamodb.ITable;
+  userInteractionsTable: dynamodb.ITable;
+  userFilesTable: dynamodb.ITable;
   processingQueue: sqs.Queue;
   documentAnalysisStateMachine: sfn.StateMachine;
 }
@@ -227,7 +227,7 @@ export class ApiStack extends cdk.NestedStack {
       })
     );
 
-    // Create API Gateway
+    // Create API Gateway with comprehensive CORS configuration
     const api = new apigateway.RestApi(this, 'AseekbotApi', {
       restApiName: 'Aseekbot API',
       description: 'API for Aseekbot chatbot',
@@ -241,57 +241,100 @@ export class ApiStack extends cdk.NestedStack {
           'X-Api-Key',
           'X-Amz-Security-Token',
           'X-Amz-User-Agent',
+          'X-Requested-With',
+          'Accept',
+          'Origin',
+          'Access-Control-Allow-Headers',
+          'Access-Control-Allow-Origin',
+          'Access-Control-Request-Method',
+          'Access-Control-Request-Headers'
         ],
+        allowCredentials: true,
+        maxAge: cdk.Duration.seconds(600)
       },
       binaryMediaTypes: ['multipart/form-data', 'application/json', '*/*'],
     });
 
-      // Replace the API endpoint creation section with this direct approach
-      // Create API endpoints
-      const createTicketResource = api.root.addResource('createTicket');
-      createTicketResource.addMethod('POST', new apigateway.LambdaIntegration(createTicketFunction));
-
-      const processChatMessageResource = api.root.addResource('processChatMessage');
-      processChatMessageResource.addMethod('POST', new apigateway.LambdaIntegration(processChatMessageFunction));
-
-      const uploadFileResource = api.root.addResource('uploadFile');
-      uploadFileResource.addMethod('POST', new apigateway.LambdaIntegration(uploadFileFunction));
-
-      const deleteFileResource = api.root.addResource('deleteFile');
-      deleteFileResource.addMethod('POST', new apigateway.LambdaIntegration(deleteFileFunction));
-
-      const downloadFileResource = api.root.addResource('downloadFile');
-      downloadFileResource.addMethod('POST', new apigateway.LambdaIntegration(downloadFileFunction));
-
-      const quickLinkResource = api.root.addResource('quickLink');
-      quickLinkResource.addMethod('POST', new apigateway.LambdaIntegration(quickLinkFunction));
-
-      const startProcessingResource = api.root.addResource('startProcessing');
-      startProcessingResource.addMethod('POST', new apigateway.LambdaIntegration(startProcessingFunction));
-
-      const recordUserInteractionResource = api.root.addResource('recordUserInteraction');
-      recordUserInteractionResource.addMethod('POST', new apigateway.LambdaIntegration(recordUserInteractionFunction));
-
-      const getUserFilesResource = api.root.addResource('getUserFiles');
-      getUserFilesResource.addMethod('POST', new apigateway.LambdaIntegration(getUserFilesFunction));
-
-      // Handle paths with proxy parameters
-      const documentAnalysisResource = api.root.addResource('document-analysis');
-      documentAnalysisResource.addProxy({
-          defaultIntegration: new apigateway.LambdaIntegration(getDocumentAnalysisStatusFunction),
-          anyMethod: true
+    // Helper function to create Lambda integration with CORS
+    const createLambdaIntegration = (fn: lambda.Function) => {
+      return new apigateway.LambdaIntegration(fn, {
+        proxy: true,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With'",
+              'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'",
+              'method.response.header.Access-Control-Allow-Credentials': "'true'"
+            }
+          }
+        ]
       });
+    };
 
-      const checkStatusResource = api.root.addResource('checkStatus');
-      checkStatusResource.addProxy({
-          defaultIntegration: new apigateway.LambdaIntegration(checkStatusFunction),
-          anyMethod: true
-      });
+    // Define method options with CORS headers
+    const methodOptions: apigateway.MethodOptions = {
+      methodResponses: [
+        {
+          statusCode: '200',
+          responseParameters: {
+            'method.response.header.Access-Control-Allow-Origin': true,
+            'method.response.header.Access-Control-Allow-Headers': true,
+            'method.response.header.Access-Control-Allow-Methods': true,
+            'method.response.header.Access-Control-Allow-Credentials': true
+          },
+        }
+      ]
+    };
 
-      // Special handling for files/download endpoint
-      const filesResource = api.root.addResource('files');
-      const downloadResource = filesResource.addResource('download');
-      downloadResource.addMethod('ANY', new apigateway.LambdaIntegration(downloadFileFunction));
+    // Add API resources and methods with CORS
+    const createTicketResource = api.root.addResource('createTicket');
+    createTicketResource.addMethod('POST', createLambdaIntegration(createTicketFunction), methodOptions);
+
+    const processChatMessageResource = api.root.addResource('processChatMessage');
+    processChatMessageResource.addMethod('POST', createLambdaIntegration(processChatMessageFunction), methodOptions);
+
+    const uploadFileResource = api.root.addResource('uploadFile');
+    uploadFileResource.addMethod('POST', createLambdaIntegration(uploadFileFunction), methodOptions);
+
+    const deleteFileResource = api.root.addResource('deleteFile');
+    deleteFileResource.addMethod('POST', createLambdaIntegration(deleteFileFunction), methodOptions);
+
+    const downloadFileResource = api.root.addResource('downloadFile');
+    downloadFileResource.addMethod('POST', createLambdaIntegration(downloadFileFunction), methodOptions);
+
+    const quickLinkResource = api.root.addResource('quickLink');
+    quickLinkResource.addMethod('POST', createLambdaIntegration(quickLinkFunction), methodOptions);
+
+    const startProcessingResource = api.root.addResource('startProcessing');
+    startProcessingResource.addMethod('POST', createLambdaIntegration(startProcessingFunction), methodOptions);
+
+    const recordUserInteractionResource = api.root.addResource('recordUserInteraction');
+    recordUserInteractionResource.addMethod('POST', createLambdaIntegration(recordUserInteractionFunction), methodOptions);
+
+    const getUserFilesResource = api.root.addResource('getUserFiles');
+    getUserFilesResource.addMethod('POST', createLambdaIntegration(getUserFilesFunction), methodOptions);
+
+    // Handle paths with proxy parameters
+    const documentAnalysisResource = api.root.addResource('document-analysis');
+    documentAnalysisResource.addProxy({
+      defaultIntegration: createLambdaIntegration(getDocumentAnalysisStatusFunction),
+      anyMethod: true,
+      defaultMethodOptions: methodOptions
+    });
+
+    const checkStatusResource = api.root.addResource('checkStatus');
+    checkStatusResource.addProxy({
+      defaultIntegration: createLambdaIntegration(checkStatusFunction),
+      anyMethod: true,
+      defaultMethodOptions: methodOptions
+    });
+
+    // Special handling for files/download endpoint
+    const filesResource = api.root.addResource('files');
+    const downloadResource = filesResource.addResource('download');
+    downloadResource.addMethod('ANY', createLambdaIntegration(downloadFileFunction), methodOptions);
 
     // Set up SQS event source for the worker processor
     const eventSource = new lambda.EventSourceMapping(this, 'SqsEventSource', {

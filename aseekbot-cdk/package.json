@@ -4,14 +4,16 @@
   "bin": {
     "aseekbot-cdk": "bin/aseekbot-cdk.js"
   },
-  "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
-    "cdk": "cdk",
-    "deploy": "ts-node deploy.ts",
-    "init": "ts-node initialize.ts"
-  },
+ "scripts": {
+  "build": "tsc",
+  "watch": "tsc -w",
+  "test": "jest",
+  "cdk": "cdk",
+  "deploy": "./deploy.sh",
+  "deploy:import": "./deploy.sh --import-all",
+  "deploy:dev": "./deploy.sh --env dev",
+  "deploy:prod": "./deploy.sh --env prod"
+},
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",

@@ -1,5 +1,5 @@
 // app/utils/lambdaApi.ts
-export const API_BASE_URL = 'https://c9mue0raqh.execute-api.us-east-1.amazonaws.com/dev';
+export const API_BASE_URL = 'https://owss61w547.execute-api.us-east-1.amazonaws.com/prod';
 
 export const LAMBDA_ENDPOINTS = {
   processChatMessage: `${API_BASE_URL}/processChatMessage`,
@@ -46,7 +46,7 @@ export interface TicketDetails {
 }
 
 export interface ApiResponse {
-  url: ApiResponse;
+  url: string;
   subject?: any;
   createdAt?: string;
   ticketId?: string;
@@ -54,7 +54,7 @@ export interface ApiResponse {
   fileUrl?: string;
   fileId?: string | undefined;
   success?: boolean;
-  data?: unknown;
+  data?: any[];
   error?: string;
   message?: string;
   requestId?: string;

@@ -125,3 +125,14 @@ npm test
 1. Add a table construct in `lib/constructs/dynamodb-constructs.ts`
 2. Add the table to the storage stack in `lib/stacks/storage-stack.ts`
 3. Grant necessary permissions to Lambda functions that access the table
+
+### Gotchas
+
+# Use existing tables and bucket
+IMPORT_BUCKET = true npm run deploy
+
+# Create new tables but use existing bucket
+CREATE_TABLES = true IMPORT_BUCKET = true npm run deploy
+
+# Create everything new (for a new environment)
+  CREATE_TABLES = true IMPORT_BUCKET = false npm run deploy

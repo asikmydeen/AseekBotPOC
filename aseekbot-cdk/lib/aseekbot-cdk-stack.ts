@@ -12,15 +12,28 @@ export class AseekbotCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: AseekbotCdkStackProps) {
     super(scope, id, props);
 
-    // Determine whether to create tables based on environment variable
+    // Determine whether to import resources based on environment variables
+    const importBucket = process.env.IMPORT_BUCKET === 'true';
     const createTables = process.env.CREATE_TABLES === 'true';
-    console.log(`Creating tables: ${createTables ? 'Yes' : 'No (using existing tables)'}`);
+    const importResources = process.env.IMPORT_RESOURCES === 'true';
+    const environment = process.env.ENVIRONMENT || 'dev';
+    const bucketName = process.env.AWS_S3_BUCKET_NAME || `aseekbot-files-${environment}`;
+
+    console.log(`Deployment Configuration:
+      Environment: ${environment}
+      Bucket Name: ${bucketName}
+      Import Bucket: ${importBucket ? 'Yes' : 'No'}
+      Create Tables: ${createTables ? 'Yes' : 'No'}
+      Import Resources: ${importResources ? 'Yes' : 'No'}
+    `);
 
     // Create the storage stack first as it contains resources needed by other stacks
     const storageStack = new StorageStack(this, 'StorageStack', {
       ...props,
       stackName: 'AseekbotStorageStack',
-      createTables: process.env.CREATE_TABLES === 'true', // Control table creation
+      createTables: createTables,
+      importBucket: importBucket,
+      bucketName: bucketName
     });
 
     // Create the processing stack which depends on storage resources
@@ -32,6 +45,7 @@ export class AseekbotCdkStack extends cdk.Stack {
       documentAnalysisStatusTable: storageStack.documentAnalysisStatusTable,
       userInteractionsTable: storageStack.userInteractionsTable,
       userFilesTable: storageStack.userFilesTable,
+      importResources: importResources
     });
 
     // Create the API stack which depends on both storage and processing resources

@@ -11,11 +11,12 @@ import * as path from 'path';
 
 export interface ProcessingStackProps extends cdk.NestedStackProps {
     stackName?: string;
-    s3Bucket: s3.Bucket;
-    requestStatusTable: dynamodb.ITable;           // Change from Table to ITable
-    documentAnalysisStatusTable: dynamodb.ITable;  // Change from Table to ITable
-    userInteractionsTable: dynamodb.ITable;        // Change from Table to ITable
-    userFilesTable: dynamodb.ITable;               // Change from Table to ITable
+    s3Bucket: s3.IBucket;
+    requestStatusTable: dynamodb.ITable;
+    documentAnalysisStatusTable: dynamodb.ITable;
+    userInteractionsTable: dynamodb.ITable;
+    userFilesTable: dynamodb.ITable;
+    importResources?: boolean;
 }
 
 export class ProcessingStack extends cdk.NestedStack {
@@ -41,6 +42,10 @@ export class ProcessingStack extends cdk.NestedStack {
     constructor(scope: Construct, id: string, props: ProcessingStackProps) {
         super(scope, id, props);
 
+        // Determine if we should import resources
+        const importResources = props.importResources ?? process.env.IMPORT_RESOURCES === 'true';
+        console.log(`Processing Stack - Import resources: ${importResources}`);
+
         // Create AWS SDK Layer
         const awsSdkLayer = new lambda.LayerVersion(this, 'AwsSdkLayer', {
             code: lambda.Code.fromAsset('layers/aws-sdk-v3'),
@@ -48,22 +53,47 @@ export class ProcessingStack extends cdk.NestedStack {
             description: 'AWS SDK v3 libraries and other common dependencies',
         });
 
-        // Create Dead Letter Queue
-        this.processingDLQ = new sqs.Queue(this, 'ProcessingDeadLetterQueue', {
-            queueName: 'aseekbot-processing-dlq',
-            retentionPeriod: cdk.Duration.days(14),
-        });
+        // Create or import SQS queues
+        if (importResources) {
+            // Import existing queues
+            console.log('Importing existing SQS queues');
+            this.processingDLQ = sqs.Queue.fromQueueArn(
+                this,
+                'ImportedProcessingDLQ',
+                `arn:aws:sqs:${this.region}:${this.account}:aseekbot-processing-dlq`
+            ) as sqs.Queue;
 
-        // Create SQS Queue for processing
-        this.processingQueue = new sqs.Queue(this, 'ProcessingQueue', {
-            queueName: 'aseekbot-processing-queue',
-            visibilityTimeout: cdk.Duration.seconds(900), // 15 minutes to match Lambda timeout
-            retentionPeriod: cdk.Duration.days(14),
-            deadLetterQueue: {
-                queue: this.processingDLQ,
-                maxReceiveCount: 3,
-            },
-        });
+            this.processingQueue = sqs.Queue.fromQueueArn(
+                this,
+                'ImportedProcessingQueue',
+                `arn:aws:sqs:${this.region}:${this.account}:aseekbot-processing-queue`
+            ) as sqs.Queue;
+
+            // Import existing state machine
+            console.log('Importing existing Step Functions state machine');
+            this.documentAnalysisStateMachine = sfn.StateMachine.fromStateMachineArn(
+                this,
+                'ImportedDocumentAnalysisStateMachine',
+                `arn:aws:states:${this.region}:${this.account}:stateMachine:DocumentAnalysisWorkflow`
+            ) as sfn.StateMachine;
+        } else {
+            // Create Dead Letter Queue
+            this.processingDLQ = new sqs.Queue(this, 'ProcessingDeadLetterQueue', {
+                queueName: 'aseekbot-processing-dlq',
+                retentionPeriod: cdk.Duration.days(14),
+            });
+
+            // Create SQS Queue for processing
+            this.processingQueue = new sqs.Queue(this, 'ProcessingQueue', {
+                queueName: 'aseekbot-processing-queue',
+                visibilityTimeout: cdk.Duration.seconds(900), // 15 minutes to match Lambda timeout
+                retentionPeriod: cdk.Duration.days(14),
+                deadLetterQueue: {
+                    queue: this.processingDLQ,
+                    maxReceiveCount: 3,
+                },
+            });
+        }
 
         // Common environment variables for Lambda functions
         const commonEnvironment = {
@@ -250,46 +280,63 @@ export class ProcessingStack extends cdk.NestedStack {
             })
         );
 
-        // Define Step Functions workflow based on the JSON definition
-        // Read the state machine definition from the file
-        const stateMachineDefinition = require('../../resources/document-analysis-workflow.json');
+        // Only create the state machine if we're not importing it
+        if (!importResources) {
+            // Define Step Functions workflow based on the JSON definition
+            // Read the state machine definition from the file
+            const stateMachineDefinition = require('../../resources/document-analysis-workflow.json');
 
-        // Create a role for the state machine
-        // Create a role for the state machine
-        const stateMachineRole = new iam.Role(this, 'DocumentAnalysisStateMachineRole', {
-            assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
-        });
+            // Create a role for the state machine with inline policies
+            const stateMachineRole = new iam.Role(this, 'DocumentAnalysisStateMachineRole', {
+                assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
+                inlinePolicies: {
+                    LambdaInvoke: new iam.PolicyDocument({
+                        statements: [
+                            new iam.PolicyStatement({
+                                actions: ['lambda:InvokeFunction'],
+                                resources: [
+                                    this.initProcessFunction.functionArn,
+                                    this.fileValidationFunction.functionArn,
+                                    this.textractHandlerFunction.functionArn,
+                                    this.docxParserFunction.functionArn,
+                                    this.excelParserFunction.functionArn,
+                                    this.csvParserFunction.functionArn,
+                                    this.contentAnalyzerFunction.functionArn,
+                                    this.documentComparerFunction.functionArn,
+                                    this.insightGeneratorFunction.functionArn,
+                                    this.resultStorageFunction.functionArn,
+                                    this.errorHandlerFunction.functionArn,
+                                    this.statusUpdaterFunction.functionArn
+                                ]
+                            })
+                        ]
+                    })
+                }
+            });
 
-        // Add lambda invocation permissions to the role
-        stateMachineRole.addManagedPolicy(
-            iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaRole')
-        );
+            // Substitute Lambda ARNs in the definition
+            const substitutedDefinition = JSON.stringify(stateMachineDefinition)
+                .replace('${InitProcessLambdaArn}', this.initProcessFunction.functionArn)
+                .replace('${StatusUpdaterLambdaArn}', this.statusUpdaterFunction.functionArn)
+                .replace('${FileValidationLambdaArn}', this.fileValidationFunction.functionArn)
+                .replace('${TextractHandlerLambdaArn}', this.textractHandlerFunction.functionArn)
+                .replace('${DocxParserLambdaArn}', this.docxParserFunction.functionArn)
+                .replace('${ExcelParserLambdaArn}', this.excelParserFunction.functionArn)
+                .replace('${CsvParserLambdaArn}', this.csvParserFunction.functionArn)
+                .replace('${ContentAnalyzerLambdaArn}', this.contentAnalyzerFunction.functionArn)
+                .replace('${DocumentComparerLambdaArn}', this.documentComparerFunction.functionArn)
+                .replace('${InsightGeneratorLambdaArn}', this.insightGeneratorFunction.functionArn)
+                .replace('${ResultStorageLambdaArn}', this.resultStorageFunction.functionArn)
+                .replace('${ErrorHandlerLambdaArn}', this.errorHandlerFunction.functionArn);
 
-        // Create the state machine by substituting the Lambda ARNs into the definition
-        const substitutedDefinition = JSON.stringify(stateMachineDefinition)
-            .replace('${InitProcessLambdaArn}', this.initProcessFunction.functionArn)
-            .replace('${StatusUpdaterLambdaArn}', this.statusUpdaterFunction.functionArn)
-            .replace('${FileValidationLambdaArn}', this.fileValidationFunction.functionArn)
-            .replace('${TextractHandlerLambdaArn}', this.textractHandlerFunction.functionArn)
-            .replace('${DocxParserLambdaArn}', this.docxParserFunction.functionArn)
-            .replace('${ExcelParserLambdaArn}', this.excelParserFunction.functionArn)
-            .replace('${CsvParserLambdaArn}', this.csvParserFunction.functionArn)
-            .replace('${ContentAnalyzerLambdaArn}', this.contentAnalyzerFunction.functionArn)
-            .replace('${DocumentComparerLambdaArn}', this.documentComparerFunction.functionArn)
-            .replace('${InsightGeneratorLambdaArn}', this.insightGeneratorFunction.functionArn)
-            .replace('${ResultStorageLambdaArn}', this.resultStorageFunction.functionArn)
-            .replace('${ErrorHandlerLambdaArn}', this.errorHandlerFunction.functionArn);
-
-        // Create the Step Functions state machine
-        this.documentAnalysisStateMachine = new sfn.StateMachine(this, 'DocumentAnalysisStateMachine', {
-            stateMachineName: 'DocumentAnalysisWorkflow',
-            definitionBody: sfn.DefinitionBody.fromString(substitutedDefinition),
-            role: stateMachineRole,
-            timeout: cdk.Duration.minutes(30),
-        });
-
-        // Grant permissions to invoke the state machine
-        this.documentAnalysisStateMachine.grantStartExecution(stateMachineRole);
+            // Create the state machine
+            this.documentAnalysisStateMachine = new sfn.StateMachine(this, 'DocumentAnalysisStateMachine', {
+                stateMachineName: 'DocumentAnalysisWorkflow',
+                definitionBody: sfn.DefinitionBody.fromString(substitutedDefinition),
+                role: stateMachineRole,
+                timeout: cdk.Duration.minutes(30),
+            });
+        }
 
         // Output the state machine ARN for reference in other resources
         new cdk.CfnOutput(this, 'DocumentAnalysisStateMachineArn', {
