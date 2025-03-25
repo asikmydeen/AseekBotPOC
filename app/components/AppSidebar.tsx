@@ -154,7 +154,8 @@ export default function AppSidebar({
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
                 '--sidebar-width-open': 'min(100vw, 300px)',
-                '--sidebar-width-closed': '60px'
+                '--sidebar-width-closed': '60px',
+                backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'white'
             } as React.CSSProperties}
         >
             {/* Sidebar Header */}

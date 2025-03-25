@@ -20,15 +20,20 @@ import ChatFooter from './ChatFooter';
 import useAgentStyling from '../../hooks/useAgentStyling';
 import useFileActions from '../../hooks/useFileActions';
 import { MessageType, TicketDetails } from '../../types/shared';
+import { ArtifactProvider } from '../../context/ArtifactContext';
+import useMessageArtifacts from '../../hooks/useMessageArtifacts';
+import ArtifactPanel from '../ArtifactPanel';
 
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
 
-// Wrap the component with the ChatProvider
+// Wrap the component with the ChatProvider and ArtifactProvider
 export default function ChatInterface(props: ChatInterfaceProps) {
     return (
         <ChatProvider>
-            <ChatInterfaceComponent {...props} />
+            <ArtifactProvider>
+                <ChatInterfaceComponent {...props} />
+            </ArtifactProvider>
         </ChatProvider>
     );
 }
@@ -62,6 +67,9 @@ function ChatInterfaceComponent({
     const [errorDialogVisible, setErrorDialogVisible] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>('');
 
+    // State for artifact panel
+    const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState(false);
+
     const {
         messages,
         setMessages,
@@ -94,6 +102,38 @@ function ChatInterfaceComponent({
         onMessagesUpdate,
         initialMessages
     });
+
+    // Use the message artifacts hook with dependency stabilization
+    const { processMessages, processIncomingMessage, artifacts } = useMessageArtifacts();
+    const previousMessagesLengthRef = useRef(0);
+
+    // Process initial messages once for artifacts
+    useEffect(() => {
+        // Only process initial messages if they're available and we haven't processed them yet
+        if (initialMessages &&
+            initialMessages.length > 0 &&
+            previousMessagesLengthRef.current === 0) {
+            processMessages(initialMessages);
+            previousMessagesLengthRef.current = initialMessages.length;
+        }
+    }, [initialMessages, processMessages]);
+
+    // Process new messages for artifacts, but only the latest one
+    useEffect(() => {
+        // Only process if we have more messages than before
+        if (messages.length > previousMessagesLengthRef.current) {
+            // Get just the latest message
+            const latestMessage = messages[messages.length - 1];
+
+            // Only process if it's from the bot
+            if (latestMessage && latestMessage.sender === 'bot') {
+                processIncomingMessage(latestMessage);
+            }
+
+            // Update our count
+            previousMessagesLengthRef.current = messages.length;
+        }
+    }, [messages, processIncomingMessage]);
 
     // Connect the ref from the hook to our local ref
     useEffect(() => {
@@ -358,6 +398,11 @@ function ChatInterfaceComponent({
         }
     }, [currentRequestId, isAsyncProcessing, refreshAsyncStatus]);
 
+    // Toggle artifact panel visibility
+    const toggleArtifactPanel = useCallback(() => {
+        setIsArtifactPanelOpen(prev => !prev);
+    }, []);
+
     return (
         <div className={`flex-1 flex h-full ${isDarkMode ? 'dark-bg dark-text' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`}>
             {/* Error Dialog */}
@@ -378,7 +423,11 @@ function ChatInterfaceComponent({
                 </div>
             )}
 
-            <div className="flex-1 flex flex-col w-full">
+            {/* Main content with conditional class for artifact panel */}
+            <div
+                className={`flex-1 flex flex-col w-full transition-all duration-300 ${isArtifactPanelOpen ? 'mr-[40%]' : 'mr-0'
+                    }`}
+            >
                 <ChatHeader
                     isDarkMode={isDarkMode}
                     toggleTheme={toggleTheme}
@@ -387,6 +436,9 @@ function ChatInterfaceComponent({
                     setShowFeedbackForm={openFeedbackForm}
                     setShowTicketForm={openTicketForm}
                     exportChat={exportChatAsPDF}
+                    artifactsCount={artifacts.length}
+                    onToggleArtifacts={toggleArtifactPanel}
+                    isArtifactPanelOpen={isArtifactPanelOpen}
                 />
 
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-50'} rounded-lg shadow-inner mx-2 my-2`}>
@@ -448,6 +500,13 @@ function ChatInterfaceComponent({
                     asyncProgress={asyncProgress}
                 />
             </div>
+
+            {/* Artifact Panel */}
+            <ArtifactPanel
+                isOpen={isArtifactPanelOpen}
+                onClose={() => setIsArtifactPanelOpen(false)}
+                isDarkMode={isDarkMode}
+            />
 
             {/* Multimedia Modal */}
             <MultimediaModal

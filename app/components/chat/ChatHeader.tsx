@@ -11,9 +11,10 @@ import {
   MdDownload,
   MdFeedback,
   MdAdd,
-  MdOutlineMoreVert
+  MdOutlineMoreVert,
+  MdCode
 } from 'react-icons/md';
-import { FiHelpCircle } from 'react-icons/fi';
+import { FiHelpCircle, FiCode } from 'react-icons/fi';
 import { TicketIcon } from '@heroicons/react/24/outline';
 import { useChatHistory } from '../../context/ChatHistoryContext';
 
@@ -25,6 +26,10 @@ interface ChatHeaderProps {
   exportChat?: () => void;
   setShowFeedbackForm?: () => void;
   setShowTicketForm?: () => void;
+  // New props for artifact panel
+  artifactsCount?: number;
+  onToggleArtifacts?: () => void;
+  isArtifactPanelOpen?: boolean;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -34,7 +39,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   setSearchQuery,
   exportChat,
   setShowFeedbackForm,
-  setShowTicketForm
+  setShowTicketForm,
+  // New props with defaults
+  artifactsCount = 0,
+  onToggleArtifacts = () => { },
+  isArtifactPanelOpen = false
 }) => {
   const { createChat, activeChat } = useChatHistory();
 
@@ -63,20 +72,43 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`block w-full pl-10 pr-3 py-2 rounded-md ${isDarkMode
-              ? 'dark-card-bg dark-border dark-placeholder dark-text focus:ring-blue-500 focus:border-blue-500'
-              : 'bg-gray-100 border-gray-300 placeholder-gray-500 text-gray-900 focus:ring-blue-600 focus:border-blue-600'
+            ? 'dark-card-bg dark-border dark-placeholder dark-text focus:ring-blue-500 focus:border-blue-500'
+            : 'bg-gray-100 border-gray-300 placeholder-gray-500 text-gray-900 focus:ring-blue-600 focus:border-blue-600'
             } border focus:outline-none focus:ring-2 transition-colors`}
         />
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
+      <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+        {/* Artifacts Button - New */}
+        {artifactsCount > 0 && (
+          <button
+            onClick={onToggleArtifacts}
+            className={`p-1 sm:p-2 rounded-full flex items-center ${isArtifactPanelOpen
+                ? isDarkMode
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-500 text-white'
+                : isDarkMode
+                  ? 'hover:dark-card-bg dark-text-secondary'
+                  : 'hover:bg-gray-200 text-gray-700'
+              } transition-colors relative`}
+            aria-label="Toggle artifacts panel"
+          >
+            <FiCode className="h-4 w-4 sm:h-5 sm:w-5" />
+            {/* Notification badge */}
+            <span className={`absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs rounded-full ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white'
+              }`}>
+              {artifactsCount}
+            </span>
+          </button>
+        )}
+
         {/* New Chat Button */}
         <button
           onClick={createChat}
           className={`p-1 sm:p-2 rounded-full ${isDarkMode
-              ? 'hover:dark-card-bg dark-text-secondary'
-              : 'hover:bg-gray-200 text-gray-700'
+            ? 'hover:dark-card-bg dark-text-secondary'
+            : 'hover:bg-gray-200 text-gray-700'
             } transition-colors flex items-center`}
           aria-label="Start new chat"
         >
@@ -88,8 +120,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={toggleTheme}
           className={`p-1 sm:p-2 rounded-full ${isDarkMode
-              ? 'hover:dark-card-bg dark-text-secondary'
-              : 'hover:bg-gray-200 text-gray-700'
+            ? 'hover:dark-card-bg dark-text-secondary'
+            : 'hover:bg-gray-200 text-gray-700'
             } transition-colors`}
           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
@@ -100,8 +132,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <Link
           href="/userguide"
           className={`p-1 sm:p-2 rounded-full ${isDarkMode
-              ? 'hover:dark-card-bg dark-text-secondary'
-              : 'hover:bg-gray-200 text-gray-700'
+            ? 'hover:dark-card-bg dark-text-secondary'
+            : 'hover:bg-gray-200 text-gray-700'
             } transition-colors`}
           aria-label="User Guide"
         >
@@ -113,8 +145,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={exportChat}
             className={`p-1 sm:p-2 rounded-full ${isDarkMode
-                ? 'hover:dark-card-bg dark-text-secondary'
-                : 'hover:bg-gray-200 text-gray-700'
+              ? 'hover:dark-card-bg dark-text-secondary'
+              : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Export conversation"
           >
@@ -127,8 +159,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowFeedbackForm}
             className={`p-1 sm:p-2 rounded-full ${isDarkMode
-                ? 'hover:dark-card-bg dark-text-secondary'
-                : 'hover:bg-gray-200 text-gray-700'
+              ? 'hover:dark-card-bg dark-text-secondary'
+              : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Provide feedback"
           >
@@ -141,8 +173,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowTicketForm}
             className={`p-1 sm:p-2 rounded-full ${isDarkMode
-                ? 'hover:dark-card-bg dark-text-secondary'
-                : 'hover:bg-gray-200 text-gray-700'
+              ? 'hover:dark-card-bg dark-text-secondary'
+              : 'hover:bg-gray-200 text-gray-700'
               } transition-colors`}
             aria-label="Create a ticket"
           >
@@ -153,8 +185,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Mobile Search Button */}
         <button
           className={`p-1 sm:p-2 rounded-full sm:hidden ${isDarkMode
-              ? 'hover:dark-card-bg dark-text-secondary'
-              : 'hover:bg-gray-200 text-gray-700'
+            ? 'hover:dark-card-bg dark-text-secondary'
+            : 'hover:bg-gray-200 text-gray-700'
             } transition-colors`}
           aria-label="Search"
         >

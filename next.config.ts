@@ -13,7 +13,6 @@ const nextConfig: NextConfig = {
     API_BASE_URL: process.env.API_BASE_URL || '/api',
     MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE || '10485760',
   },
-  // Removing the headers function since it doesn't work with static export
   images: {
     domains: ['localhost'],
     remotePatterns: [
