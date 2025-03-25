@@ -159,7 +159,7 @@ const UserGuidePage = () => {
             <span className="bg-indigo-100 dark:bg-indigo-900 p-2 rounded-lg mr-3">
               <FiUpload className="text-indigo-600 dark:text-indigo-400 text-2xl" />
             </span>
-            Document Analysis (Available Now)
+            Document Analysis (Available in phases)
           </h2>
           <p className="text-lg mb-6">
             ASEEK Bot processes and analyzes vendor submissions, extracts key data using advanced AI, and produces comparative reports to streamline your RFP evaluation process.
@@ -210,7 +210,7 @@ const UserGuidePage = () => {
             <span className="bg-indigo-100 dark:bg-indigo-900 p-2 rounded-lg mr-3">
               <FiTag className="text-indigo-600 dark:text-indigo-400 text-2xl" />
             </span>
-            Vendor Insights (Available Now)
+            Vendor Insights (Coming Soon)
           </h2>
           <p className="text-lg mb-6">
             ASEEK Bot provides AI-powered vendor performance dashboards and risk monitoring alert systems to help you select and manage the best vendors for your data center needs.

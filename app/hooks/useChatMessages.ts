@@ -3,13 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
-import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis, checkRequestStatus } from '../api/advancedApi';
+import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
 import { useAsyncProcessing } from './useAsyncProcessing';
 import {
-  isDocumentAnalysisResponse,
   createDocumentAnalysisMessage,
-  logDocumentAnalysisResponse
 } from '../utils/documentAnalysisUtils';
 
 // Define the ChatHistoryItem interface again in useChatMessages.ts to match the import
@@ -110,9 +108,6 @@ export default function useChatMessages({
       if (status.status === 'COMPLETED' && status.result) {
         console.log('Status update received:', status);
 
-        // Log document analysis response for debugging
-        logDocumentAnalysisResponse(status);
-
         setIsThinking(false);
         setProgress(100);  // Set to 100% when completed
 
@@ -120,41 +115,10 @@ export default function useChatMessages({
         setCurrentRequestId(null);
         setIsAsyncProcessing(false);
 
-        // Check if this is a document analysis response
-        if (isDocumentAnalysisResponse(status)) {
-          console.log('Processing document analysis response with insights:', status.result.insights);
+        const botMessage = createDocumentAnalysisMessage(status, chatSessionId);
 
-          // Create a formatted message for document analysis
-          const botMessage = createDocumentAnalysisMessage(status, chatSessionId);
-
-          // Log created message for debugging
-          console.log('Created document analysis message:', botMessage);
-
-          // Add the message to the chat
-          safeUpdateMessages(prev => [...prev, botMessage]);
-        } else {
-          // Handle regular message response
-          let botText = status.result.message || 'Processing complete';
-
-          // Create bot message from response
-          const botMessage: MessageType = {
-            sender: 'bot',
-            text: botText,
-            timestamp: status.result.timestamp || new Date().toISOString(),
-            suggestions: status.result.suggestions || [],
-            multimedia: status.result.multimedia,
-            report: status.result.report,
-            chatId: status.requestId || '',
-            chatSessionId: chatSessionId
-          };
-
-          // Add attachments if they exist
-          if (status.result.attachments) {
-            botMessage.attachments = status.result.attachments;
-          }
-
-          safeUpdateMessages(prev => [...prev, botMessage]);
-        }
+        // Add the bot message to the messages state
+        safeUpdateMessages(prev => [...prev, botMessage]);
 
         // Scroll to the bottom to show the new message
         if (messagesEndRef.current) {

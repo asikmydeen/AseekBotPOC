@@ -170,32 +170,6 @@ export async function startAsyncDocumentAnalysis(
   }
 }
 
-export async function checkRequestStatus(requestId: string): Promise<ApiResponse> {
-  try {
-    const response = await fetch(`${LAMBDA_ENDPOINTS.checkStatus}/${requestId}`);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to check request status');
-    }
-
-    const result = await response.json();
-
-    // Add special processing for document analysis responses
-    if (result.result && result.result.insights) {
-      console.log('Document analysis insights found:', result.result.insights);
-
-      // Add special processing for document analysis if needed
-      // You might want to format the insights here for better display
-    }
-
-    return result;
-  } catch (error) {
-    console.error(`Error checking status for request ${requestId}:`, error);
-    throw error;
-  }
-}
-
 // Existing API functions with minimal changes
 export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<ApiResponse> {
   try {
