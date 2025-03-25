@@ -94,8 +94,18 @@ export default function AppSidebar({
     ];
 
     const sidebarVariants = {
-        open: { width: 'var(--sidebar-width-open, 300px)', opacity: 1 },
-        closed: { width: 'var(--sidebar-width-closed, 60px)', opacity: 1 }
+        open: {
+            transform: 'translateX(0%)',
+            width: 'var(--sidebar-width-open, 300px)',
+            opacity: 1,
+            backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'var(--light-bg, #ffffff)'
+        },
+        closed: {
+            width: 'var(--sidebar-width-closed, 60px)',
+            transform: 'translateX(0%)',
+            opacity: 1,
+            backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'var(--light-bg, #ffffff)'
+        }
     };
 
     const toggleSidebar = () => {
@@ -145,17 +155,20 @@ export default function AppSidebar({
         <>
             {sidebarOverlay}
             <motion.div
-            className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'bg-white text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50
-                        ${!isOpen && 'sm:w-16 md:w-16'}
-                        ${isOpen && 'sm:w-full md:w-72 lg:w-80'}`}
+            className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'light-bg text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50`}
             initial={false}
             animate={isOpen ? 'open' : 'closed'}
             variants={sidebarVariants}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 40,
+                backgroundColor: { duration: 0 }
+            }}
             style={{
                 '--sidebar-width-open': 'min(100vw, 300px)',
                 '--sidebar-width-closed': '60px',
-                backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'white'
+                '--light-bg': '#ffffff'
             } as React.CSSProperties}
         >
             {/* Sidebar Header */}

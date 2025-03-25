@@ -7,6 +7,9 @@
 :root {
   /* Light mode variables are defined in globals.css */
 
+  /* Core background colors for light mode */
+  --light-bg: #ffffff;        /* Light mode background color */
+
   /* Attachment background for light mode */
   --attachment-bg-light: #f9f9f9;
 }
