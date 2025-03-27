@@ -16,10 +16,21 @@ import {
     MdSupportAgent,
     MdLightbulb,
     MdAdd,
-    MdLibraryAdd
+    MdLibraryAdd,
+    MdDelete,
+    MdAnalytics
 } from 'react-icons/md';
 import { FiHelpCircle, FiDownload } from 'react-icons/fi';
-import { downloadFileApi } from '../api/advancedApi';
+import {
+    FaFilePdf,
+    FaFileWord,
+    FaFileExcel,
+    FaFileImage,
+    FaFileAlt,
+    FaFileCsv,
+    FaFile
+} from 'react-icons/fa';
+import { downloadFileApi, deleteFileApi } from '../api/advancedApi';
 import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
@@ -30,7 +41,7 @@ interface UploadedFile {
     fileKey: string;
     uploadDate: string;
     fileSize: number;
-    fileType: string;
+    fileType?: string;
     presignedUrl?: string;
 }
 
@@ -148,14 +159,15 @@ export default function AppSidebar({
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const getFileIcon = (fileType: string) => {
-        if (fileType.includes('pdf')) return 'pdf';
-        if (fileType.includes('word') || fileType.includes('docx')) return 'docx';
-        if (fileType.includes('text') || fileType.includes('txt')) return 'txt';
-        if (fileType.includes('csv')) return 'csv';
-        if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return 'xlsx';
-        if (fileType.includes('image')) return 'img';
-        return 'file';
+    const getFileIcon = (fileType: string | undefined) => {
+        if (!fileType) return <FaFile className="text-gray-500" />; // Return default icon if fileType is undefined
+        if (fileType?.includes('pdf')) return <FaFilePdf className="text-red-500" />;
+        if (fileType?.includes('word') || fileType?.includes('docx')) return <FaFileWord className="text-blue-500" />;
+        if (fileType?.includes('text') || fileType?.includes('txt')) return <FaFileAlt className="text-gray-500" />;
+        if (fileType?.includes('csv')) return <FaFileCsv className="text-green-500" />;
+        if (fileType?.includes('excel') || fileType?.includes('xlsx') || fileType?.includes('xls')) return <FaFileExcel className="text-green-600" />;
+        if (fileType?.includes('image')) return <FaFileImage className="text-purple-500" />;
+        return <FaFile className="text-gray-500" />;
     };
 
     const onDownloadClick = async (file: UploadedFile, e: React.MouseEvent) => {
@@ -180,6 +192,55 @@ export default function AppSidebar({
             }
         } catch (error) {
             console.error('Error downloading file:', error);
+        }
+    };
+
+    const onDeleteClick = async (file: UploadedFile, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent event bubbling
+        try {
+            // Extract fileKey from presignedUrl or use fileKey directly
+            const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+
+            if (!fileKey) {
+                console.error('File key not found');
+                return;
+            }
+
+            // Call the deleteFileApi to delete the file
+            const response = await deleteFileApi(fileKey);
+
+            if (response && response.success) {
+                console.log('File deleted successfully');
+                // You might want to refresh the file list here or show a notification
+            } else {
+                console.error('Error deleting file:', response?.message || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error deleting file:', error);
+        }
+    };
+
+    const onAnalyzeClick = (file: UploadedFile, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent event bubbling
+        try {
+            // Extract fileKey from presignedUrl or use fileKey directly
+            const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+
+            if (!fileKey) {
+                console.error('File key not found');
+                return;
+            }
+
+            // Here you would call your analysis API
+            console.log('Performing analysis on file:', file.fileName);
+            // Example: startAsyncDocumentAnalysis(fileKey);
+
+            // For now, just add the file to chat as a fallback action
+            if (onFileAddToChat) {
+                onFileAddToChat(file);
+            }
+        } catch (error) {
+            console.error('Error analyzing file:', error);
         }
     };
 
@@ -293,7 +354,7 @@ export default function AppSidebar({
                         </div>
                         {uploadedFiles.length > 0 ? (
                             <div className="space-y-2">
-                                {uploadedFiles.map((file, index) => (
+                                {uploadedFiles.filter(file => file).map((file, index) => (
                                     <div
                                         key={`file-${index}`}
                                         className={`p-2 md:p-3 rounded-lg transition-all duration-200 ${isDarkMode
@@ -303,14 +364,9 @@ export default function AppSidebar({
                                     >
                                         <div className="flex flex-col">
                                             <div className="flex items-center w-full">
-                                                <div className={`mr-3 text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    {getFileIcon(file.fileType) === 'pdf' && '📄'}
-                                                    {getFileIcon(file.fileType) === 'docx' && '📝'}
-                                                    {getFileIcon(file.fileType) === 'txt' && '📃'}
-                                                    {getFileIcon(file.fileType) === 'csv' && '📊'}
-                                                    {getFileIcon(file.fileType) === 'xlsx' && '📑'}
-                                                    {getFileIcon(file.fileType) === 'img' && '🖼️'}
-                                                    {getFileIcon(file.fileType) === 'file' && '📎'}
+                                                <span className="mr-2 font-semibold text-sm">{index + 1}.</span>
+                                                <div className={`mr-3 text-xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    {getFileIcon(file.fileType)}
                                                 </div>
                                                 <div className="flex-1 truncate">
                                                     <p className="text-xs font-medium truncate">{file.fileName}</p>
@@ -337,6 +393,26 @@ export default function AppSidebar({
                                                     aria-label="Download file"
                                                 >
                                                     <FiDownload size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => onAnalyzeClick(file, e)}
+                                                    className={`p-1.5 rounded-md ${isDarkMode
+                                                        ? 'hover:bg-gray-600 text-gray-300'
+                                                        : 'hover:bg-gray-300 text-gray-700'}`}
+                                                    title="Perform analysis"
+                                                    aria-label="Perform analysis"
+                                                >
+                                                    <MdAnalytics size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => onDeleteClick(file, e)}
+                                                    className={`p-1.5 rounded-md ${isDarkMode
+                                                        ? 'hover:bg-gray-600 text-gray-300'
+                                                        : 'hover:bg-gray-300 text-gray-700'}`}
+                                                    title="Delete file"
+                                                    aria-label="Delete file"
+                                                >
+                                                    <MdDelete size={18} />
                                                 </button>
                                             </div>
                                         </div>
@@ -596,7 +672,7 @@ export default function AppSidebar({
                                 </div>
                                 <div className="max-h-60 overflow-y-auto px-1">
                                     {uploadedFiles.length > 0 ? (
-                                        uploadedFiles.slice(0, 5).map((file, index) => (
+                                        uploadedFiles.filter(file => file).slice(0, 5).map((file, index) => (
                                             <div
                                                 key={`compact-file-${index}`}
                                                 onClick={() => {
@@ -610,14 +686,9 @@ export default function AppSidebar({
                                                 }`}
                                             >
                                                 <div className="flex items-center w-full">
+                                                    <span className="mr-1 text-xs font-semibold">{index + 1}.</span>
                                                     <div className="mr-1 text-sm">
-                                                        {getFileIcon(file.fileType) === 'pdf' && '📄'}
-                                                        {getFileIcon(file.fileType) === 'docx' && '📝'}
-                                                        {getFileIcon(file.fileType) === 'txt' && '📃'}
-                                                        {getFileIcon(file.fileType) === 'csv' && '📊'}
-                                                        {getFileIcon(file.fileType) === 'xlsx' && '📑'}
-                                                        {getFileIcon(file.fileType) === 'img' && '🖼️'}
-                                                        {getFileIcon(file.fileType) === 'file' && '📎'}
+                                                        {getFileIcon(file.fileType)}
                                                     </div>
                                                     <span className="text-xs truncate w-full">{file.fileName}</span>
                                                 </div>
@@ -651,6 +722,36 @@ export default function AppSidebar({
                                                         aria-label="Download file"
                                                     >
                                                         <FiDownload size={10} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onAnalyzeClick(file, e);
+                                                        }}
+                                                        className={`p-1 rounded-md ${
+                                                            isDarkMode
+                                                                ? 'hover:bg-gray-600 text-gray-300'
+                                                                : 'hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Perform analysis"
+                                                        aria-label="Perform analysis"
+                                                    >
+                                                        <MdAnalytics size={10} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteClick(file, e);
+                                                        }}
+                                                        className={`p-1 rounded-md ${
+                                                            isDarkMode
+                                                                ? 'hover:bg-gray-600 text-gray-300'
+                                                                : 'hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Delete file"
+                                                        aria-label="Delete file"
+                                                    >
+                                                        <MdDelete size={10} />
                                                     </button>
                                                 </div>
                                             </div>

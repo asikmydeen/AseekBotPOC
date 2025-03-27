@@ -1,11 +1,5 @@
 // app/utils/lambdaApi.ts
-// Determine if we're in development mode
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-// Use different base URLs depending on the environment
-export const API_BASE_URL = isDevelopment
-  ? 'http://localhost:3001/api'  // Point to the separate proxy server https://c9mue0raqh.execute-api.us-east-1.amazonaws.com/dev
-  : 'https://api-ammydeen.alpha.aseekbot.ammydeen.people.aws.dev';
+export const API_BASE_URL = 'https://api-ammydeen.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
   processChatMessage: `${API_BASE_URL}/processChatMessage`,

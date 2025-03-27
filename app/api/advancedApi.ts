@@ -280,10 +280,7 @@ function extractS3KeyFromUrl(fileUrl: string): string {
 
 export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   try {
-    const s3Key = fileUrl.split('.amazonaws.com/')[1];
-    if (!s3Key) {
-      throw new Error('Invalid file URL');
-    }
+    const s3Key = extractS3KeyFromUrl(fileUrl);
 
     const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
       method: 'POST',
