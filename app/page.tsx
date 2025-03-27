@@ -61,6 +61,11 @@ function ChatApp() {
     }
   }, []);
 
+  // Handle file deletion - update the uploadedFiles state
+  const handleFileDelete = useCallback((deletedFileKey: string) => {
+    setUploadedFiles(prevFiles => prevFiles.filter(file => file.fileKey !== deletedFileKey));
+  }, []);
+
   // When a prompt is clicked, set it as a trigger message
   const handlePromptClick = useCallback((prompt: string) => {
     handleTriggerMessage(prompt);
@@ -147,6 +152,7 @@ function ChatApp() {
         onFileClick={handleFileClick}
         onPromptClick={handlePromptClick}
         onToggle={toggleSidebar}
+        onFileDelete={handleFileDelete} // Added to update file list on deletion
       />
       <div className={`flex-1 h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-[300px] ml-0' : 'md:ml-[60px] ml-0'}`}>
         {isChatLoading ? (

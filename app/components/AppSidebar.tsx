@@ -51,6 +51,7 @@ interface AppSidebarProps {
     onPromptClick: (prompt: string) => void;
     onToggle?: (isOpen: boolean) => void;
     onFileAddToChat?: (file: UploadedFile) => void;
+    onFileDelete?: (fileKey: string) => void; // New callback for file deletion
 }
 
 export default function AppSidebar({
@@ -58,7 +59,8 @@ export default function AppSidebar({
     onFileClick,
     onPromptClick,
     onToggle,
-    onFileAddToChat
+    onFileAddToChat,
+    onFileDelete
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
@@ -211,7 +213,11 @@ export default function AppSidebar({
 
             if (response && response.success) {
                 console.log('File deleted successfully');
-                // You might want to refresh the file list here or show a notification
+                // Call the onFileDelete callback if provided
+                if (onFileDelete) {
+                    onFileDelete(fileKey);
+                    // Parent component should update its file list accordingly
+                }
             } else {
                 console.error('Error deleting file:', response?.message || 'Unknown error');
             }
