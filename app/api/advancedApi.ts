@@ -302,9 +302,9 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   }
 }
 
-export async function downloadFileApi(fileUrl: string): Promise<ApiResponse> {
+export async function downloadFileApi(fileUrlOrKey: string): Promise<ApiResponse> {
   try {
-    const fileKey = extractS3KeyFromUrl(fileUrl);
+    const fileKey = fileUrlOrKey.includes('amazonaws.com/') ? extractS3KeyFromUrl(fileUrlOrKey) : fileUrlOrKey;
 
     const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
       method: 'POST',

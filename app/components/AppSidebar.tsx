@@ -15,18 +15,23 @@ import {
     MdInfoOutline,
     MdSupportAgent,
     MdLightbulb,
-    MdAdd
+    MdAdd,
+    MdLibraryAdd
 } from 'react-icons/md';
-import { FiHelpCircle } from 'react-icons/fi';
+import { FiHelpCircle, FiDownload } from 'react-icons/fi';
+import { downloadFileApi } from '../api/advancedApi';
 import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
 
 interface UploadedFile {
-    name: string;
-    size: number;
-    type: string;
-    url?: string;
+    fileId: string;
+    fileName: string;
+    fileKey: string;
+    uploadDate: string;
+    fileSize: number;
+    fileType: string;
+    presignedUrl?: string;
 }
 
 interface AppSidebarProps {
@@ -34,13 +39,15 @@ interface AppSidebarProps {
     onFileClick: (fileUrl: string) => void;
     onPromptClick: (prompt: string) => void;
     onToggle?: (isOpen: boolean) => void;
+    onFileAddToChat?: (file: UploadedFile) => void;
 }
 
 export default function AppSidebar({
     uploadedFiles,
     onFileClick,
     onPromptClick,
-    onToggle
+    onToggle,
+    onFileAddToChat
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
@@ -151,6 +158,43 @@ export default function AppSidebar({
         return 'file';
     };
 
+    const onDownloadClick = async (file: UploadedFile, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent event bubbling
+        try {
+            // Extract fileKey from presignedUrl or use fileKey directly
+            const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+
+            if (!fileKey) {
+                console.error('File key not found');
+                return;
+            }
+
+            // Call the downloadFileApi to get a presigned URL
+            const response = await downloadFileApi(fileKey);
+
+            if (response && (response.fileUrl || response.url)) {
+                // Open the download URL in a new tab
+                window.open(response.fileUrl || response.url, '_blank');
+            } else {
+                console.error('Download URL not found in response');
+            }
+        } catch (error) {
+            console.error('Error downloading file:', error);
+        }
+    };
+
+    const onAddToChatClick = (file: UploadedFile, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent event bubbling
+
+        // If onFileAddToChat callback is provided, use it
+        if (onFileAddToChat) {
+            onFileAddToChat(file);
+        } else if (file.presignedUrl) {
+            // Otherwise, fall back to onFileClick
+            onFileClick(file.presignedUrl);
+        }
+    };
+
     return (
         <>
             {sidebarOverlay}
@@ -252,25 +296,48 @@ export default function AppSidebar({
                                 {uploadedFiles.map((file, index) => (
                                     <div
                                         key={`file-${index}`}
-                                        className={`p-2 md:p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
+                                        className={`p-2 md:p-3 rounded-lg transition-all duration-200 ${isDarkMode
                                             ? 'dark-card-bg hover:bg-gray-700'
                                             : 'bg-gray-100 hover:bg-gray-200'
                                             }`}
-                                        onClick={() => file.url && onFileClick(file.url)}
                                     >
-                                        <div className="flex items-center">
-                                            <div className={`mr-3 text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                {getFileIcon(file.type) === 'pdf' && '📄'}
-                                                {getFileIcon(file.type) === 'docx' && '📝'}
-                                                {getFileIcon(file.type) === 'txt' && '📃'}
-                                                {getFileIcon(file.type) === 'csv' && '📊'}
-                                                {getFileIcon(file.type) === 'xlsx' && '📑'}
-                                                {getFileIcon(file.type) === 'img' && '🖼️'}
-                                                {getFileIcon(file.type) === 'file' && '📎'}
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center w-full">
+                                                <div className={`mr-3 text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    {getFileIcon(file.fileType) === 'pdf' && '📄'}
+                                                    {getFileIcon(file.fileType) === 'docx' && '📝'}
+                                                    {getFileIcon(file.fileType) === 'txt' && '📃'}
+                                                    {getFileIcon(file.fileType) === 'csv' && '📊'}
+                                                    {getFileIcon(file.fileType) === 'xlsx' && '📑'}
+                                                    {getFileIcon(file.fileType) === 'img' && '🖼️'}
+                                                    {getFileIcon(file.fileType) === 'file' && '📎'}
+                                                </div>
+                                                <div className="flex-1 truncate">
+                                                    <p className="text-xs font-medium truncate">{file.fileName}</p>
+                                                    <p className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</p>
+                                                </div>
                                             </div>
-                                            <div className="flex-1 truncate">
-                                                <p className="text-sm font-medium truncate">{file.name}</p>
-                                                <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                                            <div className="flex space-x-2 mt-2 ml-8">
+                                                <button
+                                                    onClick={(e) => onAddToChatClick(file, e)}
+                                                    className={`p-1.5 rounded-md ${isDarkMode
+                                                        ? 'hover:bg-gray-600 text-gray-300'
+                                                        : 'hover:bg-gray-300 text-gray-700'}`}
+                                                    title="Add to chat"
+                                                    aria-label="Add to chat"
+                                                >
+                                                    <MdLibraryAdd size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => onDownloadClick(file, e)}
+                                                    className={`p-1.5 rounded-md ${isDarkMode
+                                                        ? 'hover:bg-gray-600 text-gray-300'
+                                                        : 'hover:bg-gray-300 text-gray-700'}`}
+                                                    title="Download file"
+                                                    aria-label="Download file"
+                                                >
+                                                    <FiDownload size={16} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -533,28 +600,59 @@ export default function AppSidebar({
                                             <div
                                                 key={`compact-file-${index}`}
                                                 onClick={() => {
-                                                    if (file.url) {
-                                                        onFileClick(file.url);
-                                                        setIsOpen(true);
-                                                        if (onToggle) onToggle(true);
-                                                    }
+                                                    setIsOpen(true);
+                                                    if (onToggle) onToggle(true);
                                                 }}
-                                                className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${
+                                                className={`flex flex-col p-2 mb-1 rounded-md cursor-pointer ${
                                                     isDarkMode
                                                         ? 'hover:bg-gray-700'
                                                         : 'hover:bg-gray-200'
                                                 }`}
                                             >
-                                                <div className="mr-1 text-sm">
-                                                    {getFileIcon(file.type) === 'pdf' && '📄'}
-                                                    {getFileIcon(file.type) === 'docx' && '📝'}
-                                                    {getFileIcon(file.type) === 'txt' && '📃'}
-                                                    {getFileIcon(file.type) === 'csv' && '📊'}
-                                                    {getFileIcon(file.type) === 'xlsx' && '📑'}
-                                                    {getFileIcon(file.type) === 'img' && '🖼️'}
-                                                    {getFileIcon(file.type) === 'file' && '📎'}
+                                                <div className="flex items-center w-full">
+                                                    <div className="mr-1 text-sm">
+                                                        {getFileIcon(file.fileType) === 'pdf' && '📄'}
+                                                        {getFileIcon(file.fileType) === 'docx' && '📝'}
+                                                        {getFileIcon(file.fileType) === 'txt' && '📃'}
+                                                        {getFileIcon(file.fileType) === 'csv' && '📊'}
+                                                        {getFileIcon(file.fileType) === 'xlsx' && '📑'}
+                                                        {getFileIcon(file.fileType) === 'img' && '🖼️'}
+                                                        {getFileIcon(file.fileType) === 'file' && '📎'}
+                                                    </div>
+                                                    <span className="text-xs truncate w-full">{file.fileName}</span>
                                                 </div>
-                                                <span className="text-xs truncate w-full">{file.name}</span>
+                                                <div className="flex space-x-1 mt-1 ml-5">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onAddToChatClick(file, e);
+                                                        }}
+                                                        className={`p-1 rounded-md ${
+                                                            isDarkMode
+                                                                ? 'hover:bg-gray-600 text-gray-300'
+                                                                : 'hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Add to chat"
+                                                        aria-label="Add to chat"
+                                                    >
+                                                        <MdLibraryAdd size={12} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDownloadClick(file, e);
+                                                        }}
+                                                        className={`p-1 rounded-md ${
+                                                            isDarkMode
+                                                                ? 'hover:bg-gray-600 text-gray-300'
+                                                                : 'hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Download file"
+                                                        aria-label="Download file"
+                                                    >
+                                                        <FiDownload size={10} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
