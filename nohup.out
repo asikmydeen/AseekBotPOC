@@ -1,3 +1,7 @@
 bind [127.0.0.1]:7443: Address already in use
 channel_setup_fwd_listener_tcpip: cannot listen to port: 7443
 Could not request local forwarding.
+Connection to dev-dsk-ammydeen-2c-636191e6.us-west-2.amazon.com closed by remote host.
+client_loop: send disconnect: Broken pipe
+Connection to dev-dsk-ammydeen-2c-636191e6.us-west-2.amazon.com closed by remote host.
+client_loop: send disconnect: Broken pipe

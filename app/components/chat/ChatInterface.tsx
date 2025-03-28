@@ -19,7 +19,7 @@ import FileUploadSection from './FileUploadSection';
 import ChatFooter from './ChatFooter';
 import useAgentStyling from '../../hooks/useAgentStyling';
 import useFileActions from '../../hooks/useFileActions';
-import { MessageType, TicketDetails } from '../../types/shared';
+import { MessageType, TicketDetails, UploadedFile } from '../../types/shared';
 import { ArtifactProvider } from '../../context/ArtifactContext';
 import useMessageArtifacts from '../../hooks/useMessageArtifacts';
 import ArtifactPanel from '../ArtifactPanel';
@@ -46,6 +46,7 @@ interface ChatInterfaceProps {
     onMessagesUpdate?: (messages: MessageType[]) => void;
     onFilesUpdate?: (files: any[]) => void;
     initialMessages?: MessageType[];
+    externalFileToAdd?: UploadedFile | null;
 }
 
 function ChatInterfaceComponent({
@@ -55,7 +56,8 @@ function ChatInterfaceComponent({
     clearDocumentAnalysisPrompt,
     onMessagesUpdate,
     onFilesUpdate,
-    initialMessages = []
+    initialMessages = [],
+    externalFileToAdd = null
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     // Using useRef<HTMLTextAreaElement>(null) to match ChatFooter's expected type
@@ -184,7 +186,8 @@ function ChatInterfaceComponent({
         isDragActive,
         uploadedFiles,
         removeFile,
-        clearUploadedFiles
+        clearUploadedFiles,
+        addExternalFile
     } = useFileUpload({
         onFilesUpdate: onFilesUpdate // Pass the callback to sync files with parent
     });
@@ -286,6 +289,14 @@ function ChatInterfaceComponent({
             }
         }
     }, [messages]);
+
+    // Handle external file being added to chat
+    useEffect(() => {
+        if (externalFileToAdd && addExternalFile) {
+            addExternalFile(externalFileToAdd);
+            setShowFileDropzone(true);
+        }
+    }, [externalFileToAdd, addExternalFile, setShowFileDropzone]);
 
     // Error Dialog handler
     const handleCloseErrorDialog = useCallback(() => {

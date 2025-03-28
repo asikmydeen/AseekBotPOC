@@ -14,6 +14,10 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
+  const addExternalFile = useCallback((externalFile: UploadedFile) => {
+    setUploadedFiles(prevFiles => [...prevFiles, externalFile]);
+  }, []);
+
   useEffect(() => {
     if (onFilesUpdate) {
       onFilesUpdate(uploadedFiles);
@@ -187,7 +191,8 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
     isDragActive,
     uploadedFiles,
     removeFile,
-    clearUploadedFiles
+    clearUploadedFiles,
+    addExternalFile
   };
 };
 
