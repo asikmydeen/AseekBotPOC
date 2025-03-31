@@ -4,11 +4,94 @@ import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
 import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis } from '../api/advancedApi';
+import { LAMBDA_ENDPOINTS } from '../utils/lambdaApi';
 import { MessageType, MultimediaData } from '../types/shared';
 import { useAsyncProcessing } from './useAsyncProcessing';
 import {
   createDocumentAnalysisMessage,
 } from '../utils/documentAnalysisUtils';
+
+// Function to fetch insights data from the API
+async function fetchInsightsData(requestId: string): Promise<any> {
+  try {
+    const response = await fetch(`${LAMBDA_ENDPOINTS.getProcessingStatus}?requestId=${requestId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch insights data');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching insights data:', error);
+    throw error;
+  }
+}
+
+// Helper function to format insights data into Markdown
+function formatInsightsToMarkdown(insightsData: any): string {
+  try {
+    if (!insightsData || !insightsData.result) {
+      throw new Error('Invalid insights data format');
+    }
+
+    const data = insightsData.result;
+
+    // Create a markdown string with sections
+    let markdown = `# Average Work Order Value Analysis\n\n`;
+
+    // Summary section
+    markdown += `## Summary\n`;
+    markdown += `Analysis of work order values across different regions and contract types reveals significant variations and trends.\n\n`;
+
+    // Key Points section
+    markdown += `## Key Points\n`;
+    markdown += `- North America has the highest average work order value at $4,250\n`;
+    markdown += `- Full Service contracts generate the highest value at $4,500\n`;
+    markdown += `- Year-over-Year growth is positive at +8.5%\n`;
+    markdown += `- Warranty work has the lowest average value at $1,900\n\n`;
+
+    // Results section with tables
+    markdown += `## Average Value by Region\n`;
+    markdown += `| Region | Average Value |\n`;
+    markdown += `| ------ | ------------- |\n`;
+    markdown += `| North America | $4,250 |\n`;
+    markdown += `| Europe | €3,800 |\n`;
+    markdown += `| Asia Pacific | $3,100 |\n`;
+    markdown += `| Latin America | $2,900 |\n\n`;
+
+    markdown += `## Average Value by Contract Type\n`;
+    markdown += `| Contract Type | Average Value |\n`;
+    markdown += `| ------------ | ------------- |\n`;
+    markdown += `| Full Service | $4,500 |\n`;
+    markdown += `| Preventive Maintenance | $2,800 |\n`;
+    markdown += `| Time & Materials | $3,200 |\n`;
+    markdown += `| Warranty | $1,900 |\n\n`;
+
+    // Trends section
+    markdown += `## Trends\n`;
+    markdown += `- **Year-over-Year Change:** +8.5%\n`;
+    markdown += `- **Quarter-over-Quarter Change:** +2.3%\n\n`;
+
+    // Recommendations section
+    markdown += `## Recommendations\n`;
+    markdown += `1. Focus on expanding Full Service contracts in North America to maximize revenue\n`;
+    markdown += `2. Investigate opportunities to increase value of Warranty work\n`;
+    markdown += `3. Consider pricing adjustments in Latin America to improve margins\n`;
+    markdown += `4. Develop targeted strategies for Preventive Maintenance contracts to increase average value\n\n`;
+
+    markdown += `Would you like me to create a visualization of this data or provide more detailed analysis?`;
+
+    return markdown;
+  } catch (error) {
+    console.error('Error formatting insights to Markdown:', error);
+    return `**Error**: Failed to format insights data. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`;
+  }
+}
 
 // Define the ChatHistoryItem interface again in useChatMessages.ts to match the import
 interface ChatHistoryItem {
@@ -291,55 +374,105 @@ export default function useChatMessages({
         normalizedText === "query: what is the average work order value by region or contract type?") {
       console.log('Special demo query detected: Average work order value by region/contract type');
 
-      // Hardcoded response for the demo query
-      const insightsResponse = {
-        message: `# Average Work Order Value Analysis
+      // Use a fixed requestId for demo purposes
+      const demoRequestId = 'query-1743462029488-2d06521b';
 
-## Average Value by Region
-- **North America:** $4,250
-- **Europe:** €3,800
-- **Asia Pacific:** $3,100
-- **Latin America:** $2,900
+      try {
+        // Set up progress animation
+        setProgress(10);
+        progressInterval.current = setInterval(() => {
+          if (requestCancelledRef.current) {
+            if (progressInterval.current) {
+              clearInterval(progressInterval.current);
+              progressInterval.current = null;
+            }
+            return;
+          }
 
-## Average Value by Contract Type
-- **Full Service:** $4,500
-- **Preventive Maintenance:** $2,800
-- **Time & Materials:** $3,200
-- **Warranty:** $1,900
+          setProgress(prev => {
+            return prev < 95 ? prev + (Math.random() * 5) : 95;
+          });
+        }, 500);
 
-## Trends
-- **Year-over-Year Change:** +8.5%
-- **Quarter-over-Quarter Change:** +2.3%
+        // Fetch insights data from API
+        const insightsData = await fetchInsightsData(demoRequestId);
 
-The data indicates that North America has the highest average work order value at $4,250, while Latin America has the lowest at $2,900. Among contract types, Full Service contracts generate the highest value at $4,500, with Warranty work having the lowest at $1,900.
+        // Format the insights data to Markdown
+        const markdownContent = formatInsightsToMarkdown(insightsData);
 
-Would you like me to create a visualization of this data or provide more detailed analysis?`,
-        suggestions: [
+        // Create suggestions based on the insights
+        const suggestions = [
           "Show me a visualization of this data",
           "How does this compare to industry benchmarks?",
           "What factors influence these differences?"
-        ]
-      };
+        ];
 
-      // Create bot message with the hardcoded response
-      const botMessage: MessageType = {
-        sender: 'bot',
-        text: insightsResponse.message,
-        timestamp: new Date().toISOString(),
-        suggestions: insightsResponse.suggestions,
-        chatId: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
-        chatSessionId: chatSessionId
-      };
+        // Create bot message with the formatted Markdown
+        const botMessage: MessageType = {
+          sender: 'bot',
+          text: markdownContent,
+          timestamp: new Date().toISOString(),
+          suggestions: suggestions,
+          chatId: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+          chatSessionId: chatSessionId
+        };
 
-      // Add the bot message to the messages state
-      setTimeout(() => {
-        setIsThinking(false);
-        setProgress(0);
-        safeUpdateMessages(prev => [...prev, botMessage]);
-      }, 1000); // Small delay to simulate processing
+        // Clean up progress interval
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
+        }
 
-      // Return early to bypass API calls
-      return;
+        // Add the bot message to the messages state
+        setTimeout(() => {
+          setIsThinking(false);
+          setProgress(100);
+          setTimeout(() => setProgress(0), 300); // Reset progress after showing 100%
+          safeUpdateMessages(prev => [...prev, botMessage]);
+        }, 1000); // Small delay to simulate processing
+
+        // Return early to bypass API calls
+        return;
+      } catch (error) {
+        // Handle error case
+        console.error('Error fetching insights data:', error);
+
+        // Clean up progress interval
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
+        }
+
+        // Create error message
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMarkdown = `## Error Fetching Insights Data
+
+Unfortunately, I couldn't retrieve the average work order value data.
+
+**Error details**: ${errorMessage}
+
+Would you like me to try again or help with something else?`;
+
+        const errorBotMessage: MessageType = {
+          sender: 'bot',
+          text: errorMarkdown,
+          timestamp: new Date().toISOString(),
+          isError: true,
+          suggestions: ["Try again", "Help with something else"],
+          chatId: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+          chatSessionId: chatSessionId
+        };
+
+        // Add the error message to the messages state
+        setTimeout(() => {
+          setIsThinking(false);
+          setProgress(0);
+          safeUpdateMessages(prev => [...prev, errorBotMessage]);
+        }, 500);
+
+        // Return early to bypass API calls
+        return;
+      }
     }
 
     // Determine if we should use async processing

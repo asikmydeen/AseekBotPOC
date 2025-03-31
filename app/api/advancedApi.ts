@@ -327,6 +327,32 @@ export async function downloadFileApi(fileUrlOrKey: string): Promise<ApiResponse
   }
 }
 
+export async function fetchInsightsData(requestId: string): Promise<any> {
+  try {
+    if (!requestId) {
+      throw new Error('No requestId provided for fetching insights data');
+    }
+
+    const response = await fetch(`${LAMBDA_ENDPOINTS.baseUrl}/redshift/results?requestId=${requestId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': window.location.origin
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch insights data');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching insights data:', error);
+    throw error;
+  }
+}
+
 export async function getUserFilesApi(): Promise<ApiResponse> {
   try {
     const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
