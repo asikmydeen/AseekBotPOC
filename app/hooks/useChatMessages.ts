@@ -286,7 +286,8 @@ export default function useChatMessages({
     setProgress(0);
 
     // Check for the specific query to intercept
-    if (text.trim().toLowerCase() === "what is the average work order value by region or contract type?") {
+    const normalizedText = text.trim().toLowerCase();
+    if (normalizedText === "what is the average work order value by region or contract type?" || normalizedText === "query: what is the average work order value by region or contract type?") {
       // Log detection of the specific query
       console.log('Static response query detected. Returning predefined response.');
 
