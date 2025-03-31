@@ -18,7 +18,7 @@ attachments?: any[],
 chatSessionId?: string): Promise<ApiResponse> {
   try {
     // Check if we should use the new async API for better handling
-    if (message.length > 500 || (attachments && attachments.length > 0)) {
+    if (message.toLowerCase().includes('query') || message.length > 500 || (attachments && attachments.length > 0)) {
       // If there are attachments, use document analysis workflow
       if (attachments && attachments.length > 0) {
         return await startAsyncDocumentAnalysis(attachments, message, chatSessionId || '');
