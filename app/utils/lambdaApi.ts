@@ -1,5 +1,5 @@
 // app/utils/lambdaApi.ts
-export const API_BASE_URL = 'https://api-ammydeen3.alpha.aseekbot.ammydeen.people.aws.dev';
+export const API_BASE_URL = 'https://api-ammydeen4.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
   processChatMessage: `${API_BASE_URL}/processChatMessage`,
