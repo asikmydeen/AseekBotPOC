@@ -285,7 +285,44 @@ export default function useChatMessages({
     setIsThinking(true);
     setProgress(0);
 
+    // Check for the specific query to intercept
+    if (text.trim().toLowerCase() === "what is the average work order value by region or contract type?") {
+      // Log detection of the specific query
+      console.log('Static response query detected. Returning predefined response.');
+
+      // Create the static response object
+      const staticResponse = {
+        insights: {
+          statusCode: 200,
+          body: "{\"success\":true,\"queryId\":\"query-1743460384273-a2b9575a\",\"insights\":{\"summary\":\"The data presents average work order values across different regions (AMER, APJC, EMEA) and contract types for data center construction projects. AMER has the highest representation with 6 out of 14 rows, followed by EMEA (5) and APJC (3). Prime Work Orders generally have the highest average values across regions, while other contract types show varying values.\",\"keyPoints\":[\"AMER region has the highest average work order value for Prime Work Orders at approximately $37.5 million.\",\"Prime Work Orders consistently have the highest average values across all regions.\",\"Multi-Phase Prime Work Orders in AMER have the second-highest average value at about $19.4 million.\",\"There's a significant drop in average value from Prime Work Orders to other contract types in the AMER region.\",\"Work Order (General Contractor) type appears in all three regions, suggesting it's a common contract type across global operations.\",\"Early Construction Phase Orders and Early Construction Work Orders have relatively lower average values, possibly indicating they cover initial project stages.\"],\"recommendations\":[\"Analyze the factors contributing to the high values of Prime Work Orders across regions.\",\"Investigate the reasons for the significant value difference between Prime Work Orders and other contract types, especially in the AMER region.\",\"Compare the distribution and average values of contract types across regions to identify regional contracting strategies.\",\"Examine the relationship between contract types and project phases to understand value allocation throughout project lifecycles.\",\"Conduct a time-based analysis to identify trends in work order values and contract type usage over time.\",\"Investigate the correlation between work order values and other factors such as project duration, site characteristics, or contractor performance.\",\"Analyze the frequency and impact of change orders on different contract types and regions to assess project management effectiveness.\"],\"analysisDetails\":{\"metrics\":{\"region_distribution\":{\"AMER\":6,\"APJC\":3,\"EMEA\":5},\"contract_type_distribution\":{\"Prime Work Order\":3,\"Multi-Phase Prime Work Order\":1,\"Phase Work Order\":2,\"Early Construction Phase Order\":2,\"Work Order (General Contractor)\":3,\"Early Construction Work Order\":3}},\"trends\":[],\"insights\":[]},\"timestamp\":\"2025-03-31T22:33:51.176Z\"}"
+        }
+      };
+
+      // Format the static response for neat readability
+      const formattedResponse = JSON.stringify(staticResponse, null, 2);
+
+      // Create a bot message object with the static response
+      const botMessage: MessageType = {
+        sender: 'bot',
+        text: formattedResponse,
+        timestamp: new Date().toISOString(),
+        chatId: `bot-${Date.now()}`,
+        chatSessionId: chatSessionId
+      };
+
+      // Update the state with the bot message
+      safeUpdateMessages(prev => [...prev, botMessage]);
+
+      // Clear any processing status as no external API call is made
+      setIsThinking(false);
+      setProgress(100);
+
+      // Return early to prevent further processing or external API calls
+      return;
+    }
+
     // Determine if we should use async processing
+    // Note: The API layer now handles "query" keyword detection
     const isComplexRequest = text.length > 500 || isFileUpload;
     const isDocumentAnalysis = isFileUpload && (
       text.toLowerCase().includes('analyze') ||
@@ -294,10 +331,16 @@ export default function useChatMessages({
       text.toLowerCase().includes('summarize')
     );
 
+    // Log for debugging when "query" is detected in the message
+    if (text.toLowerCase().includes('query')) {
+      console.log('Query keyword detected in message. API layer will handle async processing.');
+    }
+
     try {
       // Convert messages to ChatHistoryItem format
       const chatHistory: ChatHistoryItem[] = messages.map(convertToChatHistoryItem);
 
+      // The processChatMessage API now handles routing to async processing when "query" is detected
       if (isComplexRequest) {
         // Use async processing
         let response;
@@ -309,6 +352,12 @@ export default function useChatMessages({
           // Start async chat processing
           response = await startAsyncChatProcessing(text, chatHistory, attachments, chatSessionId);
         }
+
+        console.log('Async processing initiated:', {
+          isDocumentAnalysis,
+          requestId: response.requestId,
+          responseType: response.isAsync ? 'async' : 'sync'
+        });
 
         if (response.requestId) {
           // Set up for async monitoring
@@ -354,8 +403,45 @@ export default function useChatMessages({
           });
         }, 300);
 
-        // Call the API
+        // Call the API - this will now automatically route to async processing if "query" is detected
         const response = await processChatMessage(text, chatHistory, attachments, chatSessionId);
+
+        // Check if the API decided to use async processing (for "query" keyword)
+        if (response.isAsync && response.requestId) {
+          console.log('API routed to async processing due to query detection:', response.requestId);
+
+          // Clear existing interval as we're switching to async mode
+          if (progressInterval.current) {
+            clearInterval(progressInterval.current);
+            progressInterval.current = null;
+          }
+
+          // Set up for async monitoring
+          setCurrentRequestId(response.requestId);
+          setIsAsyncProcessing(true);
+
+          // Initial progress setup
+          setProgress(10);
+
+          // Start the progress animation for async processing
+          progressInterval.current = setInterval(() => {
+            if (requestCancelledRef.current) {
+              if (progressInterval.current) {
+                clearInterval(progressInterval.current);
+                progressInterval.current = null;
+              }
+              return;
+            }
+
+            setProgress(prev => {
+              // Don't exceed 95% for async operations until completion
+              return prev < 95 ? prev + (Math.random() * 1) : 95;
+            });
+          }, 1000);
+
+          // Early return as we're now in async mode
+          return;
+        }
 
         if (progressInterval.current) {
           clearInterval(progressInterval.current);
