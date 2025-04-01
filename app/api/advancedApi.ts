@@ -322,7 +322,12 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           data: [],
           url: '',
           chatId: 'getUserFiles-default',
-          error: 'Empty response received.'
+
+          error: 'Empty response received.',
+          timestamp: Date.now(),
+          suggestions: [],
+          multimedia: [],
+          report: null
         };
       }
 
@@ -335,7 +340,12 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         ...parsedResponse,
         data: filesData,
         url: parsedResponse.url || '',
-        chatId: parsedResponse.chatId || 'getUserFiles-success'
+
+        chatId: parsedResponse.chatId || 'getUserFiles-success',
+        timestamp: parsedResponse.timestamp || Date.now(),
+        suggestions: parsedResponse.suggestions || [],
+        multimedia: parsedResponse.multimedia || [],
+        report: parsedResponse.report || null
       };
     } catch (parseError) {
       console.error('Failed to parse successful response as JSON:', parseError);
@@ -345,7 +355,12 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         data: [],
         error: `Failed to parse successful response as JSON: ${errorMessage}`,
         url: '',
-        chatId: 'getUserFiles-parseError'
+
+        chatId: 'getUserFiles-parseError',
+        timestamp: Date.now(),
+        suggestions: [],
+        multimedia: [],
+        report: null
       };
     }
   } catch (error) {
@@ -354,11 +369,16 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
       data: [],
       error: error instanceof Error ? error.message : 'Unknown error fetching user files',
       url: '',
-      chatId: 'getUserFiles-error'
+
+      chatId: 'getUserFiles-error',
+      timestamp: Date.now(),
+      suggestions: [],
+      multimedia: [],
+      report: null
     };
   }
-}
 
+}
 // For backwards compatibility
 export const processChatMessage = sendMessage;
 export const startAsyncChatProcessing = sendMessage;
