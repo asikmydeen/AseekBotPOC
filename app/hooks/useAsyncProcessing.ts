@@ -206,7 +206,6 @@ export function useAsyncProcessing(
           clearPollingInterval();
         }
       }, pollingInterval);
-
     });
     // Cleanup on unmount or when requestId changes
     return () => {
