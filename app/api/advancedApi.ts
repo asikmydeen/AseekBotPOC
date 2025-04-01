@@ -325,7 +325,8 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           error: 'Empty response received.',
           timestamp: Date.now().toString(),
           suggestions: [],
-          multimedia: [],
+
+          multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
           report: null
         };
       }
@@ -340,10 +341,10 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         data: filesData,
         url: parsedResponse.url || '',
         chatId: parsedResponse.chatId || 'getUserFiles-success',
-
         timestamp: parsedResponse.timestamp || Date.now().toString(),
         suggestions: parsedResponse.suggestions || [],
-        multimedia: parsedResponse.multimedia || [],
+
+        multimedia: parsedResponse.multimedia || [{ type: 'image', data: { url: '', alt: '' } }],
         report: parsedResponse.report || null
       };
     } catch (parseError) {
@@ -355,10 +356,10 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         error: `Failed to parse successful response as JSON: ${errorMessage}`,
         url: '',
         chatId: 'getUserFiles-parseError',
-
         timestamp: Date.now().toString(),
         suggestions: [],
-        multimedia: [],
+
+        multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
         report: null
       };
     }
@@ -369,15 +370,14 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
       error: error instanceof Error ? error.message : 'Unknown error fetching user files',
       url: '',
       chatId: 'getUserFiles-error',
-
       timestamp: Date.now().toString(),
       suggestions: [],
-      multimedia: [],
+
+      multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
       report: null
     };
   }
 
-}// For backwards compatibility
-export const processChatMessage = sendMessage;
+}export const processChatMessage = sendMessage;
 export const startAsyncChatProcessing = sendMessage;
 export const startAsyncDocumentAnalysis = sendMessage;
