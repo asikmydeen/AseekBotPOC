@@ -13,7 +13,11 @@ export const LAMBDA_ENDPOINTS = {
   // New endpoints for async processing
   startProcessing: `${API_BASE_URL}/startProcessing`,
   checkStatus: `${API_BASE_URL}/checkStatus`,
-  workerProcessor: `${API_BASE_URL}/workerProcessor`
+  workerProcessor: `${API_BASE_URL}/workerProcessor`,
+
+  // Added for simplified system
+  message: `${API_BASE_URL}/message`,
+  status: `${API_BASE_URL}/status`
 };
 
 // Also define the necessary interfaces here for better organization
