@@ -126,17 +126,17 @@ export function useAsyncProcessing(
       // Call the status change callback if provided
       if (onStatusChange) {
         // Type assertion to ensure the response matches AsyncProcessingResult
-        onStatusChange(response as unknown as AsyncProcessingResult);
+        onStatusChange(response as AsyncProcessingResult);
       }
 
       return response;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error checking status:', err);
 
       // Check if we've reached max retry attempts
       if (pollingAttemptsRef.current >= maxPollingAttemptsRef.current) {
         console.error(`Failed after ${pollingAttemptsRef.current} attempts, giving up.`);
-        setError(err);
+        setError(err instanceof Error ? err : new Error('Unknown error occurred'));
         setIsLoading(false);
         setHasErrored(true);
         clearPollingInterval();
@@ -144,8 +144,7 @@ export function useAsyncProcessing(
 
       return null;
     }
-  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
-  // Start polling when requestId changes
+  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);  // Start polling when requestId changes
   useEffect(() => {
     if (!requestId) {
       setIsLoading(false);
