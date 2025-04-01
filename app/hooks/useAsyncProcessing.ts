@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { checkStatus } from '../api/advancedApi';
 
 // Helper function to determine if a status is more advanced than another
-const isStatusAdvanced = (currentStatus: string, newStatus: string): boolean => {
+const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
+  if (!newStatus) return false;
+
   const statusOrder = {
     'QUEUED': 0,
     'PROCESSING': 1,
@@ -20,9 +22,10 @@ export interface AsyncProcessingResult {
   progress: number;
   result?: any;
   error?: {
-    message: string;
-    name: string;
-  };
+    message?: string;
+    name?: string;
+  } | string;
+  message?: string;
   timestamp?: string;
   updatedAt?: string;
   workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
@@ -93,7 +96,7 @@ export function useAsyncProcessing(
       }
 
       // Update state based on response, but don't downgrade status
-      if (!isStatusAdvanced(status, response.status)) {
+      if (response.status && !isStatusAdvanced(status, response.status)) {
         setStatus(response.status);
       }
 
@@ -104,7 +107,14 @@ export function useAsyncProcessing(
         setIsLoading(false);
         clearPollingInterval();
       } else if (response.status === 'FAILED') {
-        setError(response.error || { message: 'Unknown error occurred' });
+        let errorMsg = 'Unknown error occurred';
+        if (typeof response.error === 'string') {
+          errorMsg = response.error;
+        } else if (response.error && typeof response.error === 'object' && 'message' in response.error) {
+          errorMsg = response.error.message || errorMsg;
+        }
+
+        setError({ message: errorMsg });
         setIsLoading(false);
         setHasErrored(true);
         clearPollingInterval();
@@ -115,7 +125,8 @@ export function useAsyncProcessing(
 
       // Call the status change callback if provided
       if (onStatusChange) {
-        onStatusChange(response);
+        // Type assertion to ensure the response matches AsyncProcessingResult
+        onStatusChange(response as unknown as AsyncProcessingResult);
       }
 
       return response;
@@ -164,7 +175,8 @@ export function useAsyncProcessing(
       if (!initialResponse) return;
 
       // If it's already completed or failed, don't start polling
-      if (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED') {
+      if (initialResponse.status &&
+        (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED')) {
         return;
       }
 
@@ -190,7 +202,9 @@ export function useAsyncProcessing(
         const response = await fetchStatus();
 
         // Stop polling if completed, failed, or errored
-        if (response && (response.status === 'COMPLETED' || response.status === 'FAILED') || hasErrored) {
+        if (hasErrored ||
+          (response && response.status &&
+            (response.status === 'COMPLETED' || response.status === 'FAILED'))) {
           clearPollingInterval();
         }
       }, pollingInterval);
