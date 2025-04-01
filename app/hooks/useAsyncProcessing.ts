@@ -144,7 +144,6 @@ export function useAsyncProcessing(
 
       return null;
     }
-
   }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
   // Start polling when requestId changes
   useEffect(() => {
