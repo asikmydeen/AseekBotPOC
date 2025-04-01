@@ -316,9 +316,12 @@ export default function useChatMessages({
 
         // Start polling for status updates
         statusPollIntervalRef.current = setInterval(() => {
-          pollStatus(response.requestId);
-        }, 2000); // Poll every 2 seconds
 
+
+          if (response.requestId) {
+            pollStatus(response.requestId);
+          }
+        }, 2000); // Poll every 2 seconds
         // Don't add a bot message yet, it will be added when processing completes
       } else {
         // This is a synchronous request with immediate response
