@@ -185,7 +185,16 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
 
     return await response.json();
   } catch (error) {
-    handleClientError(error, 'upload file');
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to upload file',
+      url: '',
+      chatId: 'uploadFile-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
@@ -214,7 +223,16 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
 
     return await response.json();
   } catch (error) {
-    handleClientError(error, 'create support ticket');
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to create support ticket',
+      url: '',
+      chatId: 'createTicket-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
@@ -254,7 +272,16 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
 
     return await response.json();
   } catch (error) {
-    handleClientError(error, 'delete file');
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to delete file',
+      url: '',
+      chatId: 'deleteFile-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
@@ -325,8 +352,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           error: 'Empty response received.',
           timestamp: Date.now().toString(),
           suggestions: [],
-          multimedia: [{ type: 'image', data: { url: '', alt: 'File preview' } }],
-
+          multimedia: { type: 'image', data: { url: '', alt: 'File preview' } },
           report: undefined
         };
       }
@@ -336,6 +362,19 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         ? parsedResponse.data
         : (parsedResponse.data ? [parsedResponse.data] : []);
 
+      // Extract multimedia from response or create default
+      let multimediaObject;
+      if (Array.isArray(parsedResponse.multimedia) && parsedResponse.multimedia.length > 0) {
+        // Take the first item from the array
+        multimediaObject = parsedResponse.multimedia[0];
+      } else if (parsedResponse.multimedia && typeof parsedResponse.multimedia === 'object') {
+        // If it's already an object, use it directly
+        multimediaObject = parsedResponse.multimedia;
+      } else {
+        // Default multimedia object
+        multimediaObject = { type: 'image', data: { url: '', alt: '' } };
+      }
+
       return {
         ...parsedResponse,
         data: filesData,
@@ -343,8 +382,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         chatId: parsedResponse.chatId || 'getUserFiles-success',
         timestamp: parsedResponse.timestamp || Date.now().toString(),
         suggestions: parsedResponse.suggestions || [],
-        multimedia: parsedResponse.multimedia || [{ type: 'image', data: { url: '', alt: '' } }],
-
+        multimedia: multimediaObject,
         report: parsedResponse.report || undefined
       };
     } catch (parseError) {
@@ -358,8 +396,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         chatId: 'getUserFiles-parseError',
         timestamp: Date.now().toString(),
         suggestions: [],
-        multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
-
+        multimedia: { type: 'image', data: { url: '', alt: '' } },
         report: undefined
       };
     }
@@ -372,8 +409,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
       chatId: 'getUserFiles-error',
       timestamp: Date.now().toString(),
       suggestions: [],
-      multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
-
+      multimedia: { type: 'image', data: { url: '', alt: '' } },
       report: undefined
     };
   }
