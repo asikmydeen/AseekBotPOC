@@ -111,7 +111,7 @@ export function useAsyncProcessing(
         if (typeof response.error === 'string') {
           errorMsg = response.error;
         } else if (response.error && typeof response.error === 'object' && 'message' in response.error) {
-          errorMsg = response.error.message || errorMsg;
+          errorMsg = (response.error as { message?: string }).message || errorMsg;
         }
 
         setError({ message: errorMsg });
@@ -144,8 +144,8 @@ export function useAsyncProcessing(
 
       return null;
     }
-  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);  // Start polling when requestId changes
-  useEffect(() => {
+
+  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);  // Start polling when requestId changes  useEffect(() => {
     if (!requestId) {
       setIsLoading(false);
       return () => { };
