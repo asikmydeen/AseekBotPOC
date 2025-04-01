@@ -1,99 +1,55 @@
 // app/api/advancedApi.ts
-import {
-  LAMBDA_ENDPOINTS,
-  ChatHistoryItem,
-  TicketDetails,
-  ApiResponse,
-  handleClientError,
-  API_BASE_URL
-} from '../utils/lambdaApi';
+import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
 
 // Placeholder for user ID - can be replaced with actual user ID when integrating with user management
 const TEST_USER_ID = 'test-user';
 
-// Updated API function to use the new async-only endpoint
-export async function processChatMessage(
-message: string,
-history: ChatHistoryItem[],
-attachments?: any[],
-chatSessionId?: string): Promise<ApiResponse> {
+/**
+ * Sends a message to the API, supporting multiple workflows (chat, document analysis, data query)
+ *
+ * This is the new unified message endpoint that replaces the old processChatMessage endpoint
+ *
+ * @param message - The message to send
+ * @param chatSessionId - The chat session ID (for conversation continuity)
+ * @param files - Optional files to include with the message
+ * @returns API response with requestId for status checking
+ */
+export async function sendMessage(
+  message: string,
+  chatSessionId: string,
+  files?: any[]
+): Promise<ApiResponse> {
   try {
-    // Always use the provided chatSessionId or create a new one if none exists
-    const sessionId = chatSessionId || `session-${Date.now()}`;
-    const chatId = chatSessionId || `chat-${Date.now()}`;
-
-    // Create the request payload
-    const payload: any = {
-      message: message,
-      history: history,
-      sessionId: sessionId,
-      userId: TEST_USER_ID,
-      chatId: chatId
-    };
-
-    // Add S3 file references if attachments are present
-    if (attachments && attachments.length > 0) {
-      const s3Files = attachments.map(file => ({
-        name: file.name,
-        s3Url: file.url || file.fileUrl,
-        mimeType: file.type || 'application/octet-stream',
-        useCase: "CHAT"
-      }));
-
-      payload.s3Files = s3Files;
-    }
-
-    const response = await fetch(LAMBDA_ENDPOINTS.message, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to process chat message');
-    }
-
-    const result = await response.json();
-
-    // Add a flag to indicate this is an async request
-    return {
-      ...result,
-      isAsync: true
-    };
-  } catch (error) {
-    console.error('Error in processChatMessage:', error);
-    throw error;
-  }
-}
-
-export async function startAsyncChatProcessing(
-  message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
-  try {
-    const sessionId = `session-${Date.now()}`;
-    const chatId = chatSessionId || `chat-${Date.now()}`;
+    // Generate a unique chatId if none exists
+    const chatId = `chat-${Date.now()}`;
 
     // Create the request payload
     const payload: any = {
       message,
-      sessionId,
-      history,
       userId: TEST_USER_ID,
+      sessionId: chatSessionId,
       chatId: chatId
     };
 
-    // Add S3 file references if attachments are present
-    if (attachments && attachments.length > 0) {
-      const s3Files = attachments.map(file => ({
+    // Add S3 file references if files are present
+    if (files && files.length > 0) {
+      const s3Files = files.map(file => ({
         name: file.name,
         s3Url: file.url || file.fileUrl,
-        mimeType: file.type || 'application/octet-stream',
-        useCase: "CHAT"
+        mimeType: file.type || 'application/octet-stream'
       }));
 
       payload.s3Files = s3Files;
+
+      // If files are present and message suggests analysis, mark as document analysis
+      if (message.toLowerCase().includes('analyze') ||
+        message.toLowerCase().includes('extract') ||
+        message.toLowerCase().includes('summarize')) {
+        payload.documentAnalysis = true;
+      }
     }
 
+    // Use the new simplified endpoint
     const response = await fetch(LAMBDA_ENDPOINTS.message, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -102,74 +58,107 @@ export async function startAsyncChatProcessing(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to start processing');
+      throw new Error(errorData.error || 'Failed to send message');
     }
 
     const result = await response.json();
 
-    // Add a flag to indicate this is an async request
-    return {
-      ...result,
-      isAsync: true
-    };
+    return result;
   } catch (error) {
-    console.error('Error starting async chat processing:', error);
+    console.error('Error sending message:', error);
     throw error;
   }
 }
 
-export async function startAsyncDocumentAnalysis(
-  files: any[], message: string = 'Please analyze these documents', chatSessionId: string): Promise<ApiResponse> {
+/**
+ * Checks the status of a request
+ *
+ * @param requestId - The ID of the request to check
+ * @returns The current status of the request
+ */
+export async function checkStatus(requestId: string): Promise<ApiResponse> {
   try {
-    if (!files || !files.length) {
-      throw new Error('No files provided for analysis');
+    if (!requestId) {
+      throw new Error('No requestId provided');
     }
 
-    const sessionId = `session-${Date.now()}`;
-    const chatId = chatSessionId || `chat-${Date.now()}`;
-
-    // Create the request payload
-    const payload: any = {
-      message,
-      sessionId,
-      userId: TEST_USER_ID,
-      chatId: chatId,
-      s3Files: files.map(file => ({
-        name: file.name,
-        s3Url: file.url || file.fileUrl,
-        mimeType: file.type || 'application/octet-stream',
-        useCase: "CODE_INTERPRETER"
-      })),
-      documentAnalysis: true  // This is crucial for the backend to identify it as document analysis
-    };
-
-    const response = await fetch(LAMBDA_ENDPOINTS.message, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const response = await fetch(`${LAMBDA_ENDPOINTS.status}/${requestId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to start document analysis');
+      throw new Error(errorData.error || 'Failed to check status');
     }
 
-    const result = await response.json();
-
-    // Add a flag to indicate this is an async request
-    return {
-      ...result,
-      isAsync: true,
-      isDocumentAnalysis: true
-    };
+    return await response.json();
   } catch (error) {
-    console.error('Error starting async document analysis:', error);
+    console.error(`Error checking status for ${requestId}:`, error);
     throw error;
   }
 }
 
-// Existing API functions with minimal changes
-export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<ApiResponse> {
+/**
+ * Gets a summary of all requests in a session
+ *
+ * @param sessionId - The session ID to summarize
+ * @returns Summary of all requests in the session
+ */
+export async function getSessionSummary(sessionId: string): Promise<ApiResponse> {
+  try {
+    if (!sessionId) {
+      throw new Error('No sessionId provided');
+    }
+
+    const response = await fetch(`${LAMBDA_ENDPOINTS.status}/summary?sessionId=${sessionId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get session summary');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error getting session summary for ${sessionId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Gets chat history
+ *
+ * @param chatId - The chat ID to get history for
+ * @returns Chat history
+ */
+export async function getChatHistory(chatId: string): Promise<ApiResponse> {
+  try {
+    if (!chatId) {
+      throw new Error('No chatId provided');
+    }
+
+    const response = await fetch(`${LAMBDA_ENDPOINTS.status}/history?chatId=${chatId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get chat history');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error getting chat history for ${chatId}:`, error);
+    throw error;
+  }
+}
+
+// File upload function - kept as is since it still uses the same endpoint
+export async function uploadFileApi(file: File, sessionId?: string): Promise<ApiResponse> {
   try {
     if (!file) {
       throw new Error('No file provided');
@@ -200,13 +189,13 @@ export async function uploadFileApi(file: File, sessionId?: string, p0?: string)
   }
 }
 
+// Create ticket function - kept as is
 export async function createTicketApi(ticketDetails: TicketDetails): Promise<ApiResponse> {
   try {
     if (!ticketDetails || !ticketDetails.subject) {
       throw new Error('Invalid ticket details');
     }
 
-    // Add userId to the ticket details
     const ticketWithUser = {
       ...ticketDetails,
       userId: TEST_USER_ID
@@ -229,49 +218,21 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
   }
 }
 
-export async function quickLinkApi(action: string, parameter: string): Promise<ApiResponse> {
-  try {
-    if (!action) {
-      throw new Error('No action specified');
-    }
-
-    const response = await fetch(LAMBDA_ENDPOINTS.quickLink, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, parameter, userId: TEST_USER_ID }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to process quick link action');
-    }
-
-    return await response.json();
-  } catch (error) {
-    handleClientError(error, 'process quick link action');
-  }
-}
-
 // Helper function to extract S3 key from a file URL
 function extractS3KeyFromUrl(fileUrl: string): string {
   if (!fileUrl) {
     throw new Error('Invalid file URL');
   }
 
-  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
   if (fileUrl.includes('amazonaws.com/')) {
     const s3Key = fileUrl.split('amazonaws.com/')[1];
     if (!s3Key) {
       throw new Error('Invalid file URL format');
     }
     return s3Key;
-  }
-  // Fallback if it's already a partial path
-  else if (fileUrl.includes('/')) {
+  } else if (fileUrl.includes('/')) {
     return fileUrl;
-  }
-  // If it's just the key itself
-  else {
+  } else {
     return fileUrl;
   }
 }
@@ -314,39 +275,12 @@ export async function downloadFileApi(fileUrlOrKey: string): Promise<ApiResponse
 
     const data = await response.json();
 
-    // Handle different response formats
     return {
       fileUrl: data.url || data.fileUrl || (typeof data === 'string' ? data : null),
       ...data
     };
   } catch (error) {
     console.error('Error downloading file:', error);
-    throw error;
-  }
-}
-
-export async function fetchInsightsData(requestId: string): Promise<any> {
-  try {
-    if (!requestId) {
-      throw new Error('No requestId provided for fetching insights data');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/redshift/results?requestId=${requestId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Origin': window.location.origin
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch insights data');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching insights data:', error);
     throw error;
   }
 }
@@ -366,11 +300,9 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     // Get response as text first
     const responseText = await response.text();
 
-    // Handle non-OK responses
     if (!response.ok) {
       console.error(`Error response from getUserFiles: ${responseText}`);
 
-      // Try to parse as JSON if it looks like JSON
       if (responseText.trim().startsWith('{')) {
         try {
           const errorData = JSON.parse(responseText);
@@ -380,11 +312,9 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         }
       }
 
-      // If we couldn't parse as JSON or it's not JSON, throw with the text
       throw new Error(`Failed to fetch user files: ${responseText.substring(0, 100)}...`);
     }
 
-    // For successful responses, try to parse as JSON
     try {
       if (!responseText.trim()) {
         console.warn('getUserFilesApi: Empty response received');
@@ -397,12 +327,10 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
       }
 
       const parsedResponse = JSON.parse(responseText);
-      // Ensure data is always an array
       const filesData = Array.isArray(parsedResponse.data)
         ? parsedResponse.data
         : (parsedResponse.data ? [parsedResponse.data] : []);
 
-      // Ensure the response has all required ApiResponse properties
       return {
         ...parsedResponse,
         data: filesData,
@@ -422,7 +350,6 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     }
   } catch (error) {
     console.error('Error in getUserFilesApi:', error);
-    // Return a default object instead of throwing to avoid breaking the UI
     return {
       data: [],
       error: error instanceof Error ? error.message : 'Unknown error fetching user files',
@@ -431,3 +358,8 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
     };
   }
 }
+
+// For backwards compatibility
+export const processChatMessage = sendMessage;
+export const startAsyncChatProcessing = sendMessage;
+export const startAsyncDocumentAnalysis = sendMessage;
