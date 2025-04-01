@@ -328,18 +328,24 @@ export default function useChatMessages({
           // Create bot message from response
           const botMessage: MessageType = {
             sender: 'bot',
-            text: response.message || 'No response received',
-            timestamp: response.timestamp || new Date().toISOString(),
-            suggestions: response.suggestions || [],
-            multimedia: response.multimedia,
-            report: response.report,
-            chatId: response.chatId || '',
+
+
+
+
+
+
+            text: response?.message || 'No response received',
+            timestamp: response?.timestamp || new Date().toISOString(),
+            suggestions: response?.suggestions || [],
+            multimedia: response?.multimedia,
+            report: response?.report,
+            chatId: response?.chatId || '',
             chatSessionId: chatSessionId
           };
 
           safeUpdateMessages(prev => [...prev, botMessage]);
-        }, 500);
-      }
+
+        }, 500);      }
     } catch (error) {
       // Handle errors
       if (progressInterval.current) {
