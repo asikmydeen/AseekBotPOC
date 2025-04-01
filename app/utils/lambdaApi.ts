@@ -52,6 +52,10 @@ export interface TicketDetails {
 }
 
 export interface ApiResponse {
+  timestamp: string;
+  suggestions: never[];
+  multimedia: { type: "video" | "graph" | "image"; data: MultimediaData; } | undefined;
+  report: { title: string; content: string; citations?: string[] | undefined; } | undefined;
   url: string;
   subject?: any;
   createdAt?: string;
