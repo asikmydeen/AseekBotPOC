@@ -325,8 +325,7 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           error: 'Empty response received.',
           timestamp: Date.now().toString(),
           suggestions: [],
-
-          multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
+          multimedia: [{ type: 'image', data: { url: '', alt: 'File preview' } }],
           report: null
         };
       }
