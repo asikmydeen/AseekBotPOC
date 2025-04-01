@@ -2,25 +2,27 @@
 export const API_BASE_URL = 'https://api-ammydeen4.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
-  processChatMessage: `${API_BASE_URL}/processChatMessage`,
+  // New simplified endpoints
+  message: `${API_BASE_URL}/message`,
+  status: `${API_BASE_URL}/status`,
+
+  // Unchanged endpoints
   uploadFile: `${API_BASE_URL}/uploadFile`,
   deleteFile: `${API_BASE_URL}/deleteFile`,
   createTicket: `${API_BASE_URL}/createTicket`,
   quickLink: `${API_BASE_URL}/quickLink`,
-  downloadFile: `${API_BASE_URL}/files/download`, // Updated path to match API Gateway configuration
+  downloadFile: `${API_BASE_URL}/files/download`,
   getUserFiles: `${API_BASE_URL}/getUserFiles`,
 
-  // New endpoints for async processing
+  // Legacy endpoints for backward compatibility
+  processChatMessage: `${API_BASE_URL}/processChatMessage`,
   startProcessing: `${API_BASE_URL}/startProcessing`,
   checkStatus: `${API_BASE_URL}/checkStatus`,
-  workerProcessor: `${API_BASE_URL}/workerProcessor`,
-
-  // Added for simplified system
-  message: `${API_BASE_URL}/message`,
-  status: `${API_BASE_URL}/status`
+  getProcessingStatus: `${API_BASE_URL}/checkStatus`,
+  workerProcessor: `${API_BASE_URL}/workerProcessor`
 };
 
-// Also define the necessary interfaces here for better organization
+// Define the necessary interfaces
 export interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -68,6 +70,7 @@ export interface ApiResponse {
   messageOrder?: number; // Indicates the position of this message in the conversation sequence
   sessionId?: string; // Session identifier for tracking user sessions (this is the chatSessionId)
   chatSessionId?: string; // Alias for sessionId - identifies the entire chat session (common across all messages in a session)
+  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS'; // Type of workflow being executed
 }
 
 // Helper function for error handling
@@ -101,15 +104,6 @@ export function extractS3KeyFromUrl(fileUrl: string): string {
  *
  * This function helps maintain conversation context by ensuring the same
  * chatId is used for all messages in a conversation thread.
- *
- * IMPORTANT: The frontend MUST store and reuse this chatId for all messages
- * in the same conversation to ensure proper grouping in DynamoDB.
- * Store this value in localStorage and include it with every message
- * in the same chat session.
- *
- * NOTE: For tracking entire chat sessions across multiple chatIds, use chatSessionId
- * which should be common for all messages in a single chat session and stored in
- * localStorage for the duration of the session.
  *
  * @param existingChatId - The current chatId from ongoing conversation (if any)
  * @param response - The API response which may contain a new chatId
