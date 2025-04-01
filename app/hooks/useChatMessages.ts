@@ -207,7 +207,7 @@ export default function useChatMessages({
         if (typeof statusResponse.error === 'string') {
           errorMessage = statusResponse.error;
         } else if (statusResponse.error && typeof statusResponse.error === 'object' && 'message' in statusResponse.error) {
-          errorMessage = statusResponse.error.message as string || errorMessage;
+          errorMessage = (statusResponse.error as { message: string }).message || errorMessage;
         }
 
         setProcessingError(new Error(errorMessage));
@@ -226,8 +226,8 @@ export default function useChatMessages({
     } catch (error) {
       console.error('Error polling status:', error);
     }
-  }, [chatSessionId, safeUpdateMessages]);
 
+  }, [chatSessionId, safeUpdateMessages]);
   // Send a message using the new unified API endpoint
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
