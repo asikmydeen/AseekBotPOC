@@ -203,7 +203,13 @@ export default function useChatMessages({
         setIsAsyncProcessing(false);
         setCurrentRequestId(null);
 
-        const errorMessage = statusResponse.error?.message || 'Processing failed.';
+        let errorMessage = 'Processing failed.';
+        if (typeof statusResponse.error === 'string') {
+          errorMessage = statusResponse.error;
+        } else if (statusResponse.error && typeof statusResponse.error === 'object' && 'message' in statusResponse.error) {
+          errorMessage = statusResponse.error.message as string || errorMessage;
+        }
+
         setProcessingError(new Error(errorMessage));
 
         const errorBotMessage: MessageType = {
@@ -294,8 +300,11 @@ export default function useChatMessages({
         });
       }, 500);
 
+      // Import the sendMessage function from the advancedApi
+      const { sendMessage: apiSendMessage } = await import('../api/advancedApi');
+
       // Send the message to the API
-      const response = await sendMessage(text, chatSessionId, attachments);
+      const response = await apiSendMessage(text, chatSessionId, attachments);
 
       // Check if this is an async request that requires polling
       if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {
