@@ -326,7 +326,8 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           timestamp: Date.now().toString(),
           suggestions: [],
           multimedia: [{ type: 'image', data: { url: '', alt: 'File preview' } }],
-          report: null
+
+          report: undefined
         };
       }
 
@@ -342,9 +343,9 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         chatId: parsedResponse.chatId || 'getUserFiles-success',
         timestamp: parsedResponse.timestamp || Date.now().toString(),
         suggestions: parsedResponse.suggestions || [],
-
         multimedia: parsedResponse.multimedia || [{ type: 'image', data: { url: '', alt: '' } }],
-        report: parsedResponse.report || null
+
+        report: parsedResponse.report || undefined
       };
     } catch (parseError) {
       console.error('Failed to parse successful response as JSON:', parseError);
@@ -357,9 +358,9 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
         chatId: 'getUserFiles-parseError',
         timestamp: Date.now().toString(),
         suggestions: [],
-
         multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
-        report: null
+
+        report: undefined
       };
     }
   } catch (error) {
@@ -371,12 +372,13 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
       chatId: 'getUserFiles-error',
       timestamp: Date.now().toString(),
       suggestions: [],
-
       multimedia: [{ type: 'image', data: { url: '', alt: '' } }],
-      report: null
+
+      report: undefined
     };
   }
 
-}export const processChatMessage = sendMessage;
-export const startAsyncChatProcessing = sendMessage;
+}
+
+export const processChatMessage = sendMessage;export const startAsyncChatProcessing = sendMessage;
 export const startAsyncDocumentAnalysis = sendMessage;
