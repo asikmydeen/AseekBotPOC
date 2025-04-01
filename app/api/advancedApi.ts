@@ -322,7 +322,6 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
           data: [],
           url: '',
           chatId: 'getUserFiles-default',
-
           error: 'Empty response received.',
           timestamp: Date.now(),
           suggestions: [],
