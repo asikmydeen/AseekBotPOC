@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { checkStatus } from '../api/advancedApi';
-import { ApiResponse } from '../utils/lambdaApi';
 
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
@@ -38,29 +37,12 @@ interface UseAsyncProcessingOptions {
   onStatusChange?: (status: AsyncProcessingResult) => void;
 }
 
-// Helper function to convert ApiResponse to AsyncProcessingResult
-const convertToAsyncProcessingResult = (response: ApiResponse): AsyncProcessingResult => {
-  const status = response.status as AsyncProcessingResult['status'] || 'QUEUED';
-
-  return {
-    status,
-    requestId: response.requestId || '',
-    progress: response.progress || 0,
-    result: response.result,
-    error: response.error,
-    message: response.message,
-    timestamp: response.timestamp,
-    updatedAt: response.updatedAt,
-    workflowType: response.workflowType as AsyncProcessingResult['workflowType']
-  };
-};
-
 export function useAsyncProcessing(
   requestId: string | null,
   options: UseAsyncProcessingOptions = {}
 ) {
   const [result, setResult] = useState<any>(null);
-  const [status, setStatus] = useState<AsyncProcessingResult['status']>('QUEUED');
+  const [status, setStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<any>(null);
@@ -101,10 +83,7 @@ export function useAsyncProcessing(
       pollingAttemptsRef.current += 1;
 
       // Use the new status endpoint
-      const apiResponse = await checkStatus(requestId);
-
-      // Convert API response to AsyncProcessingResult
-      const response = convertToAsyncProcessingResult(apiResponse);
+      const response = await checkStatus(requestId);
 
       // Reset polling attempts counter on success
       pollingAttemptsRef.current = 0;
@@ -146,7 +125,8 @@ export function useAsyncProcessing(
 
       // Call the status change callback if provided
       if (onStatusChange) {
-        onStatusChange(response);
+        // Type assertion to ensure the response matches AsyncProcessingResult
+        onStatusChange(response as AsyncProcessingResult);
       }
 
       return response;
@@ -164,10 +144,7 @@ export function useAsyncProcessing(
 
       return null;
     }
-  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
-
-  // Start polling when requestId changes
-  useEffect(() => {
+  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);  // Start polling when requestId changes  useEffect(() => {
     if (!requestId) {
       setIsLoading(false);
       return () => { };
@@ -191,10 +168,8 @@ export function useAsyncProcessing(
     setProgress(0);
 
     // Initial check
-    fetchStatus().then(initialApiResponse => {
-      if (!initialApiResponse) return;
-
-      const initialResponse = convertToAsyncProcessingResult(initialApiResponse);
+    fetchStatus().then(initialResponse => {
+      if (!initialResponse) return;
 
       // If it's already completed or failed, don't start polling
       if (initialResponse.status &&
@@ -221,12 +196,12 @@ export function useAsyncProcessing(
         }
 
         // Fetch status
-        const apiResponse = await fetchStatus();
+        const response = await fetchStatus();
 
         // Stop polling if completed, failed, or errored
         if (hasErrored ||
-          (apiResponse && apiResponse.status &&
-            (apiResponse.status === 'COMPLETED' || apiResponse.status === 'FAILED'))) {
+          (response && response.status &&
+            (response.status === 'COMPLETED' || response.status === 'FAILED'))) {
           clearPollingInterval();
         }
       }, pollingInterval);
