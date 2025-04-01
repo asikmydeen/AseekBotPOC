@@ -181,7 +181,7 @@ export function useAsyncProcessing(
       }
 
       // Update status based on initial response if more advanced
-      if (!isStatusAdvanced(status, initialResponse.status)) {
+      if (initialResponse.status && !isStatusAdvanced(status, initialResponse.status)) {
         setStatus(initialResponse.status);
       }
 
@@ -208,8 +208,8 @@ export function useAsyncProcessing(
           clearPollingInterval();
         }
       }, pollingInterval);
-    });
 
+    });
     // Cleanup on unmount or when requestId changes
     return () => {
       clearPollingInterval();

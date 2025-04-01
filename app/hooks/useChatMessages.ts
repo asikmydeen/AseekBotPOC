@@ -226,7 +226,6 @@ export default function useChatMessages({
     } catch (error) {
       console.error('Error polling status:', error);
     }
-
   }, [chatSessionId, safeUpdateMessages]);
   // Send a message using the new unified API endpoint
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
