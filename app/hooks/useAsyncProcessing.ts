@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LAMBDA_ENDPOINTS } from '../utils/lambdaApi';
+import { checkStatus } from '../api/advancedApi';
 
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string): boolean => {
@@ -11,7 +11,7 @@ const isStatusAdvanced = (currentStatus: string, newStatus: string): boolean => 
   };
 
   return (statusOrder[currentStatus as keyof typeof statusOrder] || 0) >=
-         (statusOrder[newStatus as keyof typeof statusOrder] || 0);
+    (statusOrder[newStatus as keyof typeof statusOrder] || 0);
 };
 
 export interface AsyncProcessingResult {
@@ -25,6 +25,7 @@ export interface AsyncProcessingResult {
   };
   timestamp?: string;
   updatedAt?: string;
+  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
 }
 
 interface UseAsyncProcessingOptions {
@@ -44,6 +45,7 @@ export function useAsyncProcessing(
   const [error, setError] = useState<any>(null);
   const [lastStatusResponse, setLastStatusResponse] = useState<AsyncProcessingResult | null>(null);
   const [hasErrored, setHasErrored] = useState<boolean>(false);
+  const [workflowType, setWorkflowType] = useState<string | undefined>(undefined);
 
   // Tracking interval and polling state
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
@@ -77,37 +79,32 @@ export function useAsyncProcessing(
     try {
       pollingAttemptsRef.current += 1;
 
-      // Use the new status endpoint structure
-      const response = await fetch(`${LAMBDA_ENDPOINTS.status}/${requestId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to check status');
-      }
-
-      const responseData = await response.json();
+      // Use the new status endpoint
+      const response = await checkStatus(requestId);
 
       // Reset polling attempts counter on success
       pollingAttemptsRef.current = 0;
 
-      setLastStatusResponse(responseData);
+      setLastStatusResponse(response);
+
+      // Update workflow type if available
+      if (response.workflowType) {
+        setWorkflowType(response.workflowType);
+      }
 
       // Update state based on response, but don't downgrade status
-      // Only update status if the new status is more advanced or equal to current
-      if (!isStatusAdvanced(status, responseData.status)) {
-        setStatus(responseData.status);
+      if (!isStatusAdvanced(status, response.status)) {
+        setStatus(response.status);
       }
-      setProgress(responseData.progress || 0);
 
-      if (responseData.status === 'COMPLETED' && responseData.result) {
-        setResult(responseData.result);
+      setProgress(response.progress || 0);
+
+      if (response.status === 'COMPLETED' && response.result) {
+        setResult(response.result);
         setIsLoading(false);
         clearPollingInterval();
-      } else if (responseData.status === 'FAILED') {
-        setError(responseData.error || { message: 'Unknown error occurred' });
+      } else if (response.status === 'FAILED') {
+        setError(response.error || { message: 'Unknown error occurred' });
         setIsLoading(false);
         setHasErrored(true);
         clearPollingInterval();
@@ -118,11 +115,10 @@ export function useAsyncProcessing(
 
       // Call the status change callback if provided
       if (onStatusChange) {
-        console.debug('[useAsyncProcessing] Calling onStatusChange with status:', responseData.status, 'and data:', responseData);
-        onStatusChange(responseData);
+        onStatusChange(response);
       }
 
-      return responseData;
+      return response;
     } catch (err) {
       console.error('Error checking status:', err);
 
@@ -137,14 +133,13 @@ export function useAsyncProcessing(
 
       return null;
     }
-  }, [requestId, clearPollingInterval, onStatusChange, hasErrored]);
-
+  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
 
   // Start polling when requestId changes
   useEffect(() => {
     if (!requestId) {
       setIsLoading(false);
-      return () => {};
+      return () => { };
     }
 
     let startTime = Date.now();
@@ -156,10 +151,12 @@ export function useAsyncProcessing(
 
     setIsLoading(true);
     setResult(null);
+
     // Only set status to QUEUED if we don't have a status yet or if we're starting fresh
     if (!status || status === 'COMPLETED' || status === 'FAILED') {
       setStatus('QUEUED');
     }
+
     setProgress(0);
 
     // Initial check
@@ -203,7 +200,7 @@ export function useAsyncProcessing(
     return () => {
       clearPollingInterval();
     };
-  }, [requestId, pollingInterval, maxPollingTime, fetchStatus, clearPollingInterval, hasErrored]);
+  }, [requestId, pollingInterval, maxPollingTime, fetchStatus, clearPollingInterval, hasErrored, status]);
 
   // Function to manually trigger a status check
   const refreshStatus = useCallback(() => {
@@ -223,6 +220,7 @@ export function useAsyncProcessing(
     error,
     refreshStatus,
     lastResponse: lastStatusResponse,
-    hasErrored
+    hasErrored,
+    workflowType
   };
 }
