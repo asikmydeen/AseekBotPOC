@@ -50,7 +50,7 @@ const convertToAsyncProcessingResult = (response: ApiResponse): AsyncProcessingR
     error: response.error,
     message: response.message,
     timestamp: response.timestamp,
-    updatedAt: response.updatedAt,
+    updatedAt: (response as any).updatedAt,
     workflowType: response.workflowType as AsyncProcessingResult['workflowType']
   };
 };
@@ -191,10 +191,8 @@ export function useAsyncProcessing(
     setProgress(0);
 
     // Initial check
-    fetchStatus().then(initialApiResponse => {
-      if (!initialApiResponse) return;
-
-      const initialResponse = convertToAsyncProcessingResult(initialApiResponse);
+    fetchStatus().then(initialResponse => {
+      if (!initialResponse) return;
 
       // If it's already completed or failed, don't start polling
       if (initialResponse.status &&

@@ -186,7 +186,7 @@ export async function uploadFileApi(file: File, sessionId?: string): Promise<Api
     return await response.json();
   } catch (error) {
     return {
-      data: null,
+      data: [],
       error: error instanceof Error ? error.message : 'Failed to upload file',
       url: '',
       chatId: 'uploadFile-error',
@@ -224,7 +224,7 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
     return await response.json();
   } catch (error) {
     return {
-      data: null,
+      data: [],
       error: error instanceof Error ? error.message : 'Failed to create support ticket',
       url: '',
       chatId: 'createTicket-error',
@@ -273,7 +273,7 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
     return await response.json();
   } catch (error) {
     return {
-      data: null,
+      data: [],
       error: error instanceof Error ? error.message : 'Failed to delete file',
       url: '',
       chatId: 'deleteFile-error',
