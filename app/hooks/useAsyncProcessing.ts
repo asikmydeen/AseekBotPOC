@@ -130,7 +130,7 @@ export function useAsyncProcessing(
       }
 
       return response;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error checking status:', err);
 
       // Check if we've reached max retry attempts
@@ -144,8 +144,8 @@ export function useAsyncProcessing(
 
       return null;
     }
-  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
 
+  }, [requestId, clearPollingInterval, onStatusChange, hasErrored, status]);
   // Start polling when requestId changes
   useEffect(() => {
     if (!requestId) {
