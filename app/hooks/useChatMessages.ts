@@ -339,6 +339,7 @@ export default function useChatMessages({
 
           safeUpdateMessages(prev => [...prev, botMessage]);
         }, 500);
+      }
     } catch (error) {
       // Handle errors
       if (progressInterval.current) {
