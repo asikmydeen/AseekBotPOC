@@ -316,8 +316,6 @@ export default function useChatMessages({
 
         // Start polling for status updates
         statusPollIntervalRef.current = setInterval(() => {
-
-
           if (response.requestId) {
             pollStatus(response.requestId);
           }
