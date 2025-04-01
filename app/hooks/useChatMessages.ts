@@ -1,90 +1,18 @@
-// app/hooks/useChatMessages.ts - Fixed version
+// app/hooks/useChatMessages.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
-import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis, fetchInsightsData } from '../api/advancedApi';
-import { LAMBDA_ENDPOINTS } from '../utils/lambdaApi';
+import { sendMessage, checkStatus } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
-import { useAsyncProcessing } from './useAsyncProcessing';
-import {
-  createDocumentAnalysisMessage,
-} from '../utils/documentAnalysisUtils';
+import { createDocumentAnalysisMessage } from '../utils/documentAnalysisUtils';
 
-// Helper function to format insights data into Markdown
-function formatInsightsToMarkdown(insightsData: any): string {
-  try {
-    if (!insightsData || !insightsData.insights) {
-      throw new Error('Invalid insights data format');
-    }
-
-    const insights = insightsData.insights;
-
-    // Create a markdown string with sections
-    let markdown = `# Average Work Order Value Analysis\n\n`;
-
-    // Summary section
-    markdown += `## Summary\n`;
-    markdown += `${insights.summary || 'Analysis of work order values across different regions and contract types reveals significant variations and trends.'}\n\n`;
-
-    // Key Points section
-    markdown += `## Key Points\n`;
-    if (insights.keyPoints && Array.isArray(insights.keyPoints)) {
-      insights.keyPoints.forEach(point => {
-        markdown += `- ${point}\n`;
-      });
-    } else {
-      markdown += `- No key points available\n`;
-    }
-    markdown += `\n`;
-
-    // Results section with tables
-    if (insightsData.results && insightsData.results.length > 0) {
-      markdown += `## Average Value by Region\n`;
-      markdown += `| Region | Number of Projects | Total Project Cost | Average Project Cost |\n`;
-      markdown += `| ------ | ----------------- | ------------------ | -------------------- |\n`;
-
-      insightsData.results.forEach(row => {
-        markdown += `| ${row.region || 'N/A'} | ${row.number_of_projects || 'N/A'} | ${row.total_project_cost || 'N/A'} | ${row.average_project_cost || 'N/A'} |\n`;
-      });
-      markdown += `\n`;
-    }
-
-    // Trends section
-    if (insights.trends) {
-      markdown += `## Trends\n`;
-      Object.keys(insights.trends).forEach(key => {
-        markdown += `- **${key}:** ${insights.trends[key]}\n`;
-      });
-      markdown += `\n`;
-    }
-
-    // Recommendations section
-    markdown += `## Recommendations\n`;
-    if (insights.recommendations && Array.isArray(insights.recommendations)) {
-      insights.recommendations.forEach((rec, idx) => {
-        markdown += `${idx+1}. ${rec}\n`;
-      });
-    } else {
-      markdown += `No specific recommendations available.\n`;
-    }
-    markdown += `\n`;
-
-    markdown += `Would you like me to create a visualization of this data or provide more detailed analysis?`;
-
-    return markdown;
-  } catch (error) {
-    console.error('Error formatting insights to Markdown:', error);
-    return `**Error**: Failed to format insights data. ${error instanceof Error ? error.message : 'Unknown error occurred.'}`;
-  }
-}
-
-// Define the ChatHistoryItem interface again in useChatMessages.ts to match the import
+// Define the ChatHistoryItem interface
 interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  chatId: string; // Add the missing property
-  chatSessionId?: string; // Add chatSessionId property
+  chatId: string;
+  chatSessionId?: string;
 }
 
 interface UseChatMessagesProps {
@@ -119,6 +47,7 @@ export default function useChatMessages({
 
     return newSessionId;
   });
+
   const [messages, setMessages] = useState<MessageType[]>(() => {
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
@@ -134,6 +63,7 @@ export default function useChatMessages({
       }
     ];
   });
+
   const [isThinking, setIsThinking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,9 +73,11 @@ export default function useChatMessages({
   } | null>(null);
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
-  // New state for async processing
+  // State for async processing
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
   const [isAsyncProcessing, setIsAsyncProcessing] = useState(false);
+  const [asyncStatus, setAsyncStatus] = useState<string>('');
+  const [asyncProgress, setAsyncProgress] = useState<number>(0);
   const [processingError, setProcessingError] = useState<Error | null>(null);
 
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
@@ -153,98 +85,7 @@ export default function useChatMessages({
   const isUpdatingRef = useRef<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const requestCancelledRef = useRef<boolean>(false);
-
-  // Set up the async processing hook for status monitoring with error handling
-  const {
-    result: asyncResult,
-    status: asyncStatus,
-    progress: asyncProgress,
-    error: asyncError,
-    refreshStatus,
-    hasErrored
-  } = useAsyncProcessing(currentRequestId, {
-    pollingInterval: 2000,
-    onStatusChange: (status) => {
-      // Don't process if request was cancelled
-      if (requestCancelledRef.current) return;
-
-      // Update progress based on async status
-      if (status.progress) {
-        setProgress(status.progress);
-      }
-
-      // When processing completes, add the bot message
-      if (status.status === 'COMPLETED' && status.result) {
-        console.log('Status update received:', status);
-
-        setIsThinking(false);
-        setProgress(100);  // Set to 100% when completed
-
-        // Clear request ID after processing
-        setCurrentRequestId(null);
-        setIsAsyncProcessing(false);
-
-        const botMessage = createDocumentAnalysisMessage(status, chatSessionId);
-
-        // Add the bot message to the messages state
-        safeUpdateMessages(prev => [...prev, botMessage]);
-
-        // Scroll to the bottom to show the new message
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
-
-      // Handle error condition (keep existing error handling)
-      if (status.status === 'FAILED') {
-        setIsThinking(false);
-        setProgress(0);
-        setIsAsyncProcessing(false);
-
-        // Don't reset currentRequestId to null here - this helps prevent repeated polling
-
-        let errorMessage = status.error?.message || 'An error occurred during processing.';
-        setProcessingError(new Error(errorMessage));
-
-        const errorBotMessage: MessageType = {
-          sender: 'bot',
-          text: `**Error**: ${errorMessage}`,
-          timestamp: new Date().toISOString(),
-          isError: true,
-          chatId: '',
-          chatSessionId: chatSessionId
-        };
-
-        safeUpdateMessages(prev => [...prev, errorBotMessage]);
-      }
-    }
-  });
-
-  // Effect to handle async error state
-  useEffect(() => {
-    if (hasErrored && currentRequestId) {
-      console.log('Detected error state, cleaning up async processing');
-      // Clean up the async processing state when an error occurs
-      setCurrentRequestId(null);
-
-      // If we haven't already shown an error message, show one
-      if (!processingError) {
-        const errorMessage = asyncError?.message || 'An error occurred during processing.';
-        setProcessingError(new Error(errorMessage));
-
-        const errorBotMessage: MessageType = {
-          sender: 'bot',
-          text: `**Error**: ${errorMessage}`,
-          timestamp: new Date().toISOString(),
-          isError: true,
-          chatId: '',
-          chatSessionId: chatSessionId
-        };
-
-        safeUpdateMessages(prev => [...prev, errorBotMessage]);
-      }
-    }
-  }, [hasErrored, asyncError, currentRequestId, processingError]);
+  const statusPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Clean up interval when component unmounts
   useEffect(() => {
@@ -252,6 +93,10 @@ export default function useChatMessages({
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
+      }
+      if (statusPollIntervalRef.current) {
+        clearInterval(statusPollIntervalRef.current);
+        statusPollIntervalRef.current = null;
       }
       requestCancelledRef.current = true;
     };
@@ -290,23 +135,94 @@ export default function useChatMessages({
 
   const filteredMessages = searchQuery
     ? messages.filter(msg =>
-        msg.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        msg.report?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        msg.report?.content?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      msg.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      msg.report?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      msg.report?.content?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : messages;
 
-  // Convert MessageType to ChatHistoryItem for API
-  const convertToChatHistoryItem = (message: MessageType): ChatHistoryItem => {
-  return {
-    role: message.sender === 'user' ? 'user' : 'assistant',
-    content: message.text || '',
-    chatId: message.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
-    chatSessionId: message.chatSessionId || chatSessionId
-  };
-};
+  // Poll status endpoint for updates
+  const pollStatus = useCallback(async (requestId: string) => {
+    if (!requestId || requestCancelledRef.current) return;
 
-  // Simplified sendMessage that always uses async processing
+    try {
+      const statusResponse = await checkStatus(requestId);
+
+      // Update async status and progress
+      setAsyncStatus(statusResponse.status || 'PROCESSING');
+      setAsyncProgress(statusResponse.progress || 0);
+
+      // Handle completed status
+      if (statusResponse.status === 'COMPLETED') {
+        // Clean up polling interval
+        if (statusPollIntervalRef.current) {
+          clearInterval(statusPollIntervalRef.current);
+          statusPollIntervalRef.current = null;
+        }
+
+        setIsThinking(false);
+        setProgress(100);
+        setIsAsyncProcessing(false);
+        setCurrentRequestId(null);
+
+        // Create appropriate bot message based on workflow type
+        let botMessage: MessageType;
+
+        if (statusResponse.workflowType === 'DOCUMENT_ANALYSIS') {
+          botMessage = createDocumentAnalysisMessage(statusResponse, chatSessionId);
+        } else {
+          // Create a standard bot message for other workflow types
+          botMessage = {
+            sender: 'bot',
+            text: statusResponse.message || 'Processing complete.',
+            timestamp: new Date().toISOString(),
+            chatId: statusResponse.chatId || '',
+            chatSessionId: chatSessionId
+          };
+        }
+
+        // Add the bot message to the chat
+        safeUpdateMessages(prev => [...prev, botMessage]);
+
+        // Scroll to bottom
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+
+      // Handle failed status
+      else if (statusResponse.status === 'FAILED') {
+        // Clean up polling interval
+        if (statusPollIntervalRef.current) {
+          clearInterval(statusPollIntervalRef.current);
+          statusPollIntervalRef.current = null;
+        }
+
+        setIsThinking(false);
+        setProgress(0);
+        setIsAsyncProcessing(false);
+        setCurrentRequestId(null);
+
+        const errorMessage = statusResponse.error?.message || 'Processing failed.';
+        setProcessingError(new Error(errorMessage));
+
+        const errorBotMessage: MessageType = {
+          sender: 'bot',
+          text: `**Error**: ${errorMessage}`,
+          timestamp: new Date().toISOString(),
+          isError: true,
+          chatId: '',
+          chatSessionId: chatSessionId
+        };
+
+        safeUpdateMessages(prev => [...prev, errorBotMessage]);
+      }
+    } catch (error) {
+      console.error('Error polling status:', error);
+    }
+  }, [chatSessionId, safeUpdateMessages]);
+
+  // Send a message using the new unified API endpoint
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
     if (!text.trim() && !isFileUpload) return;
@@ -315,12 +231,17 @@ export default function useChatMessages({
     setProcessingError(null);
     requestCancelledRef.current = false;
 
-    // Clear any existing progress interval
+    // Clear any existing intervals
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
       progressInterval.current = null;
     }
+    if (statusPollIntervalRef.current) {
+      clearInterval(statusPollIntervalRef.current);
+      statusPollIntervalRef.current = null;
+    }
 
+    // Create user message text
     let userMessageText = text;
     if (isFileUpload) {
       const fileNames = attachments.map(file => file.name).join(', ');
@@ -331,16 +252,18 @@ export default function useChatMessages({
       }
     }
 
+    // Create attachments array for the message
     const userAttachments = isFileUpload
       ? attachments.map(file => ({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          contentType: file.type,
-          url: file.url || file.fileUrl || ''
-        }))
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        contentType: file.type,
+        url: file.url || file.fileUrl || ''
+      }))
       : undefined;
 
+    // Add user message to the chat
     const userMessage: MessageType = {
       sender: 'user',
       text: userMessageText,
@@ -354,126 +277,8 @@ export default function useChatMessages({
     setIsThinking(true);
     setProgress(0);
 
-    // Special handling for demo query about average work order value
-    const normalizedText = text.trim().toLowerCase();
-    if (normalizedText === "what is the average work order value by region or contract type?" ||
-        normalizedText === "query: what is the average work order value by region or contract type?") {
-      console.log('Special demo query detected: Average work order value by region/contract type');
-
-      // Use a fixed requestId for demo purposes
-      const demoRequestId = 'query-1743462029488-2d06521b';
-
-      try {
-        // Set up progress animation
-        setProgress(10);
-        progressInterval.current = setInterval(() => {
-          if (requestCancelledRef.current) {
-            if (progressInterval.current) {
-              clearInterval(progressInterval.current);
-              progressInterval.current = null;
-            }
-            return;
-          }
-
-          setProgress(prev => {
-            return prev < 95 ? prev + (Math.random() * 5) : 95;
-          });
-        }, 500);
-
-        // Fetch insights data from API using the imported function
-        const insightsData = await fetchInsightsData(demoRequestId);
-
-        // Format the insights data to Markdown
-        const markdownContent = formatInsightsToMarkdown(insightsData);
-
-        // Create suggestions based on the insights
-        const suggestions = [
-          "Show me a visualization of this data",
-          "How does this compare to industry benchmarks?",
-          "What factors influence these differences?"
-        ];
-
-        // Create bot message with the formatted Markdown
-        const botMessage: MessageType = {
-          sender: 'bot',
-          text: markdownContent,
-          timestamp: new Date().toISOString(),
-          suggestions: suggestions,
-          chatId: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
-          chatSessionId: chatSessionId
-        };
-
-        // Clean up progress interval
-        if (progressInterval.current) {
-          clearInterval(progressInterval.current);
-          progressInterval.current = null;
-        }
-
-        // Add the bot message to the messages state
-        setTimeout(() => {
-          setIsThinking(false);
-          setProgress(100);
-          setTimeout(() => setProgress(0), 300); // Reset progress after showing 100%
-          safeUpdateMessages(prev => [...prev, botMessage]);
-        }, 1000); // Small delay to simulate processing
-
-        // Return early to bypass API calls
-        return;
-      } catch (error) {
-        // Handle error case
-        console.error('Error fetching insights data:', error);
-
-        // Clean up progress interval
-        if (progressInterval.current) {
-          clearInterval(progressInterval.current);
-          progressInterval.current = null;
-        }
-
-        // Create error message
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        const errorMarkdown = `## Error Fetching Insights Data
-
-Unfortunately, I couldn't retrieve the average work order value data.
-
-**Error details**: ${errorMessage}
-
-Would you like me to try again or help with something else?`;
-
-        const errorBotMessage: MessageType = {
-          sender: 'bot',
-          text: errorMarkdown,
-          timestamp: new Date().toISOString(),
-          isError: true,
-          suggestions: ["Try again", "Help with something else"],
-          chatId: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
-          chatSessionId: chatSessionId
-        };
-
-        // Add the error message to the messages state
-        setTimeout(() => {
-          setIsThinking(false);
-          setProgress(0);
-          safeUpdateMessages(prev => [...prev, errorBotMessage]);
-        }, 500);
-
-        // Return early to bypass API calls
-        return;
-      }
-    }
-
-    // Determine if this is a document analysis request
-    const isDocumentAnalysis = isFileUpload && (
-      text.toLowerCase().includes('analyze') ||
-      text.toLowerCase().includes('document') ||
-      text.toLowerCase().includes('extract') ||
-      text.toLowerCase().includes('summarize')
-    );
-
     try {
-      // Convert messages to ChatHistoryItem format
-      const chatHistory: ChatHistoryItem[] = messages.map(convertToChatHistoryItem);
-
-      // Set up progress animation for async processing
+      // Set up progress animation
       progressInterval.current = setInterval(() => {
         if (requestCancelledRef.current) {
           if (progressInterval.current) {
@@ -484,51 +289,73 @@ Would you like me to try again or help with something else?`;
         }
 
         setProgress(prev => {
-          // Don't exceed 95% for async operations until completion
-          return prev < 95 ? prev + (Math.random() * 1) : 95;
+          const increment = Math.random() * 10;
+          return prev < 90 ? prev + increment : 90;
         });
-      }, 1000);
+      }, 500);
 
-      // Call the appropriate API based on whether this is document analysis or regular chat
-      let response;
-      if (isDocumentAnalysis && isFileUpload) {
-        // Start document analysis workflow
-        response = await startAsyncDocumentAnalysis(attachments!, text, chatSessionId);
-      } else {
-        // Use standard processChatMessage for all other requests
-        response = await processChatMessage(text, chatHistory, attachments, chatSessionId);
-      }
+      // Send the message to the API
+      const response = await sendMessage(text, chatSessionId, attachments);
 
-      console.log('Async processing initiated:', {
-        isDocumentAnalysis,
-        requestId: response.requestId,
-        responseType: response.isAsync ? 'async' : 'sync'
-      });
-
-      // Check if we received a requestId for async processing
-      if (response.requestId) {
-        // Set up for async monitoring
+      // Check if this is an async request that requires polling
+      if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {
+        // This is an async request, set up polling
         setCurrentRequestId(response.requestId);
         setIsAsyncProcessing(true);
+        setAsyncStatus(response.status);
+        setAsyncProgress(response.progress || 0);
 
-        // Initial progress setup
-        setProgress(10);
+        // Start polling for status updates
+        statusPollIntervalRef.current = setInterval(() => {
+          pollStatus(response.requestId);
+        }, 2000); // Poll every 2 seconds
+
+        // Don't add a bot message yet, it will be added when processing completes
       } else {
-        throw new Error('No request ID received for async processing');
+        // This is a synchronous request with immediate response
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
+        }
+
+        setProgress(100);
+
+        // Add the bot response message
+        setTimeout(() => {
+          setIsThinking(false);
+          setProgress(0);
+
+          // Create bot message from response
+          const botMessage: MessageType = {
+            sender: 'bot',
+            text: response.message || 'No response received',
+            timestamp: response.timestamp || new Date().toISOString(),
+            suggestions: response.suggestions || [],
+            multimedia: response.multimedia,
+            report: response.report,
+            chatId: response.chatId || '',
+            chatSessionId: chatSessionId
+          };
+
+          safeUpdateMessages(prev => [...prev, botMessage]);
+        }, 500);
       }
     } catch (error) {
-      // Clean up any ongoing intervals
+      // Handle errors
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
+      }
+
+      if (statusPollIntervalRef.current) {
+        clearInterval(statusPollIntervalRef.current);
+        statusPollIntervalRef.current = null;
       }
 
       setIsThinking(false);
       setProgress(0);
       setIsAsyncProcessing(false);
       setCurrentRequestId(null);
-      setProcessingError(error instanceof Error ? error : new Error('Unknown error'));
-      requestCancelledRef.current = true;
 
       console.error('Error sending message:', error);
 
@@ -565,8 +392,16 @@ Would you like me to try again or help with something else?`;
 
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-  }, [messages, safeUpdateMessages]);
-  // Function to cancel ongoing async request - critical for preventing infinite loops
+  }, [chatSessionId, safeUpdateMessages, pollStatus]);
+
+  // Function to manually refresh the status
+  const refreshAsyncStatus = useCallback(() => {
+    if (currentRequestId && isAsyncProcessing) {
+      pollStatus(currentRequestId);
+    }
+  }, [currentRequestId, isAsyncProcessing, pollStatus]);
+
+  // Function to cancel an ongoing async request
   const cancelAsyncRequest = useCallback(() => {
     // Mark the request as cancelled
     requestCancelledRef.current = true;
@@ -577,18 +412,25 @@ Would you like me to try again or help with something else?`;
       progressInterval.current = null;
     }
 
+    if (statusPollIntervalRef.current) {
+      clearInterval(statusPollIntervalRef.current);
+      statusPollIntervalRef.current = null;
+    }
+
     // Reset the processing states
     setIsThinking(false);
     setProgress(0);
     setIsAsyncProcessing(false);
 
     // Don't immediately clear currentRequestId to prevent new polling attempts
-    // It will be cleared on the next message or when component unmounts
+    setTimeout(() => {
+      setCurrentRequestId(null);
+    }, 500);
 
     console.log('Async request cancelled');
   }, []);
 
-  // Other handlers remain unchanged
+  // Other handlers
   const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
     safeUpdateMessages(prev =>
       prev.map((msg, i) => i === index ? { ...msg, reaction } : msg)
@@ -603,7 +445,7 @@ Would you like me to try again or help with something else?`;
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     sendMessage(suggestion);
-  }, [sendMessage]);
+  }, []);
 
   const openMultimedia = useCallback((multimedia: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => {
     setSelectedMultimedia(multimedia);
@@ -622,11 +464,11 @@ Would you like me to try again or help with something else?`;
             <h3>${msg.report.title}</h3>
             <div>${marked.parse(msg.report.content)}</div>
             ${msg.report.citations ?
-              `<div class="citations">
+            `<div class="citations">
                 <h4>Citations</h4>
                 <ul>${msg.report.citations.map(c => `<li>${c}</li>`).join('')}</ul>
               </div>` :
-              ''}
+            ''}
           </div>
         `;
       }
@@ -690,7 +532,7 @@ Would you like me to try again or help with something else?`;
       sendMessage(triggerMessage);
       onTriggerHandled();
     }
-  }, [triggerMessage, sendMessage, onTriggerHandled]);
+  }, [triggerMessage, onTriggerHandled]);
 
   return {
     messages,
@@ -710,12 +552,12 @@ Would you like me to try again or help with something else?`;
     exportChatAsPDF,
     ticketTriggerContext,
     messagesEndRef,
-    // New properties for async processing
+    // Async processing properties
     isAsyncProcessing,
     currentRequestId,
     asyncProgress,
     asyncStatus,
-    refreshAsyncStatus: refreshStatus,
+    refreshAsyncStatus,
     cancelAsyncRequest,
     processingError
   };
