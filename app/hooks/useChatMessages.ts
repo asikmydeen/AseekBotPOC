@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
-import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis } from '../api/advancedApi';
+import { processChatMessage, startAsyncChatProcessing, startAsyncDocumentAnalysis, fetchInsightsData } from '../api/advancedApi';
 import { LAMBDA_ENDPOINTS } from '../utils/lambdaApi';
 import { MessageType, MultimediaData } from '../types/shared';
 import { useAsyncProcessing } from './useAsyncProcessing';
@@ -11,78 +11,64 @@ import {
   createDocumentAnalysisMessage,
 } from '../utils/documentAnalysisUtils';
 
-// Function to fetch insights data from the API
-async function fetchInsightsData(requestId: string): Promise<any> {
-  try {
-    const response = await fetch(`${LAMBDA_ENDPOINTS.getProcessingStatus}?requestId=${requestId}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch insights data');
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching insights data:', error);
-    throw error;
-  }
-}
-
 // Helper function to format insights data into Markdown
 function formatInsightsToMarkdown(insightsData: any): string {
   try {
-    if (!insightsData || !insightsData.result) {
+    if (!insightsData || !insightsData.insights) {
       throw new Error('Invalid insights data format');
     }
 
-    const data = insightsData.result;
+    const insights = insightsData.insights;
 
     // Create a markdown string with sections
     let markdown = `# Average Work Order Value Analysis\n\n`;
 
     // Summary section
     markdown += `## Summary\n`;
-    markdown += `Analysis of work order values across different regions and contract types reveals significant variations and trends.\n\n`;
+    markdown += `${insights.summary || 'Analysis of work order values across different regions and contract types reveals significant variations and trends.'}\n\n`;
 
     // Key Points section
     markdown += `## Key Points\n`;
-    markdown += `- North America has the highest average work order value at $4,250\n`;
-    markdown += `- Full Service contracts generate the highest value at $4,500\n`;
-    markdown += `- Year-over-Year growth is positive at +8.5%\n`;
-    markdown += `- Warranty work has the lowest average value at $1,900\n\n`;
+    if (insights.keyPoints && Array.isArray(insights.keyPoints)) {
+      insights.keyPoints.forEach(point => {
+        markdown += `- ${point}\n`;
+      });
+    } else {
+      markdown += `- No key points available\n`;
+    }
+    markdown += `\n`;
 
     // Results section with tables
-    markdown += `## Average Value by Region\n`;
-    markdown += `| Region | Average Value |\n`;
-    markdown += `| ------ | ------------- |\n`;
-    markdown += `| North America | $4,250 |\n`;
-    markdown += `| Europe | €3,800 |\n`;
-    markdown += `| Asia Pacific | $3,100 |\n`;
-    markdown += `| Latin America | $2,900 |\n\n`;
+    if (insightsData.results && insightsData.results.length > 0) {
+      markdown += `## Average Value by Region\n`;
+      markdown += `| Region | Number of Projects | Total Project Cost | Average Project Cost |\n`;
+      markdown += `| ------ | ----------------- | ------------------ | -------------------- |\n`;
 
-    markdown += `## Average Value by Contract Type\n`;
-    markdown += `| Contract Type | Average Value |\n`;
-    markdown += `| ------------ | ------------- |\n`;
-    markdown += `| Full Service | $4,500 |\n`;
-    markdown += `| Preventive Maintenance | $2,800 |\n`;
-    markdown += `| Time & Materials | $3,200 |\n`;
-    markdown += `| Warranty | $1,900 |\n\n`;
+      insightsData.results.forEach(row => {
+        markdown += `| ${row.region || 'N/A'} | ${row.number_of_projects || 'N/A'} | ${row.total_project_cost || 'N/A'} | ${row.average_project_cost || 'N/A'} |\n`;
+      });
+      markdown += `\n`;
+    }
 
     // Trends section
-    markdown += `## Trends\n`;
-    markdown += `- **Year-over-Year Change:** +8.5%\n`;
-    markdown += `- **Quarter-over-Quarter Change:** +2.3%\n\n`;
+    if (insights.trends) {
+      markdown += `## Trends\n`;
+      Object.keys(insights.trends).forEach(key => {
+        markdown += `- **${key}:** ${insights.trends[key]}\n`;
+      });
+      markdown += `\n`;
+    }
 
     // Recommendations section
     markdown += `## Recommendations\n`;
-    markdown += `1. Focus on expanding Full Service contracts in North America to maximize revenue\n`;
-    markdown += `2. Investigate opportunities to increase value of Warranty work\n`;
-    markdown += `3. Consider pricing adjustments in Latin America to improve margins\n`;
-    markdown += `4. Develop targeted strategies for Preventive Maintenance contracts to increase average value\n\n`;
+    if (insights.recommendations && Array.isArray(insights.recommendations)) {
+      insights.recommendations.forEach((rec, idx) => {
+        markdown += `${idx+1}. ${rec}\n`;
+      });
+    } else {
+      markdown += `No specific recommendations available.\n`;
+    }
+    markdown += `\n`;
 
     markdown += `Would you like me to create a visualization of this data or provide more detailed analysis?`;
 
@@ -320,7 +306,7 @@ export default function useChatMessages({
   };
 };
 
-  // Enhanced sendMessage that supports async processing with better error handling
+  // Simplified sendMessage that always uses async processing
   const sendMessage = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
     if (!text.trim() && !isFileUpload) return;
@@ -394,7 +380,7 @@ export default function useChatMessages({
           });
         }, 500);
 
-        // Fetch insights data from API
+        // Fetch insights data from API using the imported function
         const insightsData = await fetchInsightsData(demoRequestId);
 
         // Format the insights data to Markdown
@@ -475,9 +461,7 @@ Would you like me to try again or help with something else?`;
       }
     }
 
-    // Determine if we should use async processing
-    // Note: The API layer now handles "query" keyword detection
-    const isComplexRequest = text.length > 500 || isFileUpload;
+    // Determine if this is a document analysis request
     const isDocumentAnalysis = isFileUpload && (
       text.toLowerCase().includes('analyze') ||
       text.toLowerCase().includes('document') ||
@@ -485,159 +469,52 @@ Would you like me to try again or help with something else?`;
       text.toLowerCase().includes('summarize')
     );
 
-    // Log for debugging when "query" is detected in the message
-    if (text.toLowerCase().includes('query')) {
-      console.log('Query keyword detected in message. API layer will handle async processing.');
-    }
-
     try {
       // Convert messages to ChatHistoryItem format
       const chatHistory: ChatHistoryItem[] = messages.map(convertToChatHistoryItem);
 
-      // The processChatMessage API now handles routing to async processing when "query" is detected
-      if (isComplexRequest) {
-        // Use async processing
-        let response;
-
-        if (isDocumentAnalysis && isFileUpload) {
-          // Start document analysis workflow
-          response = await startAsyncDocumentAnalysis(attachments!, text, chatSessionId);
-        } else {
-          // Start async chat processing
-          response = await startAsyncChatProcessing(text, chatHistory, attachments, chatSessionId);
-        }
-
-        console.log('Async processing initiated:', {
-          isDocumentAnalysis,
-          requestId: response.requestId,
-          responseType: response.isAsync ? 'async' : 'sync'
-        });
-
-        if (response.requestId) {
-          // Set up for async monitoring
-          setCurrentRequestId(response.requestId);
-          setIsAsyncProcessing(true);
-
-          // Initial progress setup
-          setProgress(10);
-
-          // Start the progress animation, but with a safety mechanism to prevent constant updates
-          progressInterval.current = setInterval(() => {
-            if (requestCancelledRef.current) {
-              if (progressInterval.current) {
-                clearInterval(progressInterval.current);
-                progressInterval.current = null;
-              }
-              return;
-            }
-
-            setProgress(prev => {
-              // Don't exceed 95% for async operations until completion
-              return prev < 95 ? prev + (Math.random() * 1) : 95;
-            });
-          }, 1000);
-        } else {
-          throw new Error('No request ID received for async processing');
-        }
-      } else {
-        // Use standard processing for simple requests
-        progressInterval.current = setInterval(() => {
-          if (requestCancelledRef.current) {
-            if (progressInterval.current) {
-              clearInterval(progressInterval.current);
-              progressInterval.current = null;
-            }
-            return;
-          }
-
-          setProgress(prev => {
-            const increment = Math.random() * 15;
-            const newProgress = prev + increment;
-            return newProgress >= 100 ? 99 : newProgress;
-          });
-        }, 300);
-
-        // Call the API - this will now automatically route to async processing if "query" is detected
-        const response = await processChatMessage(text, chatHistory, attachments, chatSessionId);
-
-        // Check if the API decided to use async processing (for "query" keyword)
-        if (response.isAsync && response.requestId) {
-          console.log('API routed to async processing due to query detection:', response.requestId);
-
-          // Clear existing interval as we're switching to async mode
+      // Set up progress animation for async processing
+      progressInterval.current = setInterval(() => {
+        if (requestCancelledRef.current) {
           if (progressInterval.current) {
             clearInterval(progressInterval.current);
             progressInterval.current = null;
           }
-
-          // Set up for async monitoring
-          setCurrentRequestId(response.requestId);
-          setIsAsyncProcessing(true);
-
-          // Initial progress setup
-          setProgress(10);
-
-          // Start the progress animation for async processing
-          progressInterval.current = setInterval(() => {
-            if (requestCancelledRef.current) {
-              if (progressInterval.current) {
-                clearInterval(progressInterval.current);
-                progressInterval.current = null;
-              }
-              return;
-            }
-
-            setProgress(prev => {
-              // Don't exceed 95% for async operations until completion
-              return prev < 95 ? prev + (Math.random() * 1) : 95;
-            });
-          }, 1000);
-
-          // Early return as we're now in async mode
           return;
         }
 
-        if (progressInterval.current) {
-          clearInterval(progressInterval.current);
-          progressInterval.current = null;
-        }
+        setProgress(prev => {
+          // Don't exceed 95% for async operations until completion
+          return prev < 95 ? prev + (Math.random() * 1) : 95;
+        });
+      }, 1000);
 
-        setProgress(100);
+      // Call the appropriate API based on whether this is document analysis or regular chat
+      let response;
+      if (isDocumentAnalysis && isFileUpload) {
+        // Start document analysis workflow
+        response = await startAsyncDocumentAnalysis(attachments!, text, chatSessionId);
+      } else {
+        // Use standard processChatMessage for all other requests
+        response = await processChatMessage(text, chatHistory, attachments, chatSessionId);
+      }
 
-        setTimeout(() => {
-          setIsThinking(false);
-          setProgress(0);
+      console.log('Async processing initiated:', {
+        isDocumentAnalysis,
+        requestId: response.requestId,
+        responseType: response.isAsync ? 'async' : 'sync'
+      });
 
-          // Check for ticket trigger in response
-          const shouldTriggerTicket = 'triggerTicket' in response && (response as { triggerTicket: boolean }).triggerTicket === true;
+      // Check if we received a requestId for async processing
+      if (response.requestId) {
+        // Set up for async monitoring
+        setCurrentRequestId(response.requestId);
+        setIsAsyncProcessing(true);
 
-          if (shouldTriggerTicket) {
-            const userLastMessage = messages.filter(msg => msg.sender === 'user').pop()?.text || '';
-            setTicketTriggerContext(userLastMessage);
-          } else {
-            setTicketTriggerContext(null);
-          }
-
-          // Create bot message from response
-          const botMessage: MessageType = {
-            sender: 'bot',
-            text: (response as any).message || (response as any).data?.message || 'No response received',
-            timestamp: (response as any).timestamp || new Date().toISOString(),
-            suggestions: (response as any).suggestions || (response as any).data?.suggestions || [],
-            multimedia: (response as any).multimedia || (response as any).data?.multimedia,
-            report: (response as any).report || (response as any).data?.report,
-            triggerTicket: shouldTriggerTicket,
-            chatId: '',
-            chatSessionId: chatSessionId
-          };
-
-          // Add attachments if they exist in the response
-          if ((response as any).attachments || (response as any).data?.attachments) {
-            botMessage.attachments = (response as any).attachments || (response as any).data?.attachments;
-          }
-
-          safeUpdateMessages(prev => [...prev, botMessage]);
-        }, 500);
+        // Initial progress setup
+        setProgress(10);
+      } else {
+        throw new Error('No request ID received for async processing');
       }
     } catch (error) {
       // Clean up any ongoing intervals
@@ -688,7 +565,6 @@ Would you like me to try again or help with something else?`;
 
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-
   }, [messages, safeUpdateMessages]);
   // Function to cancel ongoing async request - critical for preventing infinite loops
   const cancelAsyncRequest = useCallback(() => {

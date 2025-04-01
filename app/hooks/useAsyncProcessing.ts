@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { checkStatus } from '../utils/asyncApi';
+import { LAMBDA_ENDPOINTS } from '../utils/lambdaApi';
 
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string): boolean => {
@@ -76,26 +76,38 @@ export function useAsyncProcessing(
 
     try {
       pollingAttemptsRef.current += 1;
-      const response = await checkStatus(requestId);
+
+      // Use the new status endpoint structure
+      const response = await fetch(`${LAMBDA_ENDPOINTS.status}/${requestId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to check status');
+      }
+
+      const responseData = await response.json();
 
       // Reset polling attempts counter on success
       pollingAttemptsRef.current = 0;
 
-      setLastStatusResponse(response);
+      setLastStatusResponse(responseData);
 
       // Update state based on response, but don't downgrade status
       // Only update status if the new status is more advanced or equal to current
-      if (!isStatusAdvanced(status, response.status)) {
-        setStatus(response.status);
+      if (!isStatusAdvanced(status, responseData.status)) {
+        setStatus(responseData.status);
       }
-      setProgress(response.progress || 0);
+      setProgress(responseData.progress || 0);
 
-      if (response.status === 'COMPLETED' && response.result) {
-        setResult(response.result);
+      if (responseData.status === 'COMPLETED' && responseData.result) {
+        setResult(responseData.result);
         setIsLoading(false);
         clearPollingInterval();
-      } else if (response.status === 'FAILED') {
-        setError(response.error || { message: 'Unknown error occurred' });
+      } else if (responseData.status === 'FAILED') {
+        setError(responseData.error || { message: 'Unknown error occurred' });
         setIsLoading(false);
         setHasErrored(true);
         clearPollingInterval();
@@ -106,11 +118,11 @@ export function useAsyncProcessing(
 
       // Call the status change callback if provided
       if (onStatusChange) {
-        console.debug('[useAsyncProcessing] Calling onStatusChange with status:', response.status, 'and data:', response);
-        onStatusChange(response);
+        console.debug('[useAsyncProcessing] Calling onStatusChange with status:', responseData.status, 'and data:', responseData);
+        onStatusChange(responseData);
       }
 
-      return response;
+      return responseData;
     } catch (err) {
       console.error('Error checking status:', err);
 

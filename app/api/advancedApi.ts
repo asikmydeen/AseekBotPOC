@@ -4,39 +4,31 @@ import {
   ChatHistoryItem,
   TicketDetails,
   ApiResponse,
-  handleClientError
+  handleClientError,
+  API_BASE_URL
 } from '../utils/lambdaApi';
 
 // Placeholder for user ID - can be replaced with actual user ID when integrating with user management
 const TEST_USER_ID = 'test-user';
 
-// Original API functions
+// Updated API function to use the new async-only endpoint
 export async function processChatMessage(
 message: string,
 history: ChatHistoryItem[],
 attachments?: any[],
 chatSessionId?: string): Promise<ApiResponse> {
   try {
-    // Check if we should use the new async API for better handling
-    if (message.toLowerCase().includes('query') || message.length > 500 || (attachments && attachments.length > 0)) {
-      // If there are attachments, use document analysis workflow
-      if (attachments && attachments.length > 0) {
-        return await startAsyncDocumentAnalysis(attachments, message, chatSessionId || '');
-      } else {
-        // Just a long message with no attachments, use regular async processing
-        return await startAsyncChatProcessing(message, history, undefined, chatSessionId || '');
-      }
-    }
-
-    // Use the provided chatSessionId or create a new one if none exists
+    // Always use the provided chatSessionId or create a new one if none exists
     const sessionId = chatSessionId || `session-${Date.now()}`;
+    const chatId = chatSessionId || `chat-${Date.now()}`;
 
-    // Original implementation for simpler requests
+    // Create the request payload
     const payload: any = {
       message: message,
       history: history,
-      sessionId: sessionId, // Use the existing or new session ID
-      userId: TEST_USER_ID
+      sessionId: sessionId,
+      userId: TEST_USER_ID,
+      chatId: chatId
     };
 
     // Add S3 file references if attachments are present
@@ -51,7 +43,7 @@ chatSessionId?: string): Promise<ApiResponse> {
       payload.s3Files = s3Files;
     }
 
-    const response = await fetch(LAMBDA_ENDPOINTS.processChatMessage, {
+    const response = await fetch(LAMBDA_ENDPOINTS.message, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -62,7 +54,13 @@ chatSessionId?: string): Promise<ApiResponse> {
       throw new Error(errorData.error || 'Failed to process chat message');
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // Add a flag to indicate this is an async request
+    return {
+      ...result,
+      isAsync: true
+    };
   } catch (error) {
     console.error('Error in processChatMessage:', error);
     throw error;
@@ -73,6 +71,7 @@ export async function startAsyncChatProcessing(
   message: string, history: ChatHistoryItem[] = [], attachments?: any[], chatSessionId?: string): Promise<ApiResponse> {
   try {
     const sessionId = `session-${Date.now()}`;
+    const chatId = chatSessionId || `chat-${Date.now()}`;
 
     // Create the request payload
     const payload: any = {
@@ -80,8 +79,7 @@ export async function startAsyncChatProcessing(
       sessionId,
       history,
       userId: TEST_USER_ID,
-      // Add chatId to the payload - this was missing
-      chatId: chatSessionId || `chat-${Date.now()}`
+      chatId: chatId
     };
 
     // Add S3 file references if attachments are present
@@ -96,7 +94,7 @@ export async function startAsyncChatProcessing(
       payload.s3Files = s3Files;
     }
 
-    const response = await fetch(LAMBDA_ENDPOINTS.startProcessing, {
+    const response = await fetch(LAMBDA_ENDPOINTS.message, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -128,24 +126,24 @@ export async function startAsyncDocumentAnalysis(
     }
 
     const sessionId = `session-${Date.now()}`;
+    const chatId = chatSessionId || `chat-${Date.now()}`;
 
     // Create the request payload
     const payload: any = {
       message,
       sessionId,
       userId: TEST_USER_ID,
-      // Add chatId to the payload - this was missing
-      chatId: chatSessionId || `chat-${Date.now()}`,
+      chatId: chatId,
       s3Files: files.map(file => ({
         name: file.name,
         s3Url: file.url || file.fileUrl,
         mimeType: file.type || 'application/octet-stream',
-        useCase: "CODE_INTERPRETER"  // Changed from DOCUMENT_ANALYSIS
+        useCase: "CODE_INTERPRETER"
       })),
       documentAnalysis: true  // This is crucial for the backend to identify it as document analysis
     };
 
-    const response = await fetch(LAMBDA_ENDPOINTS.startProcessing, {
+    const response = await fetch(LAMBDA_ENDPOINTS.message, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -333,7 +331,7 @@ export async function fetchInsightsData(requestId: string): Promise<any> {
       throw new Error('No requestId provided for fetching insights data');
     }
 
-    const response = await fetch(`${LAMBDA_ENDPOINTS.baseUrl}/redshift/results?requestId=${requestId}`, {
+    const response = await fetch(`${API_BASE_URL}/redshift/results?requestId=${requestId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
