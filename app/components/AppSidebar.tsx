@@ -268,7 +268,11 @@ export default function AppSidebar({
         // If onFileAddToChat callback is provided, use it
         if (onFileAddToChat) {
             // Ensure we're passing a complete file object
-            const completeFile = {
+            const completeFile: UploadedFile = {
+                name: file.name,
+                size: file.size,
+                type: file.type || 'application/octet-stream',
+                url: file.url || '',
                 fileId: file.fileId || `file-${Date.now()}`, // Generate a temporary ID if missing
                 fileName: file.name,
                 fileKey: file.url ? file.url.split('/').pop() || file.name : file.name,
@@ -284,7 +288,6 @@ export default function AppSidebar({
             onFileClick(file.url);
         }
     };
-
     return (
         <>
             {sidebarOverlay}
