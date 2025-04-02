@@ -70,6 +70,7 @@ export interface ApiResponse {
   error?: string;
   message?: string;
   formattedMessage?: string;
+  formattedResponse?: string;
   requestId?: string;
   progress?: number;
   result?: any;
