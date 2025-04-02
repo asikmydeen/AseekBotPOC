@@ -15,7 +15,38 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const addExternalFile = useCallback((externalFile: UploadedFile) => {
-    setUploadedFiles(prevFiles => [...prevFiles, externalFile]);
+    if (!externalFile || !externalFile.name) {
+      console.error('Invalid external file:', externalFile);
+      return;
+    }
+
+    // Ensure the external file has all the required properties
+    const formattedFile: UploadedFile = {
+      name: externalFile.name || 'Unknown File',
+      size: externalFile.size || 0,
+      type: externalFile.type || 'application/octet-stream',
+      url: externalFile.url || '',
+      fileId: externalFile.fileId,
+      status: 'success', // Mark as already uploaded
+      progress: 100
+    };
+
+    // Add to state and preserve existing files
+    setUploadedFiles(prevFiles => {
+      // Check if this file already exists (by URL or name+size)
+      const fileExists = prevFiles.some(f =>
+        (f.url && f.url === formattedFile.url) ||
+        (f.name === formattedFile.name && f.size === formattedFile.size)
+      );
+
+      if (fileExists) {
+        console.log('File already exists in the list:', formattedFile.name);
+        return prevFiles; // Don't add duplicates
+      }
+
+      console.log('Adding external file to list:', formattedFile.name);
+      return [...prevFiles, formattedFile];
+    });
   }, []);
 
   useEffect(() => {
@@ -67,9 +98,13 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
             // Update status to uploading
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
-              const fileIndex = prevFiles.length - filesToAdd.length + index;
+              const fileIndex = prevFiles.findIndex(f =>
+                f.name === file.name &&
+                f.size === file.size &&
+                f.status === 'pending'
+              );
 
-              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+              if (fileIndex >= 0) {
                 updatedFiles[fileIndex] = {
                   ...updatedFiles[fileIndex],
                   status: 'uploading',
@@ -88,9 +123,13 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
             // Update with success status and URL
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
-              const fileIndex = prevFiles.length - filesToAdd.length + index;
+              const fileIndex = prevFiles.findIndex(f =>
+                f.name === file.name &&
+                f.size === file.size &&
+                f.status === 'uploading'
+              );
 
-              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+              if (fileIndex >= 0) {
                 updatedFiles[fileIndex] = {
                   ...updatedFiles[fileIndex],
                   status: 'success',
@@ -108,9 +147,13 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
             // Update with error status
             setUploadedFiles(prevFiles => {
               const updatedFiles = [...prevFiles];
-              const fileIndex = prevFiles.length - filesToAdd.length + index;
+              const fileIndex = prevFiles.findIndex(f =>
+                f.name === file.name &&
+                f.size === file.size &&
+                (f.status === 'uploading' || f.status === 'pending')
+              );
 
-              if (fileIndex >= 0 && fileIndex < updatedFiles.length) {
+              if (fileIndex >= 0) {
                 updatedFiles[fileIndex] = {
                   ...updatedFiles[fileIndex],
                   status: 'error',
