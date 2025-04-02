@@ -81,6 +81,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
   };
 
   const getFileIcon = (fileType: string) => {
+    if (!fileType) return <FaFile className="text-gray-500" size={16} />;
     if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500" size={16} />;
     if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className="text-blue-500" size={16} />;
     if (fileType.includes('text') || fileType.includes('txt')) return <FaFileAlt className="text-yellow-500" size={16} />;
@@ -91,7 +92,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -190,37 +191,48 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
             <div className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               <h4 className="text-xs font-medium mb-1 text-left">Uploaded Files:</h4>
               <ul className="space-y-1">
-                {uploadedFiles.map((file, index) => (
-                  <li
-                    key={`${file.name}-${index}`}
-                    className={`flex items-center justify-between p-1.5 rounded ${isDarkMode ? 'bg-gray-700/70' : 'bg-gray-100'
-                      }`}
-                  >
-                    <div className="flex items-center flex-1 min-w-0">
-                      {getFileIcon(file.type)}
-                      <span className="ml-2 text-sm truncate max-w-[200px]">{file.name}</span>
-                      <span className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        ({formatFileSize(file.size)})
-                      </span>
-                      {getFileStatusIndicator(file)}
-                    </div>
-                    {onRemoveFile && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveFile(file.name);
-                        }}
-                        className={`p-1 rounded-full ${isDarkMode
-                          ? 'text-gray-400 hover:text-red-400 hover:bg-gray-600'
-                          : 'text-gray-500 hover:text-red-500 hover:bg-gray-200'
-                          }`}
-                      >
-                        <FaTimes size={14} />
-                      </button>
-                    )}
-                  </li>
-                ))}
+                {uploadedFiles.map((file, index) => {
+                  // Ensure file has all required properties with defaults
+                  const safeFile = {
+                    name: file.name || 'Unnamed File',
+                    size: typeof file.size === 'number' ? file.size : 0,
+                    type: file.type || 'application/octet-stream',
+                    status: file.status || 'success',
+                    progress: typeof file.progress === 'number' ? file.progress : 100
+                  };
+
+                  return (
+                    <li
+                      key={`${safeFile.name}-${index}`}
+                      className={`flex items-center justify-between p-1.5 rounded ${isDarkMode ? 'bg-gray-700/70' : 'bg-gray-100'
+                        }`}
+                    >
+                      <div className="flex items-center flex-1 min-w-0">
+                        {getFileIcon(safeFile.type)}
+                        <span className="ml-2 text-sm truncate max-w-[200px]">{safeFile.name}</span>
+                        <span className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          ({formatFileSize(safeFile.size)})
+                        </span>
+                        {getFileStatusIndicator(file)}
+                      </div>
+                      {onRemoveFile && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveFile(file.name);
+                          }}
+                          className={`p-1 rounded-full ${isDarkMode
+                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-600'
+                            : 'text-gray-500 hover:text-red-500 hover:bg-gray-200'
+                            }`}
+                        >
+                          <FaTimes size={14} />
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
