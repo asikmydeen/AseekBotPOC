@@ -158,7 +158,7 @@ export async function getChatHistory(chatId: string): Promise<ApiResponse> {
 }
 
 // File upload function - kept as is since it still uses the same endpoint
-export async function uploadFileApi(file: File, sessionId?: string): Promise<ApiResponse> {
+export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<ApiResponse> {
   try {
     if (!file) {
       throw new Error('No file provided');
