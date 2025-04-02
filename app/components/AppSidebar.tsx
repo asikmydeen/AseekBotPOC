@@ -36,6 +36,10 @@ import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
 
 interface UploadedFile {
+    name: any;
+    size: undefined;
+    url: any;
+    type: string;
     fileId: string;
     fileName: string;
     fileKey: string;
