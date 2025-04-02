@@ -125,7 +125,7 @@ function ChatApp() {
     console.log('Syncing files from chat interface:', newFiles);
 
     // Get a unique key for each file for deduplication
-    const getFileKey = (file: any) => {
+    const getFileKey = (file: any): string => {
       if (file.url && typeof file.url === 'string') {
         return file.url.split('/').pop() || `${file.name}-${file.size}`;
       }
@@ -137,7 +137,9 @@ function ChatApp() {
       const existingFilesMap = new Map();
       prevFiles.forEach(file => {
         const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
-        existingFilesMap.set(key, file);
+        if (key) {
+          existingFilesMap.set(key, file);
+        }
       });
 
       // Process new files
@@ -177,13 +179,13 @@ function ChatApp() {
       // Combine existing sidebar files with updated/new files
       const result = Array.from(existingFilesMap.values()).filter(file => {
         const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
-        return sidebarFilesRef.current.has(key);
+        return key && sidebarFilesRef.current.has(key);
       });
 
       // Add files that aren't from the sidebar
       newProcessedFiles.forEach(newFile => {
         const fileKey = newFile.fileKey;
-        if (!sidebarFilesRef.current.has(fileKey)) {
+        if (fileKey && !sidebarFilesRef.current.has(fileKey)) {
           result.push(newFile);
         }
       });
@@ -216,9 +218,12 @@ function ChatApp() {
 
     // Track this file as coming from the sidebar to prevent it from being removed
     const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
-    sidebarFilesRef.current.add(fileKey);
 
-    console.log('Added file to sidebar tracking:', fileKey, sidebarFilesRef.current);
+    // Only add to sidebarFilesRef if fileKey is not undefined
+    if (fileKey) {
+      sidebarFilesRef.current.add(fileKey);
+      console.log('Added file to sidebar tracking:', fileKey, sidebarFilesRef.current);
+    }
 
     // Map the local file properties to the shared UploadedFile format
     const mappedFile: UploadedFile = {
@@ -229,8 +234,8 @@ function ChatApp() {
       fileId: file.fileId || '',
       status: 'success',
       progress: 100,
-      // Add a property to indicate this file should not be removed from the sidebar
-      preserveInSidebar: true
+      // Note: We don't add preserveInSidebar property here since it's not in the UploadedFile type
+      // Instead we track sidebar files using the sidebarFilesRef
     };
 
     console.log('Mapped file for chat:', mappedFile);
@@ -265,7 +270,11 @@ function ChatApp() {
 
             // Add each file key to the sidebar files tracker
             const fileKey = fileObj.fileKey || (fileObj.presignedUrl ? fileObj.presignedUrl.split('/').pop() : `${fileObj.fileName}-${fileObj.fileSize}`);
-            sidebarFilesRef.current.add(fileKey);
+
+            // Only add to sidebarFilesRef if fileKey is not undefined
+            if (fileKey) {
+              sidebarFilesRef.current.add(fileKey);
+            }
 
             return fileObj;
           });
