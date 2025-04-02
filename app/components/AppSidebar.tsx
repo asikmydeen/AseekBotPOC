@@ -253,12 +253,31 @@ export default function AppSidebar({
     const onAddToChatClick = (file: UploadedFile, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent event bubbling
 
+        // Validate that the file object has required properties before adding
+        if (!file.name || file.size === undefined) {
+            console.error('Invalid file object for chat:', file);
+            return;
+        }
+
+        console.log('Adding file to chat:', file.name, 'Size:', file.size);
+
         // If onFileAddToChat callback is provided, use it
         if (onFileAddToChat) {
-            onFileAddToChat(file);
-        } else if (file.presignedUrl) {
+            // Ensure we're passing a complete file object
+            const completeFile = {
+                fileId: file.fileId || `file-${Date.now()}`, // Generate a temporary ID if missing
+                fileName: file.name,
+                fileKey: file.url ? file.url.split('/').pop() || file.name : file.name,
+                uploadDate: new Date().toISOString(),
+                fileSize: file.size,
+                fileType: file.type || 'application/octet-stream',
+                presignedUrl: file.url || ''
+            };
+
+            onFileAddToChat(completeFile);
+        } else if (file.url) {
             // Otherwise, fall back to onFileClick
-            onFileClick(file.presignedUrl);
+            onFileClick(file.url);
         }
     };
 
