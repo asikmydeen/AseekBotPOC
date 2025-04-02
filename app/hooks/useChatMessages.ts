@@ -201,10 +201,13 @@ export default function useChatMessages({
             botMessage.text.includes('### Next Steps')
           );
         } else {
+          // Debug log to check for formattedMessage
+          console.log('Status response formattedMessage:', statusResponse.formattedMessage);
+
           // Create a standard bot message for other workflow types
           botMessage = {
             sender: 'bot',
-            text: statusResponse.message || 'Processing complete.',
+            text: statusResponse.formattedMessage || statusResponse.message || 'Processing complete.',
             timestamp: new Date().toISOString(),
             chatId: statusResponse.chatId || '',
             chatSessionId: chatSessionId
