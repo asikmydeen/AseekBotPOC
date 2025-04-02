@@ -207,7 +207,8 @@ export default function useChatMessages({
           // Create a standard bot message for other workflow types
           botMessage = {
             sender: 'bot',
-            text: statusResponse.formattedMessage || statusResponse.message || 'Processing complete.',
+            formattedMessage: statusResponse.formattedMessage,
+            text: statusResponse.message || 'Processing complete.',
             timestamp: new Date().toISOString(),
             chatId: statusResponse.chatId || '',
             chatSessionId: chatSessionId
@@ -375,7 +376,8 @@ export default function useChatMessages({
           // Create bot message from response
           const botMessage: MessageType = {
             sender: 'bot',
-            text: response.formattedMessage || response.formattedResponse || response.message || 'No response received',
+            formattedMessage: response.formattedMessage || response.formattedResponse,
+            text: response.message || 'No response received',
             timestamp: response.timestamp || new Date().toISOString(),
             suggestions: response.suggestions || [],
             multimedia: response.multimedia,
