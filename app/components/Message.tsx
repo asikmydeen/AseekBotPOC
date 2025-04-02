@@ -54,8 +54,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
 
     // Helper function to get message content
     const getMessageContent = useCallback((): string => {
-        return message.text || message.message || "";
-    }, [message.text, message.message]);
+        return message.formattedMessage || message.text || message.message || "";
+    }, [message.formattedMessage, message.text, message.message]);
 
     // Function to handle image click
     const handleImageClick = (imageUrl: string): void => {
@@ -765,8 +765,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
 // Use React.memo to prevent unnecessary re-renders
 export default React.memo(EnhancedMessage, (prevProps, nextProps) => {
     // Custom comparison function to determine if component should re-render
-    const prevContent = prevProps.message.text || prevProps.message.message;
-    const nextContent = nextProps.message.text || nextProps.message.message;
+    const prevContent = prevProps.message.formattedMessage || prevProps.message.text || prevProps.message.message;
+    const nextContent = nextProps.message.formattedMessage || nextProps.message.text || nextProps.message.message;
 
     const prevAttachmentsStr = JSON.stringify(prevProps.message.attachments || []);
     const nextAttachmentsStr = JSON.stringify(nextProps.message.attachments || []);

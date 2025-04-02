@@ -372,7 +372,7 @@ export default function useChatMessages({
           // Create bot message from response
           const botMessage: MessageType = {
             sender: 'bot',
-            text: response.message || 'No response received',
+            text: response.formattedMessage || response.formattedResponse || response.message || 'No response received',
             timestamp: response.timestamp || new Date().toISOString(),
             suggestions: response.suggestions || [],
             multimedia: response.multimedia,
