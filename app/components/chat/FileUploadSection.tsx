@@ -37,11 +37,21 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 }) => {
   // Format file size to human-readable format
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === undefined || bytes === null || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Get file icon based on file type
+  const getFileIcon = (fileType: string) => {
+    if (!fileType) return <FiFile size={20} />;
+    if (fileType.includes('pdf')) return <FiFile size={20} className="text-red-500" />;
+    if (fileType.includes('doc')) return <FiFile size={20} className="text-blue-500" />;
+    if (fileType.includes('xlsx') || fileType.includes('csv')) return <FiFile size={20} className="text-green-500" />;
+    if (fileType.includes('image') || fileType.includes('jpg') || fileType.includes('png')) return <FiFile size={20} className="text-purple-500" />;
+    return <FiFile size={20} />;
   };
 
   return (
@@ -58,12 +68,12 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-lg p-6 mb-4 text-center cursor-pointer transition-colors ${isDarkMode
-                ? isDragActive
-                  ? 'border-blue-400 bg-blue-900/20'
-                  : 'border-gray-600 hover:border-gray-500'
-                : isDragActive
-                  ? 'border-blue-400 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+              ? isDragActive
+                ? 'border-blue-400 bg-blue-900/20'
+                : 'border-gray-600 hover:border-gray-500'
+              : isDragActive
+                ? 'border-blue-400 bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
               }`}
           >
             <input {...getInputProps()} />
@@ -97,32 +107,39 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 
               {/* File list */}
               <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-                {uploadedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-2 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-white'
-                      }`}
-                  >
-                    <div className="flex items-center">
-                      <FiFile className="mr-2" />
-                      <div>
-                        <p className={`text-sm font-medium truncate max-w-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                          {file.name}
-                        </p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {formatFileSize(file.size)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className={`p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
-                      aria-label="Remove file"
+                {uploadedFiles.map((file, index) => {
+                  // Ensure file has all required properties with defaults
+                  const safeFileName = file.name || 'Unnamed File';
+                  const safeFileSize = typeof file.size === 'number' ? file.size : 0;
+                  const safeFileType = file.type || 'application/octet-stream';
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-2 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-white'
+                        }`}
                     >
-                      <FiX className={isDarkMode ? 'text-gray-300' : 'text-gray-500'} />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center">
+                        {getFileIcon(safeFileType)}
+                        <div>
+                          <p className={`text-sm font-medium truncate max-w-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                            {safeFileName}
+                          </p>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            ({formatFileSize(safeFileSize)})
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className={`p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
+                        aria-label="Remove file"
+                      >
+                        <FiX className={isDarkMode ? 'text-gray-300' : 'text-gray-500'} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Action buttons */}
@@ -133,7 +150,15 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                     }`}
                   disabled={isUploading}
                 >
-                  {showPrompt ? 'Analyze Document' : 'Analyze the File/s'}
+                  {showPrompt ? 'Analyze Document' : 'Analyze the File(s)'}
+                </button>
+                <button
+                  onClick={sendFiles}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                    }`}
+                  disabled={isUploading}
+                >
+                  Send with Message
                 </button>
                 <button
                   onClick={cancelUpload}
