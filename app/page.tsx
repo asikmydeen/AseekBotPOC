@@ -13,7 +13,6 @@ const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').th
   loading: () => <div className="flex items-center justify-center h-screen">Loading chat interface...</div>
 });
 
-
 function ChatApp() {
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [showDocumentAnalysisPrompt, setShowDocumentAnalysisPrompt] = useState<boolean>(false);
@@ -23,6 +22,9 @@ function ChatApp() {
 
   // Track which files came from the sidebar to prevent them from being removed
   const sidebarFilesRef = useRef<Set<string>>(new Set());
+
+  // Add a list of files we've already added to chat to prevent duplicates
+  const filesAddedToChatRef = useRef<Set<string>>(new Set());
 
   // Use ref to track if we're in the middle of a message update
   const isUpdatingRef = useRef(false);
@@ -77,6 +79,11 @@ function ChatApp() {
         sidebarFilesRef.current.delete(deletedFileKey);
       }
 
+      // Also remove from filesAddedToChat if it exists
+      if (filesAddedToChatRef.current.has(deletedFileKey)) {
+        filesAddedToChatRef.current.delete(deletedFileKey);
+      }
+
       return updatedFiles;
     });
   }, []);
@@ -124,79 +131,53 @@ function ChatApp() {
 
     console.log('Syncing files from chat interface:', newFiles);
 
-    // Get a unique key for each file for deduplication
-    const getFileKey = (file: any): string => {
-      if (file.url && typeof file.url === 'string') {
-        return file.url.split('/').pop() || `${file.name}-${file.size}`;
-      }
-      return `${file.name}-${file.size}`;
-    };
+    // Track all processed file keys to avoid duplicates
+    const processedKeys = new Set<string>();
 
     setUploadedFiles(prevFiles => {
-      // Create a set of file keys already in the sidebar
-      const sidebarFileKeys = new Set(Array.from(sidebarFilesRef.current));
-
       // Create a map of existing files for easy lookups
       const existingFilesMap = new Map();
       prevFiles.forEach(file => {
-        const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
+        const key = file.fileKey || '';
         if (key) {
           existingFilesMap.set(key, file);
         }
       });
 
-      // Create a set to track processed files and avoid duplicates
-      const processedKeys = new Set<string>();
-
-      // First, add all sidebar files to the result
-      const result = Array.from(existingFilesMap.values()).filter(file => {
-        const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
-        if (key && sidebarFileKeys.has(key)) {
+      // Start with a copy of the existing sidebar files
+      const result = prevFiles.filter(file => {
+        const key = file.fileKey || '';
+        // Keep file if it's in sidebarFilesRef
+        if (key && sidebarFilesRef.current.has(key)) {
           processedKeys.add(key);
           return true;
         }
         return false;
       });
 
-      // Then, process new files from the chat interface
+      // Process the new files from chat interface
       newFiles.forEach(file => {
-        const fileKey = getFileKey(file);
-
-        // Skip if we've already processed this file
+        // Skip files already processed
+        const fileKey = file.fileId || file.url || `${file.name}-${file.size}`;
         if (processedKeys.has(fileKey)) {
           return;
         }
 
         processedKeys.add(fileKey);
 
-        // If it exists in our map but wasn't added as a sidebar file already
-        if (existingFilesMap.has(fileKey) && !sidebarFileKeys.has(fileKey)) {
-          // This is an existing file uploaded via the chat interface, update it
-          const existingFile = existingFilesMap.get(fileKey);
-          result.push({
-            ...existingFile,
-            fileName: file.name || existingFile.fileName,
-            fileSize: file.size || existingFile.fileSize,
-            fileType: file.type || existingFile.fileType,
-            presignedUrl: file.url || existingFile.presignedUrl,
-            status: file.status || 'success',
-          });
-        } else if (!existingFilesMap.has(fileKey)) {
-          // This is a new file uploaded via the chat interface
-          result.push({
-            fileId: file.fileId || `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            fileName: file.name || 'Untitled File',
-            fileKey: fileKey,
-            uploadDate: new Date().toISOString(),
-            fileSize: file.size || 0,
-            fileType: file.type || 'application/octet-stream',
-            presignedUrl: file.url || '',
-            status: file.status || 'success',
-          });
-        }
+        // Create a properly formatted file object
+        result.push({
+          fileId: file.fileId || `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          fileName: file.name || 'Untitled File',
+          fileKey: fileKey,
+          uploadDate: new Date().toISOString(),
+          fileSize: file.size || 0,
+          fileType: file.type || 'application/octet-stream',
+          presignedUrl: file.url || '',
+          status: file.status || 'success',
+        });
       });
 
-      console.log('Updated uploaded files state:', result);
       return result;
     });
   }, []);
@@ -223,38 +204,44 @@ function ChatApp() {
     }
 
     // Get a proper fileKey
-    const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
+    const fileKey = file.fileKey || '';
 
-    // Track this file as coming from the sidebar
-    if (fileKey) {
-      sidebarFilesRef.current.add(fileKey);
-      console.log('Added file to sidebar tracking:', fileKey, sidebarFilesRef.current);
+    // Don't add the same file multiple times to chat
+    if (fileKey && filesAddedToChatRef.current.has(fileKey)) {
+      console.log('File already added to chat, skipping:', fileKey);
+      return;
     }
 
-    // Map the local file properties to the shared UploadedFile format
+    // Add to tracking sets
+    if (fileKey) {
+      sidebarFilesRef.current.add(fileKey);
+      filesAddedToChatRef.current.add(fileKey);
+      console.log('Added file to sidebar tracking:', fileKey);
+    }
+
+    // Map the file to the format expected by ChatInterface
     const mappedFile: UploadedFile = {
       name: file.fileName || 'Unnamed File',
       size: typeof file.fileSize === 'number' ? file.fileSize : 0,
       type: file.fileType || 'application/octet-stream',
       url: file.presignedUrl || '',
-      fileId: file.fileId || '',
+      fileId: file.fileId || fileKey || '',
       status: 'success',
       progress: 100,
     };
 
     console.log('Mapped file for chat:', mappedFile);
 
-    // Always set the preselected file to trigger the chat interface
-    setPreselectedFile(null); // Clear it first to ensure the effect triggers even for the same file
-    setTimeout(() => {
-      setPreselectedFile(mappedFile);
-    }, 0);
+    // Set the preselected file - this will be picked up by ChatInterface
+    setPreselectedFile(mappedFile);
   }, []);
 
   // Reset lastMessagesRef when active chat changes
   useEffect(() => {
     if (activeChat?.id) {
       lastMessagesRef.current = JSON.stringify(activeChat.messages || []);
+      // Clear filesAddedToChat when changing chats
+      filesAddedToChatRef.current.clear();
     }
   }, [activeChat?.id]);
 
@@ -278,9 +265,7 @@ function ChatApp() {
             };
 
             // Add each file key to the sidebar files tracker
-            const fileKey = fileObj.fileKey || (fileObj.presignedUrl ? fileObj.presignedUrl.split('/').pop() : `${fileObj.fileName}-${fileObj.fileSize}`);
-
-            // Only add to sidebarFilesRef if fileKey is not undefined
+            const fileKey = fileObj.fileKey || '';
             if (fileKey) {
               sidebarFilesRef.current.add(fileKey);
             }
@@ -303,6 +288,18 @@ function ChatApp() {
     }
     fetchFiles();
   }, []);
+
+  // Clear preselectedFile after ChatInterface has handled it
+  useEffect(() => {
+    if (preselectedFile) {
+      // Wait a bit to ensure ChatInterface has time to process the file
+      const timer = setTimeout(() => {
+        setPreselectedFile(null);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [preselectedFile]);
 
   return (
     <main id="main-content" role="main" className="flex h-screen w-full">
