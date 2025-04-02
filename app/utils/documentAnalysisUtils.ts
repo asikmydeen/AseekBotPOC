@@ -336,24 +336,19 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
     suggestions.push('What trends do you see in this data?');
   }
 
-  // Check for formattedMessage in different locations
-  const formattedMessage = status.formattedMessage ||
-                          status.formattedResponse ||
-                          findPropertyDeep(status, 'formattedMessage', 5);
-
   // Debug log to help diagnose message formatting issues
   console.log('Document analysis message sources:', {
     hasFormattedMessage: !!status.formattedMessage,
     hasFormattedResponse: !!status.formattedResponse,
     hasDeepFormattedMessage: !!findPropertyDeep(status, 'formattedMessage', 5),
-    formattedMessageLength: formattedMessage ? formattedMessage.length : 0,
     analysisTextLength: analysisText.length
   });
 
   // Create the bot message
+  // Use analysisText for both formattedMessage and text to ensure proper markdown rendering
   return {
     sender: 'bot',
-    formattedMessage: formattedMessage,
+    formattedMessage: analysisText,
     text: analysisText,
     timestamp: status.timestamp || new Date().toISOString(),
     suggestions: suggestions,
