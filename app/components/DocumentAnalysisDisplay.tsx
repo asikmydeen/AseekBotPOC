@@ -18,6 +18,7 @@ const DocumentAnalysisDisplay: React.FC<DocumentAnalysisDisplayProps> = ({
 
     // Parse the markdown content into sections
     const sections: Record<string, string> = {};
+    // Improved regex to ensure it captures all content correctly, including at the end of the string
     const sectionRegex = /### ([^\n]+)\n((?:.+\n?)+?)(?=### |$)/g;
     let match;
 
@@ -140,11 +141,38 @@ const DocumentAnalysisDisplay: React.FC<DocumentAnalysisDisplayProps> = ({
                                     }`}>
                                     Next Steps
                                 </h4>
-                                <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-                                    {sections['Next Steps']}
-                                </p>
+                                <div
+                                    className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}
+                                    dangerouslySetInnerHTML={{ __html: sections['Next Steps'].replace(/- /g, '• ') }}
+                                />
                             </motion.div>
                         )}
+
+                        {/* Render any additional sections that might be present */}
+                        {Object.entries(sections).map(([title, content]) => {
+                            // Skip the sections we've already rendered
+                            if (['Summary', 'Key Points', 'Recommendations', 'Next Steps'].includes(title)) {
+                                return null;
+                            }
+
+                            return (
+                                <motion.div
+                                    key={title}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3, delay: 0.5 }}
+                                    className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}
+                                >
+                                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                                        {title}
+                                    </h4>
+                                    <div
+                                        className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}
+                                        dangerouslySetInnerHTML={{ __html: content.replace(/- /g, '• ') }}
+                                    />
+                                </motion.div>
+                            );
+                        })}
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -10,6 +10,7 @@ export interface StatusResponse {
   requestId: string;
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   message?: string;
+  formattedMessage?: string;
   progress: number;
   result?: any;
   error?: {

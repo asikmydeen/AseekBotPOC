@@ -85,6 +85,7 @@ export interface MessageType {
   id?: string;
   agentType?: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support';
   message?: string; // For backward compatibility
+  formattedMessage?: string;  // Optional formatted message for display override
   isError?: boolean;
   userId?: string;
 }

@@ -69,6 +69,7 @@ export interface ApiResponse {
   data?: any[];
   error?: string;
   message?: string;
+  formattedMessage?: string;
   requestId?: string;
   progress?: number;
   result?: any;
