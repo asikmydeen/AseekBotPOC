@@ -293,7 +293,18 @@ function ChatInterfaceComponent({
     // Handle external file being added to chat
     useEffect(() => {
         if (externalFileToAdd && addExternalFile) {
+            console.log('Adding external file to chat:', externalFileToAdd.name, 'Size:', externalFileToAdd.size);
+
+            // Check if the file object has all required properties before adding
+            if (!externalFileToAdd.name || externalFileToAdd.size === undefined) {
+                console.error('Invalid external file detected:', externalFileToAdd);
+                return;
+            }
+
+            // Add the file to the upload state
             addExternalFile(externalFileToAdd);
+
+            // Make sure the file dropzone is visible
             setShowFileDropzone(true);
         }
     }, [externalFileToAdd, addExternalFile, setShowFileDropzone]);
