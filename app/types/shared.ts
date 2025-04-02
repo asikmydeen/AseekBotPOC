@@ -93,15 +93,18 @@ export interface MessageType {
 // Helper type for sharing setState functions
 export type SetState<T> = Dispatch<SetStateAction<T>>;
 
-// Type for uploaded file information
+// Type for uploaded file information with better documentation
 export interface UploadedFile {
-  name: string;
-  size: number;
-  type: string;
-  file?: File;
-  status?: 'pending' | 'uploading' | 'success' | 'error';
-  progress?: number;
-  url: string; // Making url required
-  fileId?: string;
-  error?: string;
+  // Required properties
+  name: string;        // The name of the file
+  size: number;        // The size of the file in bytes
+  type: string;        // The MIME type of the file
+  url: string;         // The URL where the file can be accessed
+
+  // Optional properties
+  file?: File;         // The original File object if available (browser only)
+  status?: 'pending' | 'uploading' | 'success' | 'error';  // Current upload status
+  progress?: number;   // Upload progress (0-100)
+  fileId?: string;     // Unique identifier for the file
+  error?: string;      // Error message if upload failed
 }
