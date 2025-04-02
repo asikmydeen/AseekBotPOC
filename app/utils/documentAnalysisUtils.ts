@@ -353,7 +353,8 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
   // Create the bot message
   return {
     sender: 'bot',
-    text: formattedMessage || analysisText,
+    formattedMessage: formattedMessage,
+    text: analysisText,
     timestamp: status.timestamp || new Date().toISOString(),
     suggestions: suggestions,
     chatId: status.requestId || documentId,

@@ -86,6 +86,7 @@ export default function useChatMessages({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const requestCancelledRef = useRef<boolean>(false);
   const statusPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const processedRequestIdsRef = useRef<Set<string>>(new Set());
 
   // Clean up interval when component unmounts
   useEffect(() => {
@@ -173,6 +174,13 @@ export default function useChatMessages({
 
       // Handle completed status
       if (statusResponse.status === 'COMPLETED') {
+        // Check if this request has already been processed
+        if (processedRequestIdsRef.current.has(requestId)) {
+          console.log(`Request ${requestId} already processed, skipping duplicate message`);
+          return;
+        }
+        processedRequestIdsRef.current.add(requestId);
+
         // Clean up polling interval
         if (statusPollIntervalRef.current) {
           clearInterval(statusPollIntervalRef.current);
@@ -351,6 +359,9 @@ export default function useChatMessages({
         setIsAsyncProcessing(true);
         setAsyncStatus(response.status);
         setAsyncProgress(response.progress || 0);
+
+        // Clear the processed request IDs for the new async request
+        processedRequestIdsRef.current.clear();
 
         // Start polling for status updates
         statusPollIntervalRef.current = setInterval(() => {
