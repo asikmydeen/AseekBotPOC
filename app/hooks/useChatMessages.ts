@@ -128,6 +128,25 @@ export default function useChatMessages({
       const currentMessagesStr = JSON.stringify(messages);
       if (currentMessagesStr !== lastUpdateRef.current) {
         lastUpdateRef.current = currentMessagesStr;
+
+        // Check for document analysis messages before passing to parent
+        const hasDocAnalysis = messages.some(msg =>
+          msg.text?.includes('## Document Analysis:') ||
+          msg.agentType === 'bid-analysis'
+        );
+
+        if (hasDocAnalysis) {
+          console.log('Passing document analysis message to parent component');
+          console.log('Document analysis sections present:',
+            messages.filter(msg => msg.agentType === 'bid-analysis')
+              .map(msg => ({
+                hasKeyPoints: msg.text?.includes('### Key Points') || false,
+                hasRecommendations: msg.text?.includes('### Recommendations') || false,
+                hasNextSteps: msg.text?.includes('### Next Steps') || false
+              }))
+          );
+        }
+
         onMessagesUpdate(messages);
       }
     }
@@ -169,7 +188,18 @@ export default function useChatMessages({
         let botMessage: MessageType;
 
         if (statusResponse.workflowType === 'DOCUMENT_ANALYSIS') {
+          console.log('Document analysis workflow detected, processing insights...');
+          console.log('Status response structure:', JSON.stringify(statusResponse, null, 2).substring(0, 500) + '...');
+
           botMessage = createDocumentAnalysisMessage(statusResponse, chatSessionId);
+
+          console.log('Document analysis message created with text length:', botMessage.text.length);
+          console.log('Message contains insights sections:',
+            botMessage.text.includes('### Summary'),
+            botMessage.text.includes('### Key Points'),
+            botMessage.text.includes('### Recommendations'),
+            botMessage.text.includes('### Next Steps')
+          );
         } else {
           // Create a standard bot message for other workflow types
           botMessage = {
@@ -182,7 +212,12 @@ export default function useChatMessages({
         }
 
         // Add the bot message to the chat
-        safeUpdateMessages(prev => [...prev, botMessage]);
+        console.log('Adding document analysis message to chat history');
+        safeUpdateMessages(prev => {
+          const newMessages = [...prev, botMessage];
+          console.log('Updated messages count:', newMessages.length);
+          return newMessages;
+        });
 
         // Scroll to bottom
         if (messagesEndRef.current) {

@@ -4,7 +4,7 @@ import { MessageType } from "../types/shared";
  * Deep search for a property in an object
  * This helps find properties that might be deeply nested
  */
-function findPropertyDeep(obj: any, targetProp: string, maxDepth: number = 3, currentDepth: number = 0): any {
+function findPropertyDeep(obj: any, targetProp: string, maxDepth: number = 5, currentDepth: number = 0): any {
   if (!obj || typeof obj !== 'object' || currentDepth > maxDepth) {
     return undefined;
   }
@@ -26,6 +26,54 @@ function findPropertyDeep(obj: any, targetProp: string, maxDepth: number = 3, cu
 }
 
 /**
+ * Recursively formats an object as markdown
+ * This is useful for handling unknown or complex nested structures
+ * @param obj The object to format
+ * @param depth Current depth level (for indentation)
+ * @returns Formatted markdown string
+ */
+function formatObjectAsMarkdown(obj: any, depth: number = 0): string {
+  if (!obj || typeof obj !== 'object') {
+    return obj?.toString() || '';
+  }
+
+  // If it's an array, format each item
+  if (Array.isArray(obj)) {
+    return obj.map(item => {
+      if (typeof item === 'object' && item !== null) {
+        return `- ${formatObjectAsMarkdown(item, depth + 1)}`;
+      } else {
+        return `- ${item}`;
+      }
+    }).join('\n');
+  }
+
+  // For objects, format each property
+  let result = '';
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+
+      // Skip null or undefined values
+      if (value === null || value === undefined) continue;
+
+      // Format based on value type
+      if (typeof value === 'object') {
+        if (Array.isArray(value) && value.length > 0) {
+          result += `${'  '.repeat(depth)}**${key}**:\n${formatObjectAsMarkdown(value, depth + 1)}\n`;
+        } else if (Object.keys(value).length > 0) {
+          result += `${'  '.repeat(depth)}**${key}**:\n${formatObjectAsMarkdown(value, depth + 1)}\n`;
+        }
+      } else {
+        result += `${'  '.repeat(depth)}**${key}**: ${value}\n`;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Creates a formatted message for document analysis
  *
  * This simplified version directly extracts the most important information from the status
@@ -39,7 +87,7 @@ function findPropertyDeep(obj: any, targetProp: string, maxDepth: number = 3, cu
 export function createDocumentAnalysisMessage(status: any, chatSessionId: string): MessageType {
   console.log('Creating document analysis message from status');
 
-  // Extract insights using a simplified approach
+  // Extract insights using a more comprehensive approach
   let insights = null;
 
   // Primary path for insights - check the most common location first
@@ -51,19 +99,41 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
     insights = status.result;
   }
 
+  // If insights is not found or doesn't contain expected properties, use deep search
+  if (!insights ||
+      (typeof insights === 'object' &&
+       !insights.summary &&
+       !insights.keyPoints &&
+       !insights.recommendations &&
+       !insights.nextSteps)) {
+
+    // Try to find insights property using deep search
+    const deepInsights = findPropertyDeep(status, 'insights', 5);
+    if (deepInsights) {
+      insights = deepInsights;
+    }
+  }
+
+  // Check if insights contains a nested insights property
+  if (insights && insights.insights) {
+    insights = insights.insights;
+  }
+
   // Extract document metadata with priority on sourceDocument
   const documentId = status.result?.sourceDocument?.documentId ||
                      status.result?.documentId ||
                      status.documentId ||
+                     findPropertyDeep(status, 'documentId', 5) ||
                      'unknown';
   const fileType = status.result?.sourceDocument?.fileType ||
                    status.result?.fileType ||
                    status.fileType ||
+                   findPropertyDeep(status, 'fileType', 5) ||
                    'document';
 
-  // Get document name (simplified)
+  // Get document name (improved)
   let documentName = "document";
-  const s3Key = status.result?.s3Key || status.s3Key;
+  const s3Key = status.result?.s3Key || status.s3Key || findPropertyDeep(status, 's3Key', 5);
   if (s3Key) {
     const keyParts = s3Key.split('/');
     if (keyParts.length > 0) {
@@ -113,22 +183,55 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
       }
     }
 
+    // Check for nested completion structures
+    if (insights.completion && typeof insights.completion === 'string') {
+      try {
+        const parsed = JSON.parse(insights.completion);
+        structuredInsights = parsed;
+      } catch (e) {
+        // If parsing fails, use the string directly
+        if (!structuredInsights.summary) {
+          structuredInsights.summary = insights.completion;
+        }
+      }
+    }
+
     // Format the content sections
     if (typeof structuredInsights === 'string') {
       analysisText += "### Summary\n";
       analysisText += structuredInsights + "\n\n";
     } else {
-      // Extract all content sections
+      // Extract all content sections with deep property search if needed
       const summary = structuredInsights.summary ||
-        `Analysis of ${fileType.toUpperCase()} file completed.`;
+                     findPropertyDeep(structuredInsights, 'summary', 3) ||
+                     `Analysis of ${fileType.toUpperCase()} file completed.`;
 
-      const keyPoints = Array.isArray(structuredInsights.keyPoints) ?
-        structuredInsights.keyPoints.filter((point: any) => point && typeof point === 'string') : [];
+      // Extract key points with fallback to deep search
+      let keyPoints: string[] = [];
+      if (Array.isArray(structuredInsights.keyPoints)) {
+        keyPoints = structuredInsights.keyPoints.filter((point: any) => point && typeof point === 'string');
+      } else {
+        const deepKeyPoints = findPropertyDeep(structuredInsights, 'keyPoints', 3);
+        if (Array.isArray(deepKeyPoints)) {
+          keyPoints = deepKeyPoints.filter((point: any) => point && typeof point === 'string');
+        }
+      }
 
-      const recommendations = Array.isArray(structuredInsights.recommendations) ?
-        structuredInsights.recommendations.filter((rec: any) => rec && typeof rec === 'string') : [];
+      // Extract recommendations with fallback to deep search
+      let recommendations: string[] = [];
+      if (Array.isArray(structuredInsights.recommendations)) {
+        recommendations = structuredInsights.recommendations.filter((rec: any) => rec && typeof rec === 'string');
+      } else {
+        const deepRecommendations = findPropertyDeep(structuredInsights, 'recommendations', 3);
+        if (Array.isArray(deepRecommendations)) {
+          recommendations = deepRecommendations.filter((rec: any) => rec && typeof rec === 'string');
+        }
+      }
 
-      const nextSteps = structuredInsights.nextSteps || '';
+      // Extract next steps with fallback to deep search
+      const nextSteps = structuredInsights.nextSteps ||
+                       findPropertyDeep(structuredInsights, 'nextSteps', 3) ||
+                       '';
 
       // Add summary section
       analysisText += "### Summary\n";
@@ -171,19 +274,67 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
         analysisText += "### Next Steps\n";
         analysisText += nextSteps + "\n\n";
       }
+
+      // For any unknown structure that doesn't fit the known fields
+      // Check if we have any additional insights that weren't captured
+      const knownKeys = ['summary', 'keyPoints', 'recommendations', 'nextSteps'];
+      const additionalKeys = Object.keys(structuredInsights).filter(
+        key => !knownKeys.includes(key) &&
+              typeof structuredInsights[key] === 'object' &&
+              structuredInsights[key] !== null
+      );
+
+      if (additionalKeys.length > 0) {
+        for (const key of additionalKeys) {
+          const value = structuredInsights[key];
+          if (value && typeof value === 'object' && Object.keys(value).length > 0) {
+            analysisText += `### ${key.charAt(0).toUpperCase() + key.slice(1)}\n`;
+            analysisText += formatObjectAsMarkdown(value) + "\n\n";
+          }
+        }
+      }
     }
   } else {
     // Fallback for when no insights are found
     analysisText += "### Summary\n";
     analysisText += `This is a ${fileType.toUpperCase()} document that has been processed.\n\n`;
-    analysisText += "No detailed insights are available for this document.\n\n";
+
+    // Try to extract any useful information from the status object
+    const potentialInsightKeys = ['analysis', 'result', 'output', 'content', 'text'];
+    let foundAdditionalContent = false;
+
+    for (const key of potentialInsightKeys) {
+      const content = findPropertyDeep(status, key, 5);
+      if (content && typeof content === 'object' && Object.keys(content).length > 0) {
+        analysisText += "### Additional Information\n";
+        analysisText += formatObjectAsMarkdown(content) + "\n\n";
+        foundAdditionalContent = true;
+        break;
+      } else if (content && typeof content === 'string' && content.length > 10) {
+        analysisText += "### Additional Information\n";
+        analysisText += content + "\n\n";
+        foundAdditionalContent = true;
+        break;
+      }
+    }
+
+    if (!foundAdditionalContent) {
+      analysisText += "No detailed insights are available for this document.\n\n";
+    }
   }
 
   // Add document ID for reference
   analysisText += "\n---\n*Document ID: " + documentId + "*\n";
 
-  // Create appropriate suggestions
-  const suggestions = ['Tell me more about this document', 'What are the key insights?', 'How should I use this document?'];
+  // Create appropriate suggestions based on document type
+  let suggestions = ['Tell me more about this document', 'What are the key insights?', 'How should I use this document?'];
+
+  // Add document-type specific suggestions
+  if (fileType.toLowerCase().includes('pdf') || fileType.toLowerCase().includes('doc')) {
+    suggestions.push('Summarize the main points');
+  } else if (fileType.toLowerCase().includes('csv') || fileType.toLowerCase().includes('xls')) {
+    suggestions.push('What trends do you see in this data?');
+  }
 
   // Create the bot message
   return {
