@@ -119,16 +119,27 @@ function ChatApp() {
   }, []);
 
   // Handle adding a file to chat from the sidebar
-  const handleFileAddToChat = useCallback((file: { fileId: string; fileName: string; fileKey: string; uploadDate: string; fileSize: number; fileType?: string; presignedUrl?: string; }) => {
+  const handleFileAddToChat = useCallback((file: {
+    fileId: string;
+    fileName: string;
+    fileKey: string;
+    uploadDate: string;
+    fileSize: number;
+    fileType?: string;
+    presignedUrl?: string;
+  }) => {
     // Map the local file properties to the shared UploadedFile format
     const mappedFile: UploadedFile = {
-      name: file.fileName,               // map fileName -> name
-      size: file.fileSize,               // map fileSize -> size
-      type: file.fileType || '',         // map fileType -> type (default to empty string if undefined)
+      name: file.fileName || 'Unnamed File',               // map fileName -> name
+      size: typeof file.fileSize === 'number' ? file.fileSize : 0, // ensure size is a number
+      type: file.fileType || 'application/octet-stream',   // set default type if missing
       url: file.presignedUrl || '',      // map presignedUrl -> url
-      fileId: file.fileId                // use fileId (if any, else empty string)
-      // Note: The shared UploadedFile does not include fileKey or uploadDate, so they are omitted
+      fileId: file.fileId || '',         // use fileId (if any, else empty string)
+      status: 'success',                 // mark as already uploaded
+      progress: 100                      // set progress to 100%
     };
+
+    console.log('Mapped file for chat:', mappedFile);
     setPreselectedFile(mappedFile);
   }, []);
 
