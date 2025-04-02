@@ -1,5 +1,6 @@
 // app/api/advancedApi.ts
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
+import normalizeS3Url from '../utils/normalizeS3Url';
 
 // Placeholder for user ID - can be replaced with actual user ID when integrating with user management
 const TEST_USER_ID = 'test-user';
@@ -35,7 +36,7 @@ export async function sendMessage(
     if (files && files.length > 0) {
       const s3Files = files.map(file => ({
         name: file.name,
-        s3Url: file.url || file.fileUrl,
+        s3Url: normalizeS3Url(file.url || file.fileUrl),
         mimeType: file.type || 'application/octet-stream'
       }));
 
