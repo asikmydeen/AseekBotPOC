@@ -133,6 +133,9 @@ function ChatApp() {
     };
 
     setUploadedFiles(prevFiles => {
+      // Create a set of file keys already in the sidebar
+      const sidebarFileKeys = new Set(Array.from(sidebarFilesRef.current));
+
       // Create a map of existing files for easy lookups
       const existingFilesMap = new Map();
       prevFiles.forEach(file => {
@@ -142,25 +145,45 @@ function ChatApp() {
         }
       });
 
-      // Process new files
-      const newProcessedFiles = newFiles.map(file => {
+      // Create a set to track processed files and avoid duplicates
+      const processedKeys = new Set<string>();
+
+      // First, add all sidebar files to the result
+      const result = Array.from(existingFilesMap.values()).filter(file => {
+        const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
+        if (key && sidebarFileKeys.has(key)) {
+          processedKeys.add(key);
+          return true;
+        }
+        return false;
+      });
+
+      // Then, process new files from the chat interface
+      newFiles.forEach(file => {
         const fileKey = getFileKey(file);
 
-        // Check if we should update an existing file
-        if (existingFilesMap.has(fileKey) && !sidebarFilesRef.current.has(fileKey)) {
+        // Skip if we've already processed this file
+        if (processedKeys.has(fileKey)) {
+          return;
+        }
+
+        processedKeys.add(fileKey);
+
+        // If it exists in our map but wasn't added as a sidebar file already
+        if (existingFilesMap.has(fileKey) && !sidebarFileKeys.has(fileKey)) {
           // This is an existing file uploaded via the chat interface, update it
           const existingFile = existingFilesMap.get(fileKey);
-          return {
+          result.push({
             ...existingFile,
             fileName: file.name || existingFile.fileName,
             fileSize: file.size || existingFile.fileSize,
             fileType: file.type || existingFile.fileType,
             presignedUrl: file.url || existingFile.presignedUrl,
             status: file.status || 'success',
-          };
+          });
         } else if (!existingFilesMap.has(fileKey)) {
           // This is a new file uploaded via the chat interface
-          return {
+          result.push({
             fileId: file.fileId || `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             fileName: file.name || 'Untitled File',
             fileKey: fileKey,
@@ -169,24 +192,7 @@ function ChatApp() {
             fileType: file.type || 'application/octet-stream',
             presignedUrl: file.url || '',
             status: file.status || 'success',
-          };
-        }
-
-        // If the file exists and is from the sidebar, keep the original
-        return existingFilesMap.get(fileKey);
-      });
-
-      // Combine existing sidebar files with updated/new files
-      const result = Array.from(existingFilesMap.values()).filter(file => {
-        const key = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
-        return key && sidebarFilesRef.current.has(key);
-      });
-
-      // Add files that aren't from the sidebar
-      newProcessedFiles.forEach(newFile => {
-        const fileKey = newFile.fileKey;
-        if (fileKey && !sidebarFilesRef.current.has(fileKey)) {
-          result.push(newFile);
+          });
         }
       });
 
@@ -216,11 +222,11 @@ function ChatApp() {
       return;
     }
 
-    // Track this file as coming from the sidebar to prevent it from being removed
+    // Get a proper fileKey
     const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() : `${file.fileName}-${file.fileSize}`);
 
-    // Only add to sidebarFilesRef if fileKey is not undefined
-    if (fileKey) {
+    // Only add to sidebarFilesRef if fileKey is not undefined and not already there
+    if (fileKey && !sidebarFilesRef.current.has(fileKey)) {
       sidebarFilesRef.current.add(fileKey);
       console.log('Added file to sidebar tracking:', fileKey, sidebarFilesRef.current);
     }
@@ -234,13 +240,21 @@ function ChatApp() {
       fileId: file.fileId || '',
       status: 'success',
       progress: 100,
-      // Note: We don't add preserveInSidebar property here since it's not in the UploadedFile type
-      // Instead we track sidebar files using the sidebarFilesRef
     };
 
     console.log('Mapped file for chat:', mappedFile);
-    setPreselectedFile(mappedFile);
-  }, []);
+
+    // Only set the preselected file if it's not already in the list
+    const alreadyInChat = uploadedFiles.some(existing => {
+      const existingKey = existing.fileKey ||
+        (existing.presignedUrl ? existing.presignedUrl.split('/').pop() : `${existing.fileName}-${existing.fileSize}`);
+      return existingKey === fileKey;
+    });
+
+    if (!alreadyInChat) {
+      setPreselectedFile(mappedFile);
+    }
+  }, [uploadedFiles]);
 
   // Reset lastMessagesRef when active chat changes
   useEffect(() => {
