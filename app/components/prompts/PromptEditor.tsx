@@ -9,7 +9,7 @@ import PromptVariableEditor from './PromptVariableEditor';
 interface PromptEditorProps {
     isDarkMode: boolean;
     prompt?: Prompt;
-    onSubmit: (promptData: CreatePromptRequest | UpdatePromptRequest) => void;
+    onSubmit: (promptData: CreatePromptRequest | UpdatePromptRequest) => void | Promise<void>; // More flexible type
     onCancel: () => void;
     isSubmitting?: boolean;
 }
