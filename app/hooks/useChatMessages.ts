@@ -321,7 +321,7 @@ export default function useChatMessages({
           }
         }, 2000);
         pollIntervalRefs.current.set(response.requestId, intervalId);
-        let pending = {};
+        let pending: Record<string, { status: string }> = {};
         try {
           const stored = localStorage.getItem('pendingRequests');
           if (stored) {
@@ -395,8 +395,8 @@ export default function useChatMessages({
       };
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-  }, [chatSessionId, safeUpdateMessages, pollStatus]);
 
+  }, [chatSessionId, safeUpdateMessages, pollStatus]);
   const refreshAsyncStatus = useCallback(() => {
     console.log(`Manually refreshing status for ${activeRequestIdsRef.current.size} active requests`);
     if (activeRequestIdsRef.current.size === 0) {
