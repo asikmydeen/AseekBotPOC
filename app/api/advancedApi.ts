@@ -448,5 +448,126 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
 
 }
 
+export async function getPromptsApi(filters?: {
+  type?: PromptType;
+  tag?: string;
+  onlyMine?: boolean;
+}): Promise<ApiResponse> {
+  try {
+    // Construct query parameters
+    const queryParams = new URLSearchParams();
+    if (filters?.type) queryParams.append('type', filters.type);
+    if (filters?.tag) queryParams.append('tag', filters.tag);
+    if (filters?.onlyMine) queryParams.append('onlyMine', 'true');
+
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+    const response = await fetch(`${LAMBDA_ENDPOINTS.getPrompts}${queryString}`, {
+      method: 'GET',
+      headers: {
+        'x-user-id': TEST_USER_ID
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get prompts');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting prompts:', error);
+    throw error;
+  }
+}
+
+export async function getPromptByIdApi(promptId: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch(LAMBDA_ENDPOINTS.getPromptById.replace(':id', promptId), {
+      method: 'GET',
+      headers: {
+        'x-user-id': TEST_USER_ID
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get prompt');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error getting prompt ${promptId}:`, error);
+    throw error;
+  }
+}
+
+export async function createPromptApi(promptData: CreatePromptRequest): Promise<ApiResponse> {
+  try {
+    const response = await fetch(LAMBDA_ENDPOINTS.createPrompt, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': TEST_USER_ID
+      },
+      body: JSON.stringify(promptData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create prompt');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating prompt:', error);
+    throw error;
+  }
+}
+
+export async function updatePromptApi(promptId: string, promptData: UpdatePromptRequest): Promise<ApiResponse> {
+  try {
+    const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', promptId), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': TEST_USER_ID
+      },
+      body: JSON.stringify(promptData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update prompt');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error updating prompt ${promptId}:`, error);
+    throw error;
+  }
+}
+
+export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch(LAMBDA_ENDPOINTS.deletePrompt.replace(':id', promptId), {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': TEST_USER_ID
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete prompt');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error deleting prompt ${promptId}:`, error);
+    throw error;
+  }
+}
+
 export const processChatMessage = sendMessage;export const startAsyncChatProcessing = sendMessage;
 export const startAsyncDocumentAnalysis = sendMessage;
