@@ -108,3 +108,54 @@ export interface UploadedFile {
   fileId?: string;     // Unique identifier for the file
   error?: string;      // Error message if upload failed
 }
+
+export type PromptType = 'INDIVIDUAL' | 'COMMUNITY';
+export type VariableSource = 'USER' | 'SYSTEM' | 'DATABASE' | 'FILE';
+
+export interface PromptVariable {
+  name: string;
+  description: string;
+  source: VariableSource;
+  required: boolean;
+  defaultValue?: string;
+  sourceDetails?: {
+    type?: string;
+    databaseType?: string;
+    query?: string;
+    format?: string;
+  };
+}
+
+export interface Prompt {
+  promptId: string;
+  userId: string;
+  title: string;
+  description: string;
+  content: string;
+  type: PromptType;
+  variables: PromptVariable[];
+  tags: string[];
+  popularity: number;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePromptRequest {
+  title: string;
+  description: string;
+  content: string;
+  type: PromptType;
+  variables: PromptVariable[];
+  tags: string[];
+  isPublished?: boolean;
+}
+
+export interface UpdatePromptRequest {
+  title?: string;
+  description?: string;
+  content?: string;
+  variables?: PromptVariable[];
+  tags?: string[];
+  isPublished?: boolean;
+}
