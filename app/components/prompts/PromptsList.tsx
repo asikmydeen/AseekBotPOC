@@ -1,175 +1,222 @@
-// app/components/prompts/PromptItem.tsx
-import React, { useState } from 'react';
+// app/components/prompts/PromptsList.tsx
+"use client";
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiTag, FiEdit, FiTrash, FiMoreVertical, FiUser, FiUsers } from 'react-icons/fi';
-import { Prompt } from '../../types/shared';
+import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
+import { usePrompts } from '../../context/PromptsContext';
+import { Prompt, PromptType } from '../../types/shared';
+import PromptItem from './PromptItem';
 
-interface PromptItemProps {
-    prompt: Prompt;
+interface PromptsListProps {
     isDarkMode: boolean;
-    onClick?: () => void;
-    onEdit?: () => void;
-    onDelete?: () => void;
-    onTagClick?: (tag: string) => void;
+    onPromptClick?: (prompt: Prompt) => void;
+    onEditPrompt?: (prompt: Prompt) => void;
+    onDeletePrompt?: (promptId: string) => void;
+    onCreatePrompt?: () => void;
     showActions?: boolean;
+    maxHeight?: string;
 }
 
-const PromptItem: React.FC<PromptItemProps> = ({
-    prompt,
+const PromptsList: React.FC<PromptsListProps> = ({
     isDarkMode,
-    onClick,
-    onEdit,
-    onDelete,
-    onTagClick,
-    showActions = true
+    onPromptClick,
+    onEditPrompt,
+    onDeletePrompt,
+    onCreatePrompt,
+    showActions = true,
+    maxHeight = '70vh'
 }) => {
-    const [showOptions, setShowOptions] = useState(false);
+    const {
+        prompts,
+        isLoading,
+        error,
+        fetchPrompts,
+        filterPromptsByType,
+        filterPromptsByTag,
+        clearFilters
+    } = usePrompts();
 
-    const handleActionClick = (e: React.MouseEvent, action: () => void) => {
-        e.stopPropagation();
-        setShowOptions(false);
-        action();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
+    const [activeFilter, setActiveFilter] = useState<{
+        type?: PromptType;
+        tag?: string;
+    }>({});
+
+    // Apply local search filter
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredPrompts(prompts);
+            return;
+        }
+
+        const searchTermLower = searchTerm.toLowerCase();
+        const filtered = prompts.filter(prompt =>
+            prompt.title.toLowerCase().includes(searchTermLower) ||
+            prompt.description.toLowerCase().includes(searchTermLower) ||
+            prompt.tags.some(tag => tag.toLowerCase().includes(searchTermLower))
+        );
+
+        setFilteredPrompts(filtered);
+    }, [searchTerm, prompts]);
+
+    // Apply tag filter
+    const handleTagFilter = async (tag: string) => {
+        setActiveFilter(prev => ({ ...prev, tag }));
+        await filterPromptsByTag(tag);
     };
 
-    // Format creation date
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+    // Apply type filter
+    const handleTypeFilter = async (type: PromptType) => {
+        setActiveFilter(prev => ({ ...prev, type }));
+        await filterPromptsByType(type);
+    };
+
+    // Clear all filters
+    const handleClearFilters = async () => {
+        setActiveFilter({});
+        setSearchTerm('');
+        await clearFilters();
+    };
+
+    // Handle search input
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
     };
 
     return (
-        <motion.div
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={onClick}
-            className={`p-3 rounded-lg cursor-pointer transition-colors relative ${isDarkMode
-                ? 'bg-gray-750 hover:bg-gray-700'
-                : 'bg-white hover:bg-gray-50 shadow-sm'
-                }`}
-        >
-            <div className="flex flex-col">
-                <div className="flex justify-between items-start mb-1">
-                    <div className="flex-1">
-                        <h3 className={`font-medium text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                            {prompt.title}
-                        </h3>
-                        <p className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {prompt.description}
-                        </p>
-                    </div>
-
-                    {showActions && (
-                        <div className="relative">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowOptions(!showOptions);
-                                }}
-                                className={`p-1.5 rounded-full ${isDarkMode
-                                    ? 'hover:bg-gray-600 text-gray-400'
-                                    : 'hover:bg-gray-200 text-gray-600'
-                                    }`}
-                            >
-                                <FiMoreVertical size={16} />
-                            </button>
-
-                            {showOptions && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    className={`absolute right-0 top-full mt-1 z-10 w-32 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'
-                                        } ring-1 ring-black ring-opacity-5`}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <div className="py-1" role="menu">
-                                        {onEdit && (
-                                            <button
-                                                onClick={(e) => handleActionClick(e, onEdit)}
-                                                className={`w-full text-left flex items-center px-4 py-2 text-sm ${isDarkMode
-                                                    ? 'text-gray-300 hover:bg-gray-700'
-                                                    : 'text-gray-700 hover:bg-gray-100'
-                                                    }`}
-                                            >
-                                                <FiEdit className="mr-2" size={14} />
-                                                Edit
-                                            </button>
-                                        )}
-                                        {onDelete && (
-                                            <button
-                                                onClick={(e) => handleActionClick(e, onDelete)}
-                                                className={`w-full text-left flex items-center px-4 py-2 text-sm ${isDarkMode
-                                                    ? 'text-red-400 hover:bg-gray-700'
-                                                    : 'text-red-600 hover:bg-gray-100'
-                                                    }`}
-                                            >
-                                                <FiTrash className="mr-2" size={14} />
-                                                Delete
-                                            </button>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                    {prompt.type === 'INDIVIDUAL' ? (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
-                            }`}>
-                            <FiUser size={10} className="mr-1" />
-                            Personal
-                        </span>
-                    ) : (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'
-                            }`}>
-                            <FiUsers size={10} className="mr-1" />
-                            Community
-                        </span>
-                    )}
-
-                    {prompt.tags.slice(0, 3).map((tag) => (
-                        <span
-                            key={tag}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onTagClick && onTagClick(tag);
-                            }}
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs cursor-pointer ${isDarkMode
-                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        <div className="flex flex-col w-full">
+            {/* Search and filters */}
+            <div className={`mb-4 p-2 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <div className="relative mb-2">
+                    <input
+                        type="text"
+                        placeholder="Search prompts..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        className={`w-full p-2 pl-9 rounded-md transition-colors ${isDarkMode
+                                ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600'
+                                : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
+                            } border focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                    />
+                    <FiSearch
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}
+                        size={16}
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            <FiTag size={10} className="mr-1" />
-                            {tag}
-                        </span>
-                    ))}
-
-                    {prompt.tags.length > 3 && (
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                            }`}>
-                            +{prompt.tags.length - 3} more
-                        </span>
+                            <FiX size={16} />
+                        </button>
                     )}
                 </div>
 
-                <div className="flex justify-between items-center mt-2 text-xs">
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        Created: {formatDate(prompt.createdAt)}
-                    </span>
+                <div className="flex flex-wrap gap-2 mt-2">
+                    <button
+                        onClick={() => handleTypeFilter('INDIVIDUAL')}
+                        className={`flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeFilter.type === 'INDIVIDUAL'
+                                ? isDarkMode
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-blue-100 text-blue-800'
+                                : isDarkMode
+                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                    >
+                        <FiFilter className="mr-1" size={12} />
+                        My Prompts
+                    </button>
 
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        Variables: {prompt.variables.length}
-                    </span>
+                    <button
+                        onClick={() => handleTypeFilter('COMMUNITY')}
+                        className={`flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeFilter.type === 'COMMUNITY'
+                                ? isDarkMode
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-green-100 text-green-800'
+                                : isDarkMode
+                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                    >
+                        <FiFilter className="mr-1" size={12} />
+                        Community
+                    </button>
+
+                    {activeFilter.type || activeFilter.tag || searchTerm ? (
+                        <button
+                            onClick={handleClearFilters}
+                            className={`flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${isDarkMode
+                                    ? 'bg-red-800 text-white hover:bg-red-700'
+                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                }`}
+                        >
+                            <FiX className="mr-1" size={12} />
+                            Clear Filters
+                        </button>
+                    ) : null}
                 </div>
             </div>
-        </motion.div>
+
+            {/* Prompts list */}
+            <div
+                className={`overflow-y-auto ${isDarkMode ? 'scrollbar-dark' : 'scrollbar-light'
+                    }`}
+                style={{ maxHeight }}
+            >
+                {isLoading ? (
+                    <div className={`flex justify-center p-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                ) : error ? (
+                    <div className={`p-4 text-center rounded-lg ${isDarkMode ? 'bg-red-900/20 text-red-200' : 'bg-red-100 text-red-800'}`}>
+                        Error loading prompts: {error.message}
+                    </div>
+                ) : filteredPrompts.length === 0 ? (
+                    <div className={`p-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        No prompts found
+                    </div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="space-y-2"
+                    >
+                        {filteredPrompts.map((prompt) => (
+                            <PromptItem
+                                key={prompt.promptId}
+                                prompt={prompt}
+                                isDarkMode={isDarkMode}
+                                onClick={() => onPromptClick && onPromptClick(prompt)}
+                                onEdit={() => onEditPrompt && onEditPrompt(prompt)}
+                                onDelete={() => onDeletePrompt && onDeletePrompt(prompt.promptId)}
+                                onTagClick={handleTagFilter}
+                                showActions={showActions}
+                            />
+                        ))}
+                    </motion.div>
+                )}
+            </div>
+
+            {/* Create prompt button */}
+            {onCreatePrompt && (
+                <div className="mt-4 flex justify-center">
+                    <button
+                        onClick={onCreatePrompt}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${isDarkMode
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                            }`}
+                    >
+                        Create New Prompt
+                    </button>
+                </div>
+            )}
+        </div>
     );
 };
 
-export default PromptItem;
+export default PromptsList;
