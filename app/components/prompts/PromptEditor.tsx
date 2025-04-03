@@ -290,7 +290,6 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                         {variables.length === 0 ? (
                             <p className={`text-sm italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-
                                 No variables added yet. Use ${"{variableName}"} in your content to define variables.
                             </p>
                         ) : (
