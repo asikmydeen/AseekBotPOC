@@ -23,8 +23,10 @@ const EditPromptModal: React.FC<EditPromptModalProps> = ({
 }) => {
     if (!isOpen || !prompt) return null;
 
-    const handleSubmit = async (promptData: UpdatePromptRequest) => {
-        await onSubmit(prompt.promptId, promptData);
+    // Create a typed wrapper function
+    const handleSubmit = (data: CreatePromptRequest | UpdatePromptRequest) => {
+        // We know this is an update operation, so we can safely cast
+        onSubmit(prompt.promptId, data as UpdatePromptRequest);
     };
 
     const backdropVariants = {
