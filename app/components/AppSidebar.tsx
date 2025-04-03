@@ -108,6 +108,26 @@ export default function AppSidebar({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const {
+        prompts,
+        isLoading,
+        error,
+        selectedPrompt,
+        isSubmitting,
+        isDeleting,
+        isCreateModalOpen,
+        isEditModalOpen,
+        isDeleteModalOpen,
+        promptToEditOrDelete,
+        openCreateModal,
+        openEditModal,
+        openDeleteModal,
+        closeAllModals,
+        handleCreatePrompt,
+        handleUpdatePrompt,
+        handleDeletePrompt,
+        handleSelectPrompt
+    } = usePromptsManager();
 
     const sidebarVariants = {
         open: {
