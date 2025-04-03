@@ -108,13 +108,6 @@ export default function AppSidebar({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const savedPrompts = [
-        { title: 'Bid Document Analysis', text: 'Perform bid document analysis for Project Alpha' },
-        { title: 'Compare Suppliers', text: 'Compare suppliers for server racks' },
-        { title: 'Procurement Process', text: 'Explain the data center procurement process' },
-        { title: 'Query Database', text: 'Query the database for Q1 2025 spending' },
-        { title: 'Create Ticket', text: 'Create a ticket for network equipment issue' }
-    ];
 
     const sidebarVariants = {
         open: {
