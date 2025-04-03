@@ -4,14 +4,14 @@ import { motion } from 'framer-motion';
 import { FiTag, FiEdit, FiTrash, FiMoreVertical, FiUser, FiUsers } from 'react-icons/fi';
 import { Prompt } from '../../types/shared';
 
-interface PromptItemProps {
-    prompt: Prompt;
+interface PromptsListProps {
     isDarkMode: boolean;
-    onClick?: () => void;
-    onEdit?: () => void;
-    onDelete?: () => void;
-    onTagClick?: (tag: string) => void;
+    onPromptClick?: (prompt: Prompt) => void;
+    onEditPrompt?: (prompt: Prompt) => void;
+    onDeletePrompt?: (promptId: string) => void; // Fixed type to string
+    onCreatePrompt?: () => void;
     showActions?: boolean;
+    maxHeight?: string;
 }
 
 const PromptItem: React.FC<PromptItemProps> = ({
