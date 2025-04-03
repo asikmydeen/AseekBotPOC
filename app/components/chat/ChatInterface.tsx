@@ -92,7 +92,6 @@ function ChatInterfaceComponent({
         messagesEndRef: hookMessagesEndRef,
         // New async processing properties
         isAsyncProcessing,
-        currentRequestId,
         asyncProgress,
         asyncStatus,
         refreshAsyncStatus,
@@ -166,7 +165,7 @@ function ChatInterfaceComponent({
             console.error('Processing error detected:', processingError);
 
             // Cancel any ongoing async request to prevent infinite loops
-            if (isAsyncProcessing && currentRequestId) {
+            if (isAsyncProcessing) {
                 console.log('Cancelling async request due to error');
                 cancelAsyncRequest();
             }
@@ -415,10 +414,10 @@ function ChatInterfaceComponent({
 
     // Function to manually refresh async status
     const handleRefreshStatus = useCallback(() => {
-        if (currentRequestId && isAsyncProcessing) {
+        if (isAsyncProcessing) {
             refreshAsyncStatus();
         }
-    }, [currentRequestId, isAsyncProcessing, refreshAsyncStatus]);
+    }, [isAsyncProcessing, refreshAsyncStatus]);
 
     // Toggle artifact panel visibility
     const toggleArtifactPanel = useCallback(() => {
