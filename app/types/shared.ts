@@ -155,6 +155,7 @@ export interface UpdatePromptRequest {
   title?: string;
   description?: string;
   content?: string;
+  type?: PromptType;
   variables?: PromptVariable[];
   tags?: string[];
   isPublished?: boolean;
