@@ -69,20 +69,19 @@ export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) =>
             const mergedFilters = { ...currentFilters, ...filters };
             setCurrentFilters(mergedFilters);
 
+            // Get prompts from API
             const response = await getPromptsApi(mergedFilters);
+            console.log('[DEBUG] Prompts API Response:', response);
 
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            // Assuming the response structure has a data property or is an array
+            // FIXED: Check for response.prompts first, then fall back to response.data
             const promptsData = Array.isArray(response)
                 ? response
-                : (response.prompts as Prompt[] || []);
+                : (response.prompts || response.data || []);
 
+            console.log('[DEBUG] Extracted prompts data:', promptsData);
             setPrompts(promptsData);
         } catch (err) {
-            console.error('Error fetching prompts:', err);
+            console.error('[DEBUG] Error fetching prompts:', err);
             setError(err instanceof Error ? err : new Error('Failed to fetch prompts'));
         } finally {
             setIsLoading(false);
