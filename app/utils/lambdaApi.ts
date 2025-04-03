@@ -21,7 +21,10 @@ export const LAMBDA_ENDPOINTS = {
   startProcessing: `${API_BASE_URL}/startProcessing`,
   checkStatus: `${API_BASE_URL}/checkStatus`,
   getProcessingStatus: `${API_BASE_URL}/checkStatus`,
-  workerProcessor: `${API_BASE_URL}/workerProcessor`
+  workerProcessor: `${API_BASE_URL}/workerProcessor`,
+
+
+
 };
 
 // Define the necessary interfaces
