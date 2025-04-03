@@ -23,6 +23,7 @@ export const LAMBDA_ENDPOINTS = {
   getProcessingStatus: `${API_BASE_URL}/checkStatus`,
   workerProcessor: `${API_BASE_URL}/workerProcessor`,
 
+  // Prompt Endpoints
   getPrompts: `${API_BASE_URL}/prompts`,
   getPromptById: `${API_BASE_URL}/prompts/:id`,
   createPrompt: `${API_BASE_URL}/prompts`,
