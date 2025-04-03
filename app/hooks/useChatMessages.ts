@@ -394,7 +394,6 @@ export default function useChatMessages({
       };
       safeUpdateMessages(prev => [...prev, errorMessage]);
     }
-
   }, [chatSessionId, safeUpdateMessages, pollStatus]);
   const refreshAsyncStatus = useCallback(() => {
     console.log(`Manually refreshing status for ${activeRequestIdsRef.current.size} active requests`);
