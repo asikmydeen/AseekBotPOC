@@ -21,8 +21,8 @@ const CreatePromptModal: React.FC<CreatePromptModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    const handleSubmit = async (promptData: CreatePromptRequest) => {
-        await onSubmit(promptData);
+    const handleSubmit = (promptData: CreatePromptRequest) => {
+        onSubmit(promptData);
     };
 
     const backdropVariants = {
