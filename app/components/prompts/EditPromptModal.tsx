@@ -1,7 +1,7 @@
 // app/components/prompts/EditPromptModal.tsx
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Prompt, UpdatePromptRequest } from '../../types/shared';
+import { Prompt, UpdatePromptRequest, CreatePromptRequest } from '../../types/shared';
 import PromptEditor from './PromptEditor';
 
 interface EditPromptModalProps {
