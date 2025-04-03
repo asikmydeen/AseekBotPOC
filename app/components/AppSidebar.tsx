@@ -34,7 +34,7 @@ import { downloadFileApi, deleteFileApi } from '../api/advancedApi';
 import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
-import { usePromptsManager } from '../hooks/usePromptsManager';
+import usePromptsManager  from '../hooks/usePromptsManager';
 import PromptsList from './prompts/PromptsList';
 import CreatePromptModal from './prompts/CreatePromptModal';
 import EditPromptModal from './prompts/EditPromptModal';
