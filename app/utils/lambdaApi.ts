@@ -61,6 +61,7 @@ export interface TicketDetails {
   [key: string]: unknown; // For any additional fields
 }
 
+// Update to ApiResponse interface in lambdaApi.ts
 export interface ApiResponse {
   timestamp: string;
   suggestions: never[];
@@ -75,6 +76,9 @@ export interface ApiResponse {
   fileId?: string | undefined;
   success?: boolean;
   data?: any[];
+  // Add the prompts property to support the prompts API response
+  prompts?: any[]; // You can replace 'any[]' with a more specific type like 'Prompt[]'
+  count?: number; // Add the count property for prompts response
   error?: string;
   message?: string;
   formattedMessage?: string;
