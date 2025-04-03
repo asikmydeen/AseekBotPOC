@@ -148,7 +148,9 @@ export default function useChatMessages({
   const pollStatus = useCallback(async (requestId: string) => {
     if (!requestId || requestCancelledRef.current) return;
     try {
+      console.log(`Polling status for request ${requestId}...`);
       const statusResponse = await checkStatus(requestId);
+      console.log(`Received status for ${requestId}:`, statusResponse.status, `Progress: ${statusResponse.progress || 0}%`);
       setAsyncStatus(statusResponse.status || 'PROCESSING');
       setAsyncProgress(statusResponse.progress || 0);
       if (statusResponse.status === 'COMPLETED') {
@@ -396,7 +398,17 @@ export default function useChatMessages({
   }, [chatSessionId, safeUpdateMessages, pollStatus]);
 
   const refreshAsyncStatus = useCallback(() => {
+    console.log(`Manually refreshing status for ${activeRequestIdsRef.current.size} active requests`);
+    if (activeRequestIdsRef.current.size === 0) {
+      console.log('No active requests to refresh');
+      return;
+    }
+
+    // Ensure async status is set to show loading state
+    setAsyncStatus('PROCESSING');
+
     activeRequestIdsRef.current.forEach(requestId => {
+      console.log(`Triggering manual refresh for request ${requestId}`);
       pollStatus(requestId);
     });
   }, [pollStatus]);
@@ -414,6 +426,15 @@ export default function useChatMessages({
     setIsThinking(false);
     setProgress(0);
     setIsAsyncProcessing(false);
+
+    // Remove all pending requests from localStorage
+    try {
+      localStorage.removeItem('pendingRequests');
+      console.log('Cleared all pending requests from localStorage');
+    } catch (e) {
+      console.error('Error clearing pendingRequests from localStorage:', e);
+    }
+
     console.log('Async request cancelled');
   }, []);
 
@@ -512,9 +533,16 @@ export default function useChatMessages({
       const stored = localStorage.getItem('pendingRequests');
       if (stored) {
         const pending = JSON.parse(stored);
-        Object.keys(pending).forEach(requestId => {
+        const pendingRequestIds = Object.keys(pending);
+
+        pendingRequestIds.forEach(requestId => {
           if (!activeRequestIdsRef.current.has(requestId)) {
             activeRequestIdsRef.current.add(requestId);
+
+            // Immediately call pollStatus for the pending request
+            console.log(`Immediately polling status for pending request ${requestId} after page load`);
+            pollStatus(requestId);
+
             const intervalId = setInterval(() => {
               pollStatus(requestId);
             }, 2000);
@@ -523,10 +551,11 @@ export default function useChatMessages({
         });
 
         // If there are pending requests, update the UI state immediately
-        if (Object.keys(pending).length > 0) {
+        if (pendingRequestIds.length > 0) {
           setIsThinking(true);
           setIsAsyncProcessing(true);
-          console.log(`Found ${Object.keys(pending).length} pending requests, updating UI state`);
+          setAsyncStatus('PROCESSING'); // Ensure status is set to show loading state
+          console.log(`Found ${pendingRequestIds.length} pending requests, updating UI state`);
         }
       }
     } catch (e) {

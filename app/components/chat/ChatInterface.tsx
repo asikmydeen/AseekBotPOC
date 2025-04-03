@@ -170,7 +170,7 @@ function ChatInterfaceComponent({
                 cancelAsyncRequest();
             }
         }
-    }, [processingError, isAsyncProcessing, currentRequestId, cancelAsyncRequest]);
+    }, [processingError, isAsyncProcessing, cancelAsyncRequest]);
 
     // Track the current active agent based on the latest bot message
     const [activeAgent, setActiveAgent] = useState<string>('default');
