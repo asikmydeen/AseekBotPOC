@@ -164,7 +164,6 @@ export default function useChatMessages({
           pollIntervalRefs.current.delete(requestId);
         }
         activeRequestIdsRef.current.delete(requestId);
-
         let pending: Record<string, unknown> = {};
         try {
           const stored = localStorage.getItem('pendingRequests');
@@ -217,7 +216,6 @@ export default function useChatMessages({
           pollIntervalRefs.current.delete(requestId);
         }
         activeRequestIdsRef.current.delete(requestId);
-
         let pending: Record<string, unknown> = {};
         try {
           const stored = localStorage.getItem('pendingRequests');
@@ -252,7 +250,6 @@ export default function useChatMessages({
     } catch (error) {
       console.error('Error polling status:', error);
     }
-
   }, [chatSessionId, safeUpdateMessages]);
   const sendMessageHandler = useCallback(async (text: string, attachments?: any[]) => {
     const isFileUpload = attachments && attachments.length > 0;
