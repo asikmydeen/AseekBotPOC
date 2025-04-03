@@ -2,7 +2,7 @@
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
 import normalizeS3Url from '../utils/normalizeS3Url';
 
-function updateLocalStorageForRequest(requestId, state) {
+function updateLocalStorageForRequest(requestId: string, state: any) {
   try {
     const stored = localStorage.getItem('pendingRequests');
     const pending = stored ? JSON.parse(stored) : {};
@@ -13,7 +13,7 @@ function updateLocalStorageForRequest(requestId, state) {
   }
 }
 
-function removeLocalStorageForRequest(requestId) {
+function removeLocalStorageForRequest(requestId: string) {
   try {
     const stored = localStorage.getItem('pendingRequests');
     if (!stored) return;
