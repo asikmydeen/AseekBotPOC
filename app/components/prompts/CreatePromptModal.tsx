@@ -21,8 +21,10 @@ const CreatePromptModal: React.FC<CreatePromptModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    const handleSubmit = (promptData: CreatePromptRequest) => {
-        onSubmit(promptData);
+    // Create a typed wrapper function
+    const handleSubmit = (data: CreatePromptRequest | UpdatePromptRequest) => {
+        // We know this is a create operation, so we can safely cast
+        onSubmit(data as CreatePromptRequest);
     };
 
     const backdropVariants = {
