@@ -1,4 +1,5 @@
 // app/api/advancedApi.ts
+import { CreatePromptRequest, UpdatePromptRequest } from '../types/shared';
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
 import normalizeS3Url from '../utils/normalizeS3Url';
 
