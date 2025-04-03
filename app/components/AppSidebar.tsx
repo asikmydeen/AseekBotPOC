@@ -480,19 +480,43 @@ export default function AppSidebar({
                                 <h3 className="font-semibold text-lg">Saved Prompts</h3>
                             </div>
                             <div className="space-y-2">
-                                {savedPrompts.map((prompt, index) => (
-                                    <div
-                                        key={`prompt-${index}`}
-                                        className={`p-2 md:p-3 rounded-lg cursor-pointer transition-all duration-200 ${isDarkMode
-                                            ? 'dark-card-bg hover:bg-gray-700'
-                                            : 'bg-gray-100 hover:bg-gray-200'
-                                            }`}
-                                        onClick={() => onPromptClick(prompt.text)}
-                                    >
-                                        <p className="text-sm font-medium">{prompt.title}</p>
-                                        <p className="text-xs truncate text-gray-500">{prompt.text}</p>
+                                {isOpen && activeTab === 'prompts' && (
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center">
+                                                <MdLightbulb className="mr-2" size={20} />
+                                                <h3 className="font-semibold text-lg">Saved Prompts</h3>
+                                            </div>
+                                            <button
+                                                onClick={openCreateModal}
+                                                className={`p-1.5 rounded-md ${isDarkMode
+                                                    ? 'hover:bg-gray-700 text-gray-300'
+                                                    : 'hover:bg-gray-200 text-gray-700'
+                                                    }`}
+                                                title="Create new prompt"
+                                                aria-label="Create new prompt"
+                                            >
+                                                <MdAdd size={20} />
+                                            </button>
+                                        </div>
+
+                                        <PromptsList
+                                            isDarkMode={isDarkMode}
+                                            onPromptClick={(prompt) => {
+                                                handleSelectPrompt(prompt);
+                                                onPromptClick(prompt.content);
+                                            }}
+                                            onEditPrompt={openEditModal}
+                                            onDeletePrompt={(promptId) => {
+                                                const promptToDelete = prompts.find(p => p.promptId === promptId);
+                                                if (promptToDelete) {
+                                                    openDeleteModal(promptToDelete);
+                                                }
+                                            }}
+                                            maxHeight="calc(100vh - 220px)"
+                                        />
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
