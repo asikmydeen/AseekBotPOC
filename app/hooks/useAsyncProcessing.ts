@@ -123,6 +123,36 @@ export function useAsyncProcessing(
 
       setProgress(response.progress || 0);
 
+      // Persist to localStorage if still in progress
+      if (response.status === 'QUEUED' || response.status === 'PROCESSING') {
+        try {
+          const stored = localStorage.getItem('pendingRequests') || '{}';
+          const pending = JSON.parse(stored);
+          pending[requestId] = {
+            status: response.status,
+            progress: response.progress || 0,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('pendingRequests', JSON.stringify(pending));
+        } catch (e) {
+          console.error('Error saving pending request to localStorage:', e);
+        }
+      } else if (response.status === 'COMPLETED' || response.status === 'FAILED') {
+        // Remove from localStorage if completed or failed
+        try {
+          const stored = localStorage.getItem('pendingRequests');
+          if (stored) {
+            const pending = JSON.parse(stored);
+            if (pending[requestId]) {
+              delete pending[requestId];
+              localStorage.setItem('pendingRequests', JSON.stringify(pending));
+            }
+          }
+        } catch (e) {
+          console.error('Error removing completed request from localStorage:', e);
+        }
+      }
+
       if (response.status === 'COMPLETED' && response.result) {
         setResult(response.result);
         setIsLoading(false);
@@ -173,43 +203,50 @@ export function useAsyncProcessing(
       return () => { };
     }
 
-    let startTime = Date.now();
+    // Check if there is a pending state in localStorage for this requestId
+    try {
+      const stored = localStorage.getItem('pendingRequests');
+      if (stored) {
+        const pending = JSON.parse(stored);
+        if (pending[requestId] && (pending[requestId].status === 'QUEUED' || pending[requestId].status === 'PROCESSING')) {
+          // Optionally, update state with the persisted progress before starting polling
+          const persisted = pending[requestId];
+          setStatus(persisted.status);
+          setProgress(persisted.progress || 0);
+        }
+      }
+    } catch (e) {
+      console.error('Error reading pending request from localStorage:', e);
+    }
 
-    // Reset error state when starting a new request
+    // Existing polling logic proceeds below as before ...
+    let startTime = Date.now();
     setHasErrored(false);
     setError(null);
     pollingAttemptsRef.current = 0;
-
     setIsLoading(true);
     setResult(null);
-
-    // Only set status to QUEUED if we don't have a status yet or if we're starting fresh
     if (!status || status === 'COMPLETED' || status === 'FAILED') {
       setStatus('QUEUED');
     }
-
     setProgress(0);
 
-    // Initial check
+    // IMPORTANT: This polling will now continue even if the page is refreshed, as the pending state can be reloaded from localStorage.
     fetchStatus().then(initialResponse => {
       if (!initialResponse) return;
 
       // If it's already completed or failed, don't start polling
-      if (initialResponse.status &&
-        (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED')) {
+      if (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED') {
         return;
       }
 
-      // Update status based on initial response if more advanced
       if (initialResponse.status && !isStatusAdvanced(status, initialResponse.status)) {
         setStatus(initialResponse.status);
       }
 
-      // Start polling
       clearPollingInterval(); // Clear any existing interval first
 
       intervalIdRef.current = setInterval(async () => {
-        // Check if we've exceeded max polling time
         if (Date.now() - startTime > maxPollingTime) {
           clearPollingInterval();
           setError({ message: 'Request timed out after maximum polling time' });
@@ -218,13 +255,10 @@ export function useAsyncProcessing(
           return;
         }
 
-        // Fetch status
         const apiResponse = await fetchStatus();
 
         // Stop polling if completed, failed, or errored
-        if (hasErrored ||
-          (apiResponse && apiResponse.status &&
-            (apiResponse.status === 'COMPLETED' || apiResponse.status === 'FAILED'))) {
+        if (hasErrored || (apiResponse && (apiResponse.status === 'COMPLETED' || apiResponse.status === 'FAILED'))) {
           clearPollingInterval();
         }
       }, pollingInterval);

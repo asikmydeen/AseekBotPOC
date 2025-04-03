@@ -2,6 +2,29 @@
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
 import normalizeS3Url from '../utils/normalizeS3Url';
 
+function updateLocalStorageForRequest(requestId, state) {
+  try {
+    const stored = localStorage.getItem('pendingRequests');
+    const pending = stored ? JSON.parse(stored) : {};
+    pending[requestId] = state;
+    localStorage.setItem('pendingRequests', JSON.stringify(pending));
+  } catch (e) {
+    console.error('Error updating localStorage for request', requestId, e);
+  }
+}
+
+function removeLocalStorageForRequest(requestId) {
+  try {
+    const stored = localStorage.getItem('pendingRequests');
+    if (!stored) return;
+    const pending = JSON.parse(stored);
+    delete pending[requestId];
+    localStorage.setItem('pendingRequests', JSON.stringify(pending));
+  } catch (e) {
+    console.error('Error removing localStorage entry for request', requestId, e);
+  }
+}
+
 // Placeholder for user ID - can be replaced with actual user ID when integrating with user management
 const TEST_USER_ID = 'test-user';
 
@@ -93,7 +116,15 @@ export async function checkStatus(requestId: string): Promise<ApiResponse> {
       throw new Error(errorData.error || 'Failed to check status');
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Update localStorage based on response status
+    if (data.status === 'QUEUED' || data.status === 'PROCESSING') {
+      updateLocalStorageForRequest(requestId, data);
+    } else if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+      removeLocalStorageForRequest(requestId);
+    }
+    return data;
   } catch (error) {
     console.error(`Error checking status for ${requestId}:`, error);
     throw error;
