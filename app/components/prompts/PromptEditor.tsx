@@ -387,20 +387,19 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                     >
                         {isSubmitting ? (
                             <>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                <div className="w-4 h-4
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <FiSave className="mr-1" size={16} />
+                                {isEditing ? 'Update Prompt' : 'Create Prompt'}
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+        </motion.div>
+    );
+};
 export default PromptEditor;
