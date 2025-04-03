@@ -21,7 +21,15 @@ export const LAMBDA_ENDPOINTS = {
   startProcessing: `${API_BASE_URL}/startProcessing`,
   checkStatus: `${API_BASE_URL}/checkStatus`,
   getProcessingStatus: `${API_BASE_URL}/checkStatus`,
-  workerProcessor: `${API_BASE_URL}/workerProcessor`
+  workerProcessor: `${API_BASE_URL}/workerProcessor`,
+
+  // Prompt Endpoints
+  getPrompts: `${API_BASE_URL}/prompts`,
+  getPromptById: `${API_BASE_URL}/prompts/:id`,
+  createPrompt: `${API_BASE_URL}/prompts`,
+  updatePrompt: `${API_BASE_URL}/prompts/:id`,
+  deletePrompt: `${API_BASE_URL}/prompts/:id`
+
 };
 
 // Define the necessary interfaces
@@ -53,6 +61,7 @@ export interface TicketDetails {
   [key: string]: unknown; // For any additional fields
 }
 
+// Update to ApiResponse interface in lambdaApi.ts
 export interface ApiResponse {
   timestamp: string;
   suggestions: never[];
@@ -67,6 +76,9 @@ export interface ApiResponse {
   fileId?: string | undefined;
   success?: boolean;
   data?: any[];
+  // Add the prompts property to support the prompts API response
+  prompts?: any[]; // You can replace 'any[]' with a more specific type like 'Prompt[]'
+  count?: number; // Add the count property for prompts response
   error?: string;
   message?: string;
   formattedMessage?: string;
