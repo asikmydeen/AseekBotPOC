@@ -78,7 +78,7 @@ export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) =>
             // Assuming the response structure has a data property or is an array
             const promptsData = Array.isArray(response)
                 ? response
-                : (response.data as Prompt[] || []);
+                : (response.prompts as Prompt[] || []);
 
             setPrompts(promptsData);
         } catch (err) {
