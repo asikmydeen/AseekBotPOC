@@ -56,7 +56,7 @@ export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) =>
         onlyMine?: boolean;
     }>({});
 
-    // Fetch prompts with optional filters
+    // Type-safe version of fetchPrompts for PromptsContext.tsx
     const fetchPrompts = useCallback(async (filters?: {
         type?: PromptType;
         tag?: string;
@@ -73,13 +73,36 @@ export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) =>
             const response = await getPromptsApi(mergedFilters);
             console.log('[DEBUG] Prompts API Response:', response);
 
-            // FIXED: Check for response.prompts first, then fall back to response.data
-            const promptsData = Array.isArray(response)
-                ? response
-                : (response.prompts || response.data || []);
+            // Check for API error
+            if (response.error) {
+                console.error('[DEBUG] API returned error:', response.error);
+                throw new Error(response.error);
+            }
+
+            // Type-safe extraction logic
+            let promptsData: Prompt[] = [];
+
+            if (Array.isArray(response)) {
+                // If response itself is an array
+                promptsData = response as Prompt[];
+            } else if (response.prompts && Array.isArray(response.prompts)) {
+                // If response has a prompts property
+                promptsData = response.prompts as Prompt[];
+            } else if (response.data && Array.isArray(response.data)) {
+                // Fallback to data property
+                promptsData = response.data as Prompt[];
+            }
 
             console.log('[DEBUG] Extracted prompts data:', promptsData);
+            console.log('[DEBUG] Number of prompts:', promptsData.length);
+
+            // Update state with the extracted prompts
             setPrompts(promptsData);
+
+            // Log if no prompts were found
+            if (promptsData.length === 0) {
+                console.warn('[DEBUG] No prompts were found in the API response');
+            }
         } catch (err) {
             console.error('[DEBUG] Error fetching prompts:', err);
             setError(err instanceof Error ? err : new Error('Failed to fetch prompts'));
