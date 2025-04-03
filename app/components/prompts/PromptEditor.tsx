@@ -253,7 +253,6 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                                 ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600'
                                 : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
                             } border focus:ring-2 focus:ring-blue-500 focus:outline-none`}
-
                         placeholder="Enter prompt content, use ${variableName} for variables"
                     />
                     {errors.content && (
