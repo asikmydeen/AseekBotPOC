@@ -213,7 +213,8 @@ const MessageList: React.FC<MessageListProps> = ({
         </AnimatePresence>
       )}
 
-      {isThinking && (
+      {/* Show typing indicator or async status indicator */}
+      {(isThinking || isAsyncProcessing) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -225,7 +226,7 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
 
           <div className="flex flex-col w-full max-w-full">
-            <EnhancedTypingIndicator isDarkMode={isDarkMode} />
+            {isThinking && <EnhancedTypingIndicator isDarkMode={isDarkMode} />}
 
             {isAsyncProcessing && asyncStatus ? (
               <>
@@ -239,7 +240,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 />
               </>
             ) : (
-              progress > 0 && <EnhancedProgressBar progress={progress} isDarkMode={isDarkMode} />
+              isThinking && progress > 0 && <EnhancedProgressBar progress={progress} isDarkMode={isDarkMode} />
             )}
           </div>
         </motion.div>
