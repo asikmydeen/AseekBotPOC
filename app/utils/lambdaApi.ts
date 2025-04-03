@@ -1,7 +1,7 @@
 import { MultimediaData } from "../types/shared";
 
 // app/utils/lambdaApi.ts
-export const API_BASE_URL = 'https://api-ammydeen4.alpha.aseekbot.ammydeen.people.aws.dev';
+export const API_BASE_URL = 'https://api-ammydeen5.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
   // New simplified endpoints
