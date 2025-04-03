@@ -35,6 +35,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import HistoryList from './chat/HistoryList';
 
+
 interface UploadedFile {
     fileId: string;
     fileName: string;
