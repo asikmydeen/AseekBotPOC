@@ -32,7 +32,9 @@ export default function Providers({ children }: ProviderProps) {
     return (
         <ThemeProvider initialDarkMode={true}>
             <ChatHistoryProvider>
-                {children}
+                <PromptsProvider>
+                    {children}
+                </PromptsProvider>
             </ChatHistoryProvider>
         </ThemeProvider>
     );
