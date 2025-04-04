@@ -449,6 +449,8 @@ export async function getUserFilesApi(): Promise<ApiResponse> {
 
 }
 
+// Update these functions to match your other working API calls
+
 export async function getPromptsApi(filters?: {
   type?: PromptType;
   tag?: string;
@@ -463,33 +465,46 @@ export async function getPromptsApi(filters?: {
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
 
+    // Changed to POST with userId in body to match other endpoints
     const response = await fetch(`${LAMBDA_ENDPOINTS.getPrompts}${queryString}`, {
-      method: 'GET',
-      headers: {
-        'x-user-id': TEST_USER_ID,
-        'Content-Type': 'application/json'
-      }
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: TEST_USER_ID })
     });
+
+    // Log response details for debugging
+    console.log(`getPromptsApi response status: ${response.status}`);
+    console.log(`getPromptsApi content-type: ${response.headers.get('content-type')}`);
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to get prompts');
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result;
   } catch (error) {
     console.error('Error getting prompts:', error);
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Failed to fetch prompts',
+      url: '',
+      chatId: 'getPrompts-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
 export async function getPromptByIdApi(promptId: string): Promise<ApiResponse> {
   try {
+    // Changed to POST with userId in body to match other endpoints
     const response = await fetch(LAMBDA_ENDPOINTS.getPromptById.replace(':id', promptId), {
-      method: 'GET',
-      headers: {
-        'x-user-id': TEST_USER_ID
-      }
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: TEST_USER_ID })
     });
 
     if (!response.ok) {
@@ -500,19 +515,31 @@ export async function getPromptByIdApi(promptId: string): Promise<ApiResponse> {
     return await response.json();
   } catch (error) {
     console.error(`Error getting prompt ${promptId}:`, error);
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : `Failed to fetch prompt ${promptId}`,
+      url: '',
+      chatId: 'getPromptById-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
 export async function createPromptApi(promptData: CreatePromptRequest): Promise<ApiResponse> {
   try {
+    // Add userId to the request body instead of in headers
+    const requestData = {
+      ...promptData,
+      userId: TEST_USER_ID
+    };
+
     const response = await fetch(LAMBDA_ENDPOINTS.createPrompt, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': TEST_USER_ID
-      },
-      body: JSON.stringify(promptData)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
     });
 
     if (!response.ok) {
@@ -523,19 +550,31 @@ export async function createPromptApi(promptData: CreatePromptRequest): Promise<
     return await response.json();
   } catch (error) {
     console.error('Error creating prompt:', error);
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Failed to create prompt',
+      url: '',
+      chatId: 'createPrompt-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
 export async function updatePromptApi(promptId: string, promptData: UpdatePromptRequest): Promise<ApiResponse> {
   try {
+    // Add userId to the request body instead of in headers
+    const requestData = {
+      ...promptData,
+      userId: TEST_USER_ID
+    };
+
     const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', promptId), {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': TEST_USER_ID
-      },
-      body: JSON.stringify(promptData)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
     });
 
     if (!response.ok) {
@@ -546,17 +585,26 @@ export async function updatePromptApi(promptId: string, promptData: UpdatePrompt
     return await response.json();
   } catch (error) {
     console.error(`Error updating prompt ${promptId}:`, error);
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Failed to update prompt',
+      url: '',
+      chatId: 'updatePrompt-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
 export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
   try {
+    // Changed to POST with userId in body to match other endpoints
     const response = await fetch(LAMBDA_ENDPOINTS.deletePrompt.replace(':id', promptId), {
-      method: 'DELETE',
-      headers: {
-        'x-user-id': TEST_USER_ID
-      }
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: TEST_USER_ID })
     });
 
     if (!response.ok) {
@@ -567,7 +615,16 @@ export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
     return await response.json();
   } catch (error) {
     console.error(`Error deleting prompt ${promptId}:`, error);
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Failed to delete prompt',
+      url: '',
+      chatId: 'deletePrompt-error',
+      timestamp: Date.now().toString(),
+      suggestions: [],
+      multimedia: undefined,
+      report: undefined
+    };
   }
 }
 
