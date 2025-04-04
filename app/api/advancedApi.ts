@@ -466,7 +466,8 @@ export async function getPromptsApi(filters?: {
     const response = await fetch(`${LAMBDA_ENDPOINTS.getPrompts}${queryString}`, {
       method: 'GET',
       headers: {
-        'x-user-id': TEST_USER_ID
+        'x-user-id': TEST_USER_ID,
+        'Content-Type': 'application/json'
       }
     });
 
