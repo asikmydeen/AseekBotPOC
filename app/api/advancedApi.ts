@@ -601,12 +601,9 @@ export async function updatePromptApi(promptId: string, promptData: UpdatePrompt
 export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
   try {
     const response = await fetch(LAMBDA_ENDPOINTS.deletePrompt.replace(':id', promptId), {
-      method: 'POST',
+      method: 'DELETE',  // Changed from POST to DELETE
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: TEST_USER_ID,
-        operation: 'delete' // Add this operation flag
-      })
+      body: JSON.stringify({ userId: TEST_USER_ID })  // Keep userId in body for consistency
     });
 
     if (!response.ok) {
