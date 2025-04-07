@@ -1,7 +1,28 @@
 // app/api/advancedApi.ts
-import { CreatePromptRequest, PromptType, UpdatePromptRequest } from '../types/shared';
+import { CreatePromptRequest, PromptType, UpdatePromptRequest, MultimediaData } from '../types/shared';
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
-import normalizeS3Url from '../utils/normalizeS3Url';
+import { normalizeS3Url, extractS3KeyFromUrl, standardizeFileObject, standardizeFileObjects } from '../utils/fileUtils';
+
+// Unified API response type that combines ApiResponse and StatusResponse
+export interface UnifiedApiResponse extends ApiResponse {
+  requestId?: string;
+  status?: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  progress?: number;
+  result?: any;
+  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+  updatedAt?: string;
+  stepFunctionsExecution?: {
+    executionArn: string;
+    startTime: string;
+  };
+}
+
+// Options for async requests
+export interface AsyncRequestOptions {
+  sessionId?: string;
+  history?: any[];
+  attachments?: any[];
+}
 
 function updateLocalStorageForRequest(requestId: string, state: any) {
   try {
@@ -43,7 +64,7 @@ export async function sendMessage(
   message: string,
   chatSessionId: string,
   files?: any[]
-): Promise<ApiResponse> {
+): Promise<UnifiedApiResponse> {
   try {
     // Generate a unique chatId if none exists
     const chatId = `chat-${Date.now()}`;
@@ -58,10 +79,14 @@ export async function sendMessage(
 
     // Add S3 file references if files are present
     if (files && files.length > 0) {
-      const s3Files = files.map(file => ({
+      // Standardize file objects
+      const standardizedFiles = standardizeFileObjects(files);
+
+      // Map to the format expected by the API
+      const s3Files = standardizedFiles.map(file => ({
         name: file.name,
-        s3Url: normalizeS3Url(file.url || file.fileUrl),
-        mimeType: file.type || 'application/octet-stream'
+        s3Url: file.s3Url,
+        mimeType: file.mimeType
       }));
 
       payload.s3Files = s3Files;
@@ -101,7 +126,7 @@ export async function sendMessage(
  * @param requestId - The ID of the request to check
  * @returns The current status of the request
  */
-export async function checkStatus(requestId: string): Promise<ApiResponse> {
+export async function checkStatus(requestId: string): Promise<UnifiedApiResponse> {
   try {
     if (!requestId) {
       throw new Error('No requestId provided');
@@ -138,7 +163,7 @@ export async function checkStatus(requestId: string): Promise<ApiResponse> {
  * @param sessionId - The session ID to summarize
  * @returns Summary of all requests in the session
  */
-export async function getSessionSummary(sessionId: string): Promise<ApiResponse> {
+export async function getSessionSummary(sessionId: string): Promise<UnifiedApiResponse> {
   try {
     if (!sessionId) {
       throw new Error('No sessionId provided');
@@ -167,7 +192,7 @@ export async function getSessionSummary(sessionId: string): Promise<ApiResponse>
  * @param chatId - The chat ID to get history for
  * @returns Chat history
  */
-export async function getChatHistory(chatId: string): Promise<ApiResponse> {
+export async function getChatHistory(chatId: string): Promise<UnifiedApiResponse> {
   try {
     if (!chatId) {
       throw new Error('No chatId provided');
@@ -191,7 +216,7 @@ export async function getChatHistory(chatId: string): Promise<ApiResponse> {
 }
 
 // File upload function - kept as is since it still uses the same endpoint
-export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<ApiResponse> {
+export async function uploadFileApi(file: File, sessionId?: string, p0?: string): Promise<UnifiedApiResponse> {
   try {
     if (!file) {
       throw new Error('No file provided');
@@ -232,7 +257,7 @@ export async function uploadFileApi(file: File, sessionId?: string, p0?: string)
 }
 
 // Create ticket function - kept as is
-export async function createTicketApi(ticketDetails: TicketDetails): Promise<ApiResponse> {
+export async function createTicketApi(ticketDetails: TicketDetails): Promise<UnifiedApiResponse> {
   try {
     if (!ticketDetails || !ticketDetails.subject) {
       throw new Error('Invalid ticket details');
@@ -269,26 +294,9 @@ export async function createTicketApi(ticketDetails: TicketDetails): Promise<Api
   }
 }
 
-// Helper function to extract S3 key from a file URL
-function extractS3KeyFromUrl(fileUrl: string): string {
-  if (!fileUrl) {
-    throw new Error('Invalid file URL');
-  }
+// Using extractS3KeyFromUrl from fileUtils.ts
 
-  if (fileUrl.includes('amazonaws.com/')) {
-    const s3Key = fileUrl.split('amazonaws.com/')[1];
-    if (!s3Key) {
-      throw new Error('Invalid file URL format');
-    }
-    return s3Key;
-  } else if (fileUrl.includes('/')) {
-    return fileUrl;
-  } else {
-    return fileUrl;
-  }
-}
-
-export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
+export async function deleteFileApi(fileUrl: string): Promise<UnifiedApiResponse> {
   try {
     const s3Key = extractS3KeyFromUrl(fileUrl);
 
@@ -318,7 +326,7 @@ export async function deleteFileApi(fileUrl: string): Promise<ApiResponse> {
   }
 }
 
-export async function downloadFileApi(fileUrlOrKey: string): Promise<ApiResponse> {
+export async function downloadFileApi(fileUrlOrKey: string): Promise<UnifiedApiResponse> {
   try {
     const fileKey = fileUrlOrKey.includes('amazonaws.com/') ? extractS3KeyFromUrl(fileUrlOrKey) : fileUrlOrKey;
 
@@ -345,7 +353,7 @@ export async function downloadFileApi(fileUrlOrKey: string): Promise<ApiResponse
   }
 }
 
-export async function getUserFilesApi(): Promise<ApiResponse> {
+export async function getUserFilesApi(): Promise<UnifiedApiResponse> {
   try {
     const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
       method: 'POST',
@@ -455,7 +463,7 @@ export async function getPromptsApi(filters?: {
   type?: PromptType;
   tag?: string;
   onlyMine?: boolean;
-}): Promise<ApiResponse> {
+}): Promise<UnifiedApiResponse> {
   try {
     // Construct query parameters
     const queryParams = new URLSearchParams();
@@ -498,7 +506,7 @@ export async function getPromptsApi(filters?: {
   }
 }
 
-export async function getPromptByIdApi(promptId: string): Promise<ApiResponse> {
+export async function getPromptByIdApi(promptId: string): Promise<UnifiedApiResponse> {
   try {
     // Changed to POST with userId in body to match other endpoints
     const response = await fetch(LAMBDA_ENDPOINTS.getPromptById.replace(':id', promptId), {
@@ -528,7 +536,7 @@ export async function getPromptByIdApi(promptId: string): Promise<ApiResponse> {
   }
 }
 
-export async function createPromptApi(promptData: CreatePromptRequest): Promise<ApiResponse> {
+export async function createPromptApi(promptData: CreatePromptRequest): Promise<UnifiedApiResponse> {
   try {
     // Add userId to the request body instead of in headers
     const requestData = {
@@ -563,7 +571,7 @@ export async function createPromptApi(promptData: CreatePromptRequest): Promise<
   }
 }
 
-export async function updatePromptApi(promptId: string, promptData: UpdatePromptRequest): Promise<ApiResponse> {
+export async function updatePromptApi(promptId: string, promptData: UpdatePromptRequest): Promise<UnifiedApiResponse> {
   try {
     // Add userId to the request body instead of in headers
     const requestData = {
@@ -598,7 +606,7 @@ export async function updatePromptApi(promptId: string, promptData: UpdatePrompt
   }
 }
 
-export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
+export async function deletePromptApi(promptId: string): Promise<UnifiedApiResponse> {
   try {
     const response = await fetch(LAMBDA_ENDPOINTS.deletePrompt.replace(':id', promptId), {
       method: 'DELETE',  // Changed from POST to DELETE
@@ -627,5 +635,43 @@ export async function deletePromptApi(promptId: string): Promise<ApiResponse> {
   }
 }
 
-export const processChatMessage = sendMessage;export const startAsyncChatProcessing = sendMessage;
-export const startAsyncDocumentAnalysis = sendMessage;
+/**
+ * Start async processing of a chat message
+ * This is an alias for sendMessage for backward compatibility
+ */
+export const processChatMessage = sendMessage;
+export const startAsyncChatProcessing = sendMessage;
+
+/**
+ * Start async document analysis
+ * This is an alias for sendMessage with document analysis flag for backward compatibility
+ *
+ * @param files - Array of files to analyze
+ * @param message - Optional message to include with the analysis
+ * @param options - Additional options
+ * @returns API response with requestId for status checking
+ */
+export async function startDocumentAnalysis(
+  files: any[],
+  message: string = 'Please analyze these documents',
+  options: AsyncRequestOptions = {}
+): Promise<UnifiedApiResponse> {
+  try {
+    if (!files || !files.length) {
+      throw new Error('No files provided for analysis');
+    }
+
+    // Use the unified sendMessage function with document analysis flag
+    return await sendMessage(
+      message,
+      options.sessionId || `session-${Date.now()}`,
+      files
+    );
+  } catch (error) {
+    console.error('Error starting document analysis:', error);
+    throw error;
+  }
+}
+
+// Alias for backward compatibility
+export const startAsyncDocumentAnalysis = startDocumentAnalysis;

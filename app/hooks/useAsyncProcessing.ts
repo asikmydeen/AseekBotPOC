@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { checkStatus } from '../api/advancedApi';
-import { ApiResponse } from '../utils/lambdaApi';
+import { checkStatus, UnifiedApiResponse } from '../api/advancedApi';
 
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
@@ -38,8 +37,8 @@ interface UseAsyncProcessingOptions {
   onStatusChange?: (status: AsyncProcessingResult) => void;
 }
 
-// Helper function to convert ApiResponse to AsyncProcessingResult
-const convertToAsyncProcessingResult = (response: ApiResponse): AsyncProcessingResult => {
+// Helper function to convert UnifiedApiResponse to AsyncProcessingResult
+const convertToAsyncProcessingResult = (response: UnifiedApiResponse): AsyncProcessingResult => {
   const status = response.status as AsyncProcessingResult['status'] || 'QUEUED';
 
   return {

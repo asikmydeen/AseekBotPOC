@@ -1,35 +1,30 @@
 import { MultimediaData } from "../types/shared";
+import { extractS3KeyFromUrl } from "./fileUtils";
 
 // app/utils/lambdaApi.ts
 export const API_BASE_URL = 'https://api-ammydeen9.alpha.aseekbot.ammydeen.people.aws.dev';
 
 export const LAMBDA_ENDPOINTS = {
-  // New simplified endpoints
+  // Core endpoints
   message: `${API_BASE_URL}/message`,
   status: `${API_BASE_URL}/status`,
 
-  // Unchanged endpoints
+  // File management endpoints
   uploadFile: `${API_BASE_URL}/uploadFile`,
   deleteFile: `${API_BASE_URL}/deleteFile`,
-  createTicket: `${API_BASE_URL}/createTicket`,
-  quickLink: `${API_BASE_URL}/quickLink`,
   downloadFile: `${API_BASE_URL}/files/download`,
   getUserFiles: `${API_BASE_URL}/getUserFiles`,
 
-  // Legacy endpoints for backward compatibility
-  processChatMessage: `${API_BASE_URL}/processChatMessage`,
-  startProcessing: `${API_BASE_URL}/startProcessing`,
-  checkStatus: `${API_BASE_URL}/checkStatus`,
-  getProcessingStatus: `${API_BASE_URL}/checkStatus`,
-  workerProcessor: `${API_BASE_URL}/workerProcessor`,
+  // Support endpoints
+  createTicket: `${API_BASE_URL}/createTicket`,
+  quickLink: `${API_BASE_URL}/quickLink`,
 
-  // Prompt Endpoints
+  // Prompt management endpoints
   getPrompts: `${API_BASE_URL}/prompts`,
   getPromptById: `${API_BASE_URL}/prompts/:id`,
   createPrompt: `${API_BASE_URL}/prompts`,
   updatePrompt: `${API_BASE_URL}/prompts/:id`,
   deletePrompt: `${API_BASE_URL}/prompts/:id`
-
 };
 
 // Define the necessary interfaces
@@ -100,24 +95,7 @@ export function handleClientError(error: unknown, operation: string): never {
   throw new Error(`Failed to ${operation}. Please try again.`);
 }
 
-// Helper function to extract S3 key from file URL
-export function extractS3KeyFromUrl(fileUrl: string): string {
-  if (!fileUrl) {
-    throw new Error('Invalid file URL');
-  }
-
-  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
-  if (fileUrl.includes('amazonaws.com/')) {
-    return fileUrl.split('amazonaws.com/')[1];
-  }
-  // Handle CloudFront or custom domain URLs
-  else if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
-    // Assume it's already a partial path or key
-    return fileUrl;
-  }
-
-  throw new Error('Unable to extract file key from URL');
-}
+// Using extractS3KeyFromUrl from fileUtils.ts
 
 /**
  * Helper function to ensure chat continuity by preserving chatId

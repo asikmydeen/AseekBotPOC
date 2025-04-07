@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { stripIndent } from '../utils/helpers';
-import { sendMessage, checkStatus } from '../api/advancedApi';
+import { sendMessage, checkStatus, UnifiedApiResponse } from '../api/advancedApi';
 import { MessageType, MultimediaData } from '../types/shared';
 import { createDocumentAnalysisMessage } from '../utils/documentAnalysisUtils';
 
