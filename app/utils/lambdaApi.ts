@@ -1,5 +1,5 @@
 import { MultimediaData } from "../types/shared";
-import { extractS3KeyFromUrl } from "./fileUtils";
+import { extractS3KeyFromUrl } from "./fileUtilities";
 
 // app/utils/lambdaApi.ts
 export const API_BASE_URL = 'https://api-ammydeen9.alpha.aseekbot.ammydeen.people.aws.dev';

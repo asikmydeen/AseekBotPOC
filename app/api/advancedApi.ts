@@ -1,7 +1,7 @@
 // app/api/advancedApi.ts
 import { CreatePromptRequest, PromptType, UpdatePromptRequest, MultimediaData } from '../types/shared';
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
-import { normalizeS3Url, extractS3KeyFromUrl, standardizeFileObject, standardizeFileObjects } from '../utils/fileUtils';
+import { normalizeS3Url, extractS3KeyFromUrl, standardizeFileObject, standardizeFileObjects } from '../utils/fileUtilities';
 
 // Unified API response type that combines ApiResponse and StatusResponse
 export interface UnifiedApiResponse extends ApiResponse {
@@ -48,7 +48,7 @@ function removeLocalStorageForRequest(requestId: string) {
 }
 
 // Placeholder for user ID - can be replaced with actual user ID when integrating with user management
-const TEST_USER_ID = 'test-user';
+export const TEST_USER_ID = 'test-user';
 
 /**
  * Sends a message to the API, supporting multiple workflows (chat, document analysis, data query)
