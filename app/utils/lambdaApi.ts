@@ -1,5 +1,4 @@
 import { MultimediaData } from "../types/shared";
-import { extractS3KeyFromUrl } from "./fileUtilities";
 
 // app/utils/lambdaApi.ts
 export const API_BASE_URL = 'https://api-ammydeen9.alpha.aseekbot.ammydeen.people.aws.dev';
@@ -95,7 +94,32 @@ export function handleClientError(error: unknown, operation: string): never {
   throw new Error(`Failed to ${operation}. Please try again.`);
 }
 
-// Using extractS3KeyFromUrl from fileUtils.ts
+/**
+ * Extracts the S3 key from a file URL
+ */
+export function extractS3KeyFromUrl(fileUrl: string): string {
+  if (!fileUrl) {
+    throw new Error('Invalid file URL');
+  }
+
+  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
+  if (fileUrl.includes('amazonaws.com/')) {
+    const s3Key = fileUrl.split('amazonaws.com/')[1];
+    if (!s3Key) {
+      throw new Error('Invalid file URL format');
+    }
+    return s3Key;
+  }
+  // Handle CloudFront or custom domain URLs
+  else if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+    // Assume it's already a partial path or key
+    return fileUrl;
+  }
+  // Handle simple key
+  else {
+    return fileUrl;
+  }
+}
 
 /**
  * Helper function to ensure chat continuity by preserving chatId

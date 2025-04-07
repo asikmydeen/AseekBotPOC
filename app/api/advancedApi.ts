@@ -1,7 +1,95 @@
 // app/api/advancedApi.ts
 import { CreatePromptRequest, PromptType, UpdatePromptRequest, MultimediaData } from '../types/shared';
 import { LAMBDA_ENDPOINTS, TicketDetails, ApiResponse, handleClientError } from '../utils/lambdaApi';
-import { normalizeS3Url, extractS3KeyFromUrl, standardizeFileObject, standardizeFileObjects } from '../utils/fileUtilities';
+
+// Inline file utilities to avoid import issues
+/**
+ * Normalizes an S3 URL to ensure consistent format
+ */
+export function normalizeS3Url(url: string): string {
+  if (!url) return '';
+
+  // Remove query parameters by taking the part before '?'
+  const urlWithoutParams = url.split('?')[0];
+
+  // Normalize the bucket name if necessary
+  // Replace 'aseekbot-files.s3' with 'aseekbot-files-ammydeen9.s3'
+  if (urlWithoutParams.includes('aseekbot-files.s3')) {
+    return urlWithoutParams.replace('aseekbot-files.s3', 'aseekbot-files-ammydeen9.s3');
+  }
+
+  // If it's a relative path starting with '/', remove the leading slash
+  if (urlWithoutParams.startsWith('/')) {
+    return urlWithoutParams.substring(1);
+  }
+
+  return urlWithoutParams;
+}
+
+/**
+ * Extracts the S3 key from a file URL
+ */
+export function extractS3KeyFromUrl(fileUrl: string): string {
+  if (!fileUrl) {
+    throw new Error('Invalid file URL');
+  }
+
+  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
+  if (fileUrl.includes('amazonaws.com/')) {
+    const s3Key = fileUrl.split('amazonaws.com/')[1];
+    if (!s3Key) {
+      throw new Error('Invalid file URL format');
+    }
+    return s3Key;
+  }
+  // Handle CloudFront or custom domain URLs
+  else if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+    // Assume it's already a partial path or key
+    return fileUrl;
+  }
+  // Handle simple key
+  else {
+    return fileUrl;
+  }
+}
+
+/**
+ * Standardized file object structure
+ */
+export interface StandardFileObject {
+  name: string;
+  size?: number;
+  type?: string;
+  mimeType?: string;
+  url?: string;
+  fileUrl?: string;
+  s3Url?: string;
+  useCase?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+}
+
+/**
+ * Converts various file object formats to a standard format
+ */
+export function standardizeFileObject(file: any): StandardFileObject {
+  return {
+    name: file.name || 'unknown',
+    size: file.size,
+    type: file.type || file.mimeType || 'application/octet-stream',
+    mimeType: file.mimeType || file.type || 'application/octet-stream',
+    url: file.url || file.fileUrl || file.s3Url || '',
+    fileUrl: file.fileUrl || file.url || file.s3Url || '',
+    s3Url: file.s3Url || normalizeS3Url(file.url || file.fileUrl || ''),
+    useCase: file.useCase || 'CHAT'
+  };
+}
+
+/**
+ * Converts an array of file objects to the standard format
+ */
+export function standardizeFileObjects(files: any[]): StandardFileObject[] {
+  if (!files || !Array.isArray(files)) return [];
+  return files.map(standardizeFileObject);
+}
 
 // Unified API response type that combines ApiResponse and StatusResponse
 export interface UnifiedApiResponse extends ApiResponse {
