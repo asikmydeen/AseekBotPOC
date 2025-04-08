@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCode, FiX, FiMaximize2, FiMinimize2 } from 'react-icons/fi';
 import ArtifactDisplay from './ArtifactDisplay';
-import { useArtifacts } from '../context/ArtifactContext';
-import { useTheme } from '../context/ThemeContext';
+import { useArtifacts } from '../hooks/useArtifacts';
+import { useTheme } from '../hooks/useTheme';
 
 interface ArtifactLayoutProps {
   children: React.ReactNode;
@@ -46,12 +46,12 @@ const ArtifactLayout: React.FC<ArtifactLayoutProps> = ({ children }) => {
     <div className="flex flex-col h-screen">
       <div className="flex flex-1 overflow-hidden">
         {/* Main content area */}
-        <div 
+        <div
           className={`flex-1 transition-all duration-300 ${
-            isPanelOpen 
-              ? isPanelExpanded 
-                ? 'mr-[85%] md:mr-3/4 lg:mr-2/3' 
-                : 'mr-[40%] md:mr-1/3 lg:mr-1/3' 
+            isPanelOpen
+              ? isPanelExpanded
+                ? 'mr-[85%] md:mr-3/4 lg:mr-2/3'
+                : 'mr-[40%] md:mr-1/3 lg:mr-1/3'
               : 'mr-0'
           }`}
         >
@@ -63,15 +63,15 @@ const ArtifactLayout: React.FC<ArtifactLayoutProps> = ({ children }) => {
           {isPanelOpen && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ 
-                width: isPanelExpanded ? '85%' : '40%', 
+              animate={{
+                width: isPanelExpanded ? '85%' : '40%',
                 opacity: 1,
                 transition: { duration: 0.3 }
               }}
               exit={{ width: 0, opacity: 0 }}
               className={`
                 fixed right-0 top-0 bottom-0 z-10 flex flex-col
-                ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} 
+                ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}
                 border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}
                 shadow-xl
               `}
