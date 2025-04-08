@@ -19,7 +19,7 @@ function generateCacheKey(fnName: string, args: any[]): string {
 
 /**
  * Custom hook for making API requests with caching and deduplication
- * 
+ *
  * @param apiFunction - The API function to call
  * @param options - Options for caching and error handling
  * @returns An object with data, loading state, error, and execute function
@@ -51,25 +51,25 @@ export function useApi<T, P extends any[]>(
   const [data, setData] = useState<T | undefined>(initialData);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  
+
   // Refs to prevent stale closures in callbacks
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
   const functionNameRef = useRef(apiFunction.name || 'anonymous');
-  
+
   // Function to execute the API call
   const execute = useCallback(
     async (...args: P): Promise<T> => {
       // Generate a cache key for this request
       const cacheKey = generateCacheKey(functionNameRef.current, args);
-      
+
       // Check if we have a cached response that's still valid
       const cachedResponse = apiCache.get(cacheKey);
       if (cachedResponse && Date.now() - cachedResponse.timestamp < cacheTime) {
         setData(cachedResponse.data);
         return cachedResponse.data;
       }
-      
+
       // Check if this request is already in flight
       if (inFlightRequests.has(cacheKey)) {
         try {
@@ -85,94 +85,94 @@ export function useApi<T, P extends any[]>(
           throw err;
         }
       }
-      
+
       // Start a new request
       setIsLoading(true);
       setError(null);
-      
+
       // Create the promise for this request
       const promise = (async () => {
         try {
           const result = await apiFunction(...args);
-          
+
           // Cache the successful response
           apiCache.set(cacheKey, {
             data: result,
             timestamp: Date.now(),
           });
-          
+
           if (isMountedRef.current) {
             setData(result);
             setIsLoading(false);
           }
-          
+
           // Call onSuccess callback if provided
           if (onSuccess && isMountedRef.current) {
             onSuccess(result);
           }
-          
+
           return result;
         } catch (err) {
           // Handle retry logic
           if (retry && retryCountRef.current < (typeof retry === 'number' ? retry : 3)) {
             retryCountRef.current += 1;
-            
+
             // Wait for the retry delay
             await new Promise(resolve => setTimeout(resolve, retryDelay));
-            
+
             // Try again if still mounted
             if (isMountedRef.current) {
               return execute(...args);
             }
           }
-          
+
           if (isMountedRef.current) {
             setError(err instanceof Error ? err : new Error(String(err)));
             setIsLoading(false);
-            
+
             // Call onError callback if provided
             if (onError) {
               onError(err instanceof Error ? err : new Error(String(err)));
             }
           }
-          
+
           throw err;
         } finally {
           // Remove this request from in-flight requests
           inFlightRequests.delete(cacheKey);
         }
       })();
-      
+
       // Store the promise in the in-flight requests map
       inFlightRequests.set(cacheKey, promise);
-      
+
       return promise;
     },
     [apiFunction, cacheTime, onSuccess, onError, retry, retryDelay]
   );
-  
+
   // Auto-execute the API call if enabled
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     if (enabled) {
       // We're not passing args here, so this is for auto-executing without parameters
-      execute().catch(() => {
+      execute(...[] as unknown as P).catch(() => {
         // Error is already handled in the execute function
       });
     }
-    
+
     return () => {
       isMountedRef.current = false;
     };
   }, [enabled, execute]);
-  
+
   // Reset retry count when the function changes
   useEffect(() => {
     retryCountRef.current = 0;
     functionNameRef.current = apiFunction.name || 'anonymous';
   }, [apiFunction]);
-  
+
   return {
     data,
     isLoading,
