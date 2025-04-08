@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 interface ThemeState {
   // State
   isDarkMode: boolean;
-  
+
   // Actions
   toggleTheme: () => void;
   setDarkMode: (isDark: boolean) => void;
@@ -16,11 +16,11 @@ export const useThemeStore = create<ThemeState>()(
     (set) => ({
       // Initial state
       isDarkMode: true,
-      
+
       // Toggle between light and dark mode
       toggleTheme: () => set((state) => {
         const newMode = !state.isDarkMode;
-        
+
         // Apply or remove the 'dark' class on the document root
         if (typeof document !== 'undefined') {
           if (newMode) {
@@ -29,10 +29,10 @@ export const useThemeStore = create<ThemeState>()(
             document.documentElement.classList.remove('dark');
           }
         }
-        
+
         return { isDarkMode: newMode };
       }),
-      
+
       // Set dark mode explicitly
       setDarkMode: (isDark) => set(() => {
         // Apply or remove the 'dark' class on the document root
@@ -43,7 +43,7 @@ export const useThemeStore = create<ThemeState>()(
             document.documentElement.classList.remove('dark');
           }
         }
-        
+
         return { isDarkMode: isDark };
       }),
     }),
@@ -54,11 +54,4 @@ export const useThemeStore = create<ThemeState>()(
 );
 
 // Initialize theme on app load
-if (typeof window !== 'undefined') {
-  const { isDarkMode } = useThemeStore.getState();
-  if (isDarkMode) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}
+// We'll handle this in a useEffect in a ThemeInitializer component instead
