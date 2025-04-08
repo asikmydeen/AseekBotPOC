@@ -7,6 +7,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChatProvider } from './context/ChatContext';
 import { ArtifactProvider } from './context/ArtifactContext';
 
+// Import ThemeInitializer to handle theme initialization
+import ThemeInitializer from './components/ThemeInitializer';
+
 // Initialize Zustand stores
 import './store/themeStore';
 import './store/chatHistoryStore';
