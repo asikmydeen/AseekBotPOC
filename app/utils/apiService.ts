@@ -253,7 +253,7 @@ export const apiService = {
    */
   updatePrompt: async (id: string, promptData: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), 'PUT', promptData);
+      return await makeRequest(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), 'PUT', { ...promptData, userId: TEST_USER_ID });
     } catch (error) {
       console.error(`Error updating prompt ${id}:`, error);
       throw error;
