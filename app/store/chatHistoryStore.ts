@@ -208,7 +208,7 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
       setIsChatLoading: (isChatLoading) => set({ isChatLoading })
     }),
     {
-      name: 'chat-history-storage', // unique name for localStorage
+      name: 'aseekbot_chat_history', // Use the same key as before for localStorage
       partialize: (state) => ({
         chatHistory: state.chatHistory,
         activeChat: state.activeChat
@@ -217,9 +217,10 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
         // If there's no chat history, initialize with a new chat
         if (!state || !state.chatHistory || state.chatHistory.length === 0) {
           const newChat = createNewChat();
-          saveChat(newChat);
           state?.setActiveChat(newChat);
-          state?.chatHistory.push(newChat);
+          if (state?.chatHistory) {
+            state.chatHistory.push(newChat);
+          }
         }
       }
     }
