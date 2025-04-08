@@ -415,17 +415,16 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
-                        className={`text-xl font-bold flex items-center ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`}
+                        className={styles.report.title}
                     >
                         <FaBook className="mr-2" /> {report.title}
                     </motion.h3>
-                    <div className="flex gap-2">
+                    <div className={styles.report.buttons}>
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsCollapsed(!isCollapsed)}
-                            className={`p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                }`}
+                            className={styles.report.toggleButton}
                             aria-label={isCollapsed ? 'Expand report' : 'Collapse report'}
                             aria-expanded={!isCollapsed}
                         >
@@ -435,8 +434,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleDownload}
-                            className={`p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                }`}
+                            className={styles.report.downloadButton}
                             aria-label="Download report as PDF"
                         >
                             <FaDownload />
@@ -446,10 +444,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setShowCitationPanel(!showCitationPanel)}
-                                className={`p-2 rounded-full ${isDarkMode
-                                    ? `bg-gray-700 ${showCitationPanel ? 'text-blue-400' : 'text-gray-300'} hover:bg-gray-600`
-                                    : `bg-gray-200 ${showCitationPanel ? 'text-blue-600' : 'text-gray-600'} hover:bg-gray-300`
-                                    }`}
+                                className={styles.actions.citation(isDarkMode, showCitationPanel)}
                                 aria-label="Toggle citations"
                                 aria-expanded={showCitationPanel}
                                 aria-controls="citation-panel"
@@ -520,30 +515,27 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
         );
     };
     return (
-        <div id={id} className={`mb-8 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-            <div className={`flex items-start gap-3 ${message.sender === 'user' ? 'flex-row-reverse justify-start' : 'flex-row'}`}>
+        <div id={id} className={styles.wrapper}>
+            <div className={styles.flexContainer}>
                 {/* Avatar for bot or user */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
-                    className={`flex-shrink-0 ${message.sender === 'user' ? 'ml-2' : 'mr-2'}`}
+                    className={styles.avatar.container}
                 >
                     <motion.div
                         whileHover={{ scale: 1.1 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${message.sender === 'user'
-                                ? isDarkMode ? 'dark-active' : 'bg-gray-200'
-                                : isDarkMode ? 'dark-info-bg' : 'bg-blue-100'
-                            }`}
+                        className={styles.avatar.inner}
                     >
                         {message.sender === 'user' ? (
                             <UserThumbnail
                                 userId={message.userId || 'test-user'}
                                 size={20}
-                                className={`${isDarkMode ? 'dark-text' : 'text-gray-600'}`}
+                                className={styles.avatar.icon}
                             />
                         ) : (
-                            <FaRobot className={`${isDarkMode ? 'dark-primary' : 'text-blue-600'}`} />
+                            <FaRobot className={styles.avatar.icon} />
                         )}
                     </motion.div>
                 </motion.div>
@@ -608,8 +600,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                                                } transition-colors shadow-md`}
+                                            className={styles.imageDialog.cancelButton}
                                             onClick={() => setShowImageConfirmation(false)}
                                         >
                                             Cancel
@@ -619,8 +610,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            className={`px-4 py-2 rounded-lg ${isDarkMode ? 'dark-primary-bg text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
-                                                } transition-colors shadow-md`}
+                                            className={styles.imageDialog.confirmButton}
                                             onClick={confirmViewImage}
                                         >
                                             View Image
@@ -659,14 +649,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     whileHover="hover"
                                     whileTap="tap"
                                     onClick={() => onReact('thumbs-up')}
-                                    className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-up'
-                                        ? isDarkMode
-                                            ? 'dark-success-bg text-white' // Changed 'dark-success' to 'text-white' for better contrast
-                                            : 'bg-green-100 text-green-600'
-                                        : isDarkMode
-                                            ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
-                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-                                        }`}
+                                    className={styles.actions.reaction(isDarkMode, message.reaction === 'thumbs-up' ? true : null, true)}
                                     aria-label="Thumbs up"
                                     aria-pressed={message.reaction === 'thumbs-up'}
                                 >
@@ -679,14 +662,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     whileHover="hover"
                                     whileTap="tap"
                                     onClick={() => onReact('thumbs-down')}
-                                    className={`p-2 rounded-full transition-colors ${message.reaction === 'thumbs-down'
-                                        ? isDarkMode
-                                            ? 'dark-error-bg text-white' // Changed 'dark-error' to 'text-white' for better contrast
-                                            : 'bg-red-100 text-red-600'
-                                        : isDarkMode
-                                            ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
-                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-                                        }`}
+                                    className={styles.actions.reaction(isDarkMode, message.reaction === 'thumbs-down' ? true : null, false)}
                                     aria-label="Thumbs down"
                                     aria-pressed={message.reaction === 'thumbs-down'}
                                 >
@@ -699,14 +675,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     whileHover="hover"
                                     whileTap="tap"
                                     onClick={onPin}
-                                    className={`p-2 rounded-full transition-colors ${message.pinned
-                                            ? isDarkMode
-                                                ? 'dark-primary-bg text-white' // Changed 'dark-primary' to 'text-white' for better contrast
-                                                : 'bg-blue-100 text-blue-600'
-                                            : isDarkMode
-                                                ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-                                        }`}
+                                    className={styles.actions.pin(isDarkMode, message.pinned)}
                                     aria-label={message.pinned ? 'Unpin message' : 'Pin message'}
                                     aria-pressed={message.pinned}
                                 >
