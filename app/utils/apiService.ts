@@ -181,7 +181,7 @@ export const apiService = {
         ? fileUrlOrKey.split('/').pop() || ''
         : fileUrlOrKey;
 
-      return await makeRequest(LAMBDA_ENDPOINTS.downloadFile, 'POST', { fileKey });
+      return await makeRequest(LAMBDA_ENDPOINTS.downloadFile, 'POST', { fileKey, userId: TEST_USER_ID });
     } catch (error) {
       console.error('Error downloading file:', error);
       throw error;
