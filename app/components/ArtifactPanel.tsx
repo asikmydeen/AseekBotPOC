@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCode, FiX, FiMaximize2, FiMinimize2, FiCopy, FiDownload } from 'react-icons/fi';
-import { useArtifacts } from '../context/ArtifactContext';
+import { useArtifacts } from '../hooks/useArtifacts';
 import ArtifactDisplay from './ArtifactDisplay';
 
 interface ArtifactPanelProps {
