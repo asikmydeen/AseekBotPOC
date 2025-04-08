@@ -30,9 +30,8 @@ import {
     messageAnimationVariants,
     darkMessageAnimationVariants,
     buttonAnimationVariants,
-    getMessageContainerClass,
-    getMarkdownContentClass,
-    getAttachmentsContainerClass
+    getMessageStyles,
+    MessageStyles
 } from '../styles/messageStyles';
 
 interface MessageProps {
