@@ -3,10 +3,6 @@
 import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-// Import legacy providers that haven't been migrated yet
-import { ChatProvider } from './context/ChatContext';
-import { ArtifactProvider } from './context/ArtifactContext';
-
 // Import ThemeInitializer to handle theme initialization
 import ThemeInitializer from './components/ThemeInitializer';
 
