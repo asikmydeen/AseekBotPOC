@@ -1,8 +1,7 @@
 // app/styles/messageStyles.ts
 // Centralized styles for the Message component
 
-// Import types
-import { CSSProperties } from 'react';
+// Animation types
 
 // Animation types
 type SpinnerTransition = {
