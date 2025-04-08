@@ -98,6 +98,10 @@ export interface MessageStyles {
     pin: (isDarkMode: boolean, isPinned: boolean) => string;
     citation: (isDarkMode: boolean, isActive: boolean) => string;
   };
+  multimedia: {
+    button: string;
+    icon: string;
+  };
   report: {
     container: string;
     title: string;
