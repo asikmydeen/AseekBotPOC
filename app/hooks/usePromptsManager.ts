@@ -1,6 +1,6 @@
 // app/hooks/usePromptsManager.ts
 import { useState, useCallback } from 'react';
-import { usePrompts } from '../context/PromptsContext';
+import { usePrompts } from './usePrompts';
 import {
     Prompt,
     PromptType,
