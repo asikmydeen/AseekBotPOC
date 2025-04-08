@@ -229,7 +229,7 @@ export const apiService = {
    */
   getPromptById: async (id: string) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.getPromptById.replace(':id', id), 'GET');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.getPromptById.replace(':id', id)}?userId=${TEST_USER_ID}`, 'GET');
     } catch (error) {
       console.error(`Error getting prompt ${id}:`, error);
       throw error;
