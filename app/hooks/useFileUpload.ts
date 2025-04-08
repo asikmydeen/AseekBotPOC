@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { uploadFileApi, deleteFileApi } from '../api/advancedApi';
+import { apiService } from '../utils/apiService';
 import { UploadedFile } from '../types/shared';
 
 interface UseFileUploadProps {
