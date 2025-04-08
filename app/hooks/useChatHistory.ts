@@ -9,8 +9,6 @@ export function useChatHistory() {
   const {
     activeChat,
     chatHistory,
-    pinnedChats,
-    recentChats,
     isChatLoading,
     setActiveChat,
     createChat,
@@ -18,14 +16,14 @@ export function useChatHistory() {
     updateChatMessages,
     removeChatFromHistory,
     renameChatHistory,
-    togglePinChat
+    togglePinChat,
+    getPinnedChats,
+    getRecentChats
   } = useChatHistoryStore();
-  
+
   return {
     activeChat,
     chatHistory,
-    pinnedChats,
-    recentChats,
     isChatLoading,
     setActiveChat,
     createChat,
@@ -33,6 +31,11 @@ export function useChatHistory() {
     updateChatMessages,
     removeChatFromHistory,
     renameChatHistory,
-    togglePinChat
+    togglePinChat,
+    getPinnedChats,
+    getRecentChats,
+    // For backward compatibility
+    pinnedChats: getPinnedChats ? getPinnedChats() : [],
+    recentChats: getRecentChats ? getRecentChats() : []
   };
 }
