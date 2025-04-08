@@ -200,8 +200,8 @@ export default function AppSidebar({
                 return;
             }
 
-            // Call the downloadFileApi to get a presigned URL
-            const response = await downloadFileApi(fileKey);
+            // Call the API service to get a presigned URL
+            const response = await apiService.downloadFile(fileKey);
 
             if (response && (response.fileUrl || response.url)) {
                 // Open the download URL in a new tab
