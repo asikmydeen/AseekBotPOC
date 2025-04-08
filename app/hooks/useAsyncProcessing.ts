@@ -100,7 +100,7 @@ export function useAsyncProcessing(
       pollingAttemptsRef.current += 1;
 
       // Use the new status endpoint
-      const apiResponse = await checkStatus(requestId);
+      const apiResponse = await apiService.checkStatus(requestId);
 
       // Convert API response to AsyncProcessingResult
       const response = convertToAsyncProcessingResult(apiResponse);
