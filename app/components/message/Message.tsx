@@ -120,7 +120,7 @@ function Message({
   // Handle pin
   const handlePin = () => {
     if (onPin) {
-      onPin(message.id, !message.pinned);
+      onPin(message.id ?? '', !message.pinned);
     }
   };
 
