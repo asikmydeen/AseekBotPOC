@@ -520,7 +520,13 @@ export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): M
       title: getTicketTitleClass(isDarkMode),
       status: getTicketStatusClass(isDarkMode)
     },
-    timestamp: getTimestampClass(isDarkMode)
+    timestamp: getTimestampClass(isDarkMode),
+    multimedia: {
+      button: `mt-3 px-4 py-2 rounded-lg flex items-center ${isDarkMode
+        ? 'dark-primary-bg hover:bg-blue-700 text-blue-100'
+        : 'bg-blue-100 hover:bg-blue-200 text-blue-800'} transition-colors shadow-md`,
+      icon: `mr-2`
+    }
   };
 };
 
