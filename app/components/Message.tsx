@@ -55,10 +55,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
     const [showImageConfirmation, setShowImageConfirmation] = useState<boolean>(false);
     const [currentImage, setCurrentImage] = useState<string | null>(null);
     const [parsedContent, setParsedContent] = useState<string>('');
+    // State for hover effects
     const [isHovered, setIsHovered] = useState<boolean>(false);
-
-    // We'll keep this ref for potential future use with typing animations
-    const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Helper function to get message content with improved priority and logging
     const getMessageContent = useCallback((): string => {
