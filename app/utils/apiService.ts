@@ -145,6 +145,7 @@ export const apiService = {
 
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('userId', TEST_USER_ID);
 
       if (sessionId) {
         formData.append('sessionId', sessionId);
