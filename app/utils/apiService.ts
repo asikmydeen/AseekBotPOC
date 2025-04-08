@@ -2,8 +2,9 @@
 import { useApiStore } from '../store/apiStore';
 import { LAMBDA_ENDPOINTS } from './lambdaApi';
 
-// Placeholder for user ID - can be replaced with actual user ID when integrating with user management
+// Placeholder for user ID and auth token - can be replaced with actual values when integrating with user management
 export const TEST_USER_ID = 'test-user';
+export const API_KEY = 'aseekbot-dev-key'; // This is a placeholder API key
 
 // Generate a unique request ID
 const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
