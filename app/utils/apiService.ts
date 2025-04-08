@@ -228,7 +228,24 @@ export const apiService = {
         ? fileUrlOrKey.split('/').pop() || ''
         : fileUrlOrKey;
 
-      return await makeRequest(LAMBDA_ENDPOINTS.downloadFile, 'POST', { fileKey, userId: TEST_USER_ID });
+      // Make the request directly with fetch
+      const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileKey, userId: TEST_USER_ID })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate download link');
+      }
+
+      const data = await response.json();
+
+      return {
+        fileUrl: data.url || data.fileUrl || (typeof data === 'string' ? data : null),
+        ...data
+      };
     } catch (error) {
       console.error('Error downloading file:', error);
       throw error;
