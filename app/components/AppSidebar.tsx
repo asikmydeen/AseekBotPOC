@@ -33,7 +33,7 @@ import {
 import { apiService } from '../utils/apiService';
 import { useTheme } from '../hooks/useTheme';
 import { useChatHistory } from '../hooks/useChatHistory';
-import { usePrompts } from '../context/PromptsContext';
+import { usePrompts } from '../hooks/usePrompts';
 import usePromptsManager from '../hooks/usePromptsManager';
 import HistoryList from './chat/HistoryList';
 import PromptsList from './prompts/PromptsList';
