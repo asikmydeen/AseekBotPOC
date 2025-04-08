@@ -113,7 +113,7 @@ function Message({
   // Handle reaction
   const handleReaction = (reaction: boolean) => {
     if (onReact) {
-      onReact(message.id, reaction);
+      onReact(message.id ?? '', reaction);
     }
   };
 
