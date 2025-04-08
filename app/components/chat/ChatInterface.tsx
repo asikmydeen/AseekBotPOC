@@ -25,15 +25,10 @@ import ArtifactPanel from '../ArtifactPanel';
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
 
-// Wrap the component with the ChatProvider and ArtifactProvider
+// Export the component directly - no need for providers anymore
 export default function ChatInterface(props: ChatInterfaceProps) {
-    return (
-        <ChatProvider>
-            <ArtifactProvider>
-                <ChatInterfaceComponent {...props} />
-            </ArtifactProvider>
-        </ChatProvider>
-    );
+    // Render the component directly - all state is now managed by Zustand
+    return <ChatInterfaceComponent {...props} />;
 }
 
 interface ChatInterfaceProps {
