@@ -625,10 +625,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 whileHover="hover"
                                 whileTap="tap"
                                 onClick={() => onMultimediaClick(message.multimedia!)}
-                                className={styles.attachments.showMore}
+                                className={styles.multimedia.button}
                                 aria-label={`View ${message.multimedia.type}`}
                             >
-                                <FaExternalLinkAlt className="mr-2" size={14} />
+                                <FaExternalLinkAlt className={styles.multimedia.icon} size={14} />
                                 View {message.multimedia.type.charAt(0).toUpperCase() + message.multimedia.type.slice(1)}
                             </motion.button>
                         )}
