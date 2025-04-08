@@ -52,10 +52,21 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
 
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Helper function to get message content
+    // Helper function to get message content with improved priority and logging
     const getMessageContent = useCallback((): string => {
-        return message.formattedMessage || message.text || message.message || "";
-    }, [message.formattedMessage, message.text, message.message]);
+        const content = message.formattedMessage || message.text || message.message || "";
+        // Log content for debugging if it's empty or very short
+        if (!content || content.length < 5) {
+            console.log('Message content issue:', {
+                hasFormattedMessage: !!message.formattedMessage,
+                hasText: !!message.text,
+                hasMessage: !!message.message,
+                contentLength: content.length,
+                messageId: message.id
+            });
+        }
+        return content;
+    }, [message.formattedMessage, message.text, message.message, message.id]);
 
     // Function to handle image click
     const handleImageClick = (imageUrl: string): void => {
@@ -164,71 +175,86 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
     };
 
     useEffect(() => {
-        if (message.sender === 'bot') {
-            const messageContent = getMessageContent();
-            if (!messageContent) {
-                setDisplayedText("Error: No message content available.");
-                setIsTyping(false);
-                setParsedContent("<p>Error: No message content available.</p>");
-                return;
-            }
+        // Get message content regardless of sender
+        const messageContent = getMessageContent();
 
-            // Instead of the typing animation, immediately set the full text
-            setDisplayedText(messageContent);
+        // Handle empty content case
+        if (!messageContent) {
+            const errorMessage = message.sender === 'bot'
+                ? "Error: No message content available."
+                : "";
+            setDisplayedText(errorMessage);
             setIsTyping(false);
-
-            // Process markdown immediately
-            const renderer = new marked.Renderer();
-            renderer.image = ({ href, title, text }) => {
-                return `<div class="image-thumbnail">
-          <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-          <div class="image-overlay">Click to view</div>
-        </div>`;
-            };
-
-            const options = {
-                gfm: true,
-                breaks: true,
-                renderer,
-            };
-
-            const content = marked.parse(messageContent, options) as string;
-            const formattedContent = content.replace(/<img /g, '<img class="inline-markdown-image" ');
-            setParsedContent(formattedContent);
-        } else {
-            // Keep the user message handling as is
-            const messageContent = getMessageContent();
-            if (!messageContent) {
-                setDisplayedText("");
-                setParsedContent("");
-                return;
-            }
-
-            setDisplayedText(messageContent);
-
-            const renderer = new marked.Renderer();
-            renderer.image = ({ href, title, text }) => {
-                return `<div class="image-thumbnail">
-          <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
-          <div class="image-overlay">Click to view</div>
-        </div>`;
-            };
-
-            const options = {
-                gfm: true,
-                breaks: true,
-                renderer,
-            };
-
-            const content = marked.parse(messageContent, options) as string;
-            const formattedContent = content.replace(/<img /g, '<img class="inline-markdown-image" ');
-            setParsedContent(formattedContent);
+            setParsedContent(errorMessage ? `<p>${errorMessage}</p>` : "");
+            return;
         }
-    }, [message.text, message.message, message.sender, getMessageContent]);
-    // Add event listener for image clicks
+
+        // Set displayed text immediately for both user and bot
+        setDisplayedText(messageContent);
+        setIsTyping(false);
+
+        // Configure markdown renderer with enhanced options
+        const renderer = new marked.Renderer();
+
+        // Custom image renderer to make images clickable
+        renderer.image = ({ href, title, text }) => {
+            return `<div class="image-thumbnail">
+                <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
+                <div class="image-overlay">Click to view</div>
+            </div>`;
+        };
+
+        // Custom link renderer to open links in new tab
+        renderer.link = (href, title, text) => {
+            return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+        };
+
+        // Custom code renderer to improve code block styling
+        renderer.code = (code, language) => {
+            return `<pre class="${language ? `language-${language}` : ''}">
+                <code class="${language ? `language-${language}` : ''}">${code}</code>
+            </pre>`;
+        };
+
+        // Enhanced marked options
+        const options = {
+            gfm: true,           // GitHub Flavored Markdown
+            breaks: true,       // Convert \n to <br>
+            headerIds: true,    // Add IDs to headers
+            mangle: false,      // Don't mangle header IDs
+            pedantic: false,    // Don't be pedantic
+            smartLists: true,   // Use smarter list behavior
+            smartypants: true,  // Use smart typography
+            renderer,
+        };
+
+        try {
+            // Parse markdown content
+            const content = marked.parse(messageContent, options) as string;
+
+            // Add classes to images and ensure proper styling
+            const formattedContent = content
+                .replace(/<img /g, '<img class="inline-markdown-image" ')
+                .replace(/<table>/g, '<table class="markdown-table">')
+                .replace(/<pre>/g, '<pre class="markdown-pre">');
+
+            setParsedContent(formattedContent);
+        } catch (error) {
+            console.error('Error parsing markdown:', error);
+            setParsedContent(`<p>Error rendering content: ${messageContent}</p>`);
+        }
+    }, [message.text, message.message, message.formattedMessage, message.sender, getMessageContent]);
+    // Add event listener for image clicks with improved targeting
     useEffect(() => {
         const handleThumbnailClick = (e: MouseEvent): void => {
             const target = e.target as HTMLElement;
+
+            // Check if the click is within this specific message component
+            const messageElement = document.getElementById(id || '');
+            if (!messageElement || !messageElement.contains(target)) {
+                return; // Click was outside this message component
+            }
+
             if (target.classList.contains('thumbnail') || target.closest('.image-thumbnail')) {
                 const img = target.classList.contains('thumbnail') ? target : target.querySelector('img');
                 if (img && img instanceof HTMLImageElement) {
@@ -241,11 +267,15 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
             }
         };
 
-        document.addEventListener('click', handleThumbnailClick);
-        return () => {
-            document.removeEventListener('click', handleThumbnailClick);
-        };
-    }, []);
+        // Only add the event listener if we have an ID to identify this message
+        if (id) {
+            document.addEventListener('click', handleThumbnailClick);
+            return () => {
+                document.removeEventListener('click', handleThumbnailClick);
+            };
+        }
+        return undefined;
+    }, [id, handleImageClick]);
 
     // Render file attachments section
     const renderFileAttachments = () => {
