@@ -395,7 +395,12 @@ export const apiService = {
       try {
         const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`,
+            'X-User-ID': TEST_USER_ID
+          },
           body: JSON.stringify(requestData)
         });
 
