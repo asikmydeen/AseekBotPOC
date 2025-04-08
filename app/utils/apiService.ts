@@ -94,24 +94,28 @@ export const apiService = {
    */
   sendMessage: async (message: string, chatSessionId: string, files?: any[]) => {
     try {
-      // Create form data
-      const formData = new FormData();
-      formData.append('message', message);
-      formData.append('userId', TEST_USER_ID);
+      // Create JSON payload
+      const payload: any = {
+        message,
+        userId: TEST_USER_ID
+      };
 
       // Include chatId if it exists (for continuing conversations)
       if (chatSessionId) {
-        formData.append('chatId', chatSessionId);
+        payload.chatId = chatSessionId;
       }
 
       // Add files if they exist
       if (files && files.length > 0) {
-        files.forEach((file, index) => {
-          formData.append(`file${index}`, file);
-        });
+        payload.files = files.map(file => ({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url: file.url || ''
+        }));
       }
 
-      return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', formData);
+      return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
