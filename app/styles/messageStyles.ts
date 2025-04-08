@@ -2,8 +2,6 @@
 // Centralized styles for the Message component
 
 // Animation types
-
-// Animation types
 type SpinnerTransition = {
   duration: number;
   repeat: number;
