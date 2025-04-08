@@ -5,43 +5,66 @@
  * Animation variants for message containers
  */
 export const messageAnimationVariants = {
-  initial: (isDarkMode: boolean) => ({
+  initial: {
     opacity: 0,
     y: 10,
     scale: 0.98,
-    boxShadow: isDarkMode 
-      ? '0 4px 6px -1px rgba(0, 0, 0, 0.2)' 
-      : '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-  }),
-  animate: (isHovered: boolean, isDarkMode: boolean) => ({
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+  },
+  animate: {
     opacity: 1,
     y: 0,
     scale: 1,
-    boxShadow: isHovered
-      ? isDarkMode
-        ? '0 10px 25px -5px rgba(30, 64, 175, 0.3), 0 8px 10px -6px rgba(30, 64, 175, 0.3)'
-        : '0 10px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)'
-      : isDarkMode
-        ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
-        : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
     transition: {
       type: "spring",
       stiffness: 500,
       damping: 30,
       mass: 1
     }
-  }),
-  hover: (isDarkMode: boolean) => ({
+  },
+  hover: {
     scale: 1.01,
-    boxShadow: isDarkMode
-      ? '0 20px 25px -5px rgba(30, 64, 175, 0.3), 0 8px 10px -6px rgba(30, 64, 175, 0.3)'
-      : '0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)',
+    boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)',
     transition: {
       type: "spring",
       stiffness: 400,
       damping: 20
     }
-  })
+  }
+};
+
+/**
+ * Animation variants for message containers in dark mode
+ */
+export const darkMessageAnimationVariants = {
+  initial: {
+    opacity: 0,
+    y: 10,
+    scale: 0.98,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30,
+      mass: 1
+    }
+  },
+  hover: {
+    scale: 1.01,
+    boxShadow: '0 20px 25px -5px rgba(30, 64, 175, 0.3), 0 8px 10px -6px rgba(30, 64, 175, 0.3)',
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 20
+    }
+  }
 };
 
 /**
@@ -81,17 +104,17 @@ export const getAvatarContainerClass = (sender: 'user' | 'bot', isDarkMode: bool
  * Get markdown content class based on theme
  */
 export const getMarkdownContentClass = (isDarkMode: boolean): string => {
-  return `text-base leading-relaxed prose max-w-none break-words overflow-hidden 
-    ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'} 
-    prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'} 
-    prose-img:max-w-full prose-img:rounded-md prose-img:my-2 
-    prose-pre:max-w-full prose-pre:overflow-x-auto 
-    prose-code:text-sm prose-code:p-1 prose-code:rounded 
-    prose-code:before:content-none prose-code:after:content-none 
-    ${isDarkMode ? 'prose-code:bg-gray-800' : 'prose-code:bg-gray-100'} 
-    prose-headings:mt-4 prose-headings:mb-2 
-    prose-p:my-2 prose-ul:my-2 prose-ol:my-2 
-    prose-li:my-1 prose-blockquote:my-2 
+  return `text-base leading-relaxed prose max-w-none break-words overflow-hidden
+    ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'}
+    prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'}
+    prose-img:max-w-full prose-img:rounded-md prose-img:my-2
+    prose-pre:max-w-full prose-pre:overflow-x-auto
+    prose-code:text-sm prose-code:p-1 prose-code:rounded
+    prose-code:before:content-none prose-code:after:content-none
+    ${isDarkMode ? 'prose-code:bg-gray-800' : 'prose-code:bg-gray-100'}
+    prose-headings:mt-4 prose-headings:mb-2
+    prose-p:my-2 prose-ul:my-2 prose-ol:my-2
+    prose-li:my-1 prose-blockquote:my-2
     prose-table:my-2 prose-hr:my-4`;
 };
 
