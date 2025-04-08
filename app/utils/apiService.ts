@@ -127,7 +127,7 @@ export const apiService = {
         throw new Error('No requestId provided');
       }
 
-      return await makeRequest(`${LAMBDA_ENDPOINTS.status}/${requestId}`, 'GET');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.status}/${requestId}?userId=${TEST_USER_ID}`, 'GET');
     } catch (error) {
       console.error('Error checking status:', error);
       throw error;
