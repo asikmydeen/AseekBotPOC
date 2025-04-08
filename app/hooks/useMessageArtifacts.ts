@@ -1,6 +1,6 @@
 // app/hooks/useMessageArtifacts.ts
 import { useEffect, useCallback, useRef } from 'react';
-import { useArtifacts } from '../context/ArtifactContext';
+import { useArtifacts } from './useArtifacts';
 import { MessageType } from '../types/shared';
 
 /**
