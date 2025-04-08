@@ -30,7 +30,7 @@ import {
     FaFileCsv,
     FaFile
 } from 'react-icons/fa';
-import { downloadFileApi, deleteFileApi } from '../utils/apiMigrationAdapter';
+import { apiService } from '../utils/apiService';
 import { useTheme } from '../context/ThemeContext';
 import { useChatHistory } from '../context/ChatHistoryContext';
 import { usePrompts } from '../context/PromptsContext';
