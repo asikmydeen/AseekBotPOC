@@ -369,51 +369,18 @@ export const apiService = {
         userId: TEST_USER_ID
       };
 
-      // Try PUT method first
-      try {
-        const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${API_KEY}`,
-            'X-User-ID': TEST_USER_ID
-          },
-          body: JSON.stringify(requestData)
-        });
+      const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      });
 
-        if (response.ok) {
-          return await response.json();
-        }
-
-        // If PUT fails with 405 Method Not Allowed, try POST as fallback
-        if (response.status === 405) {
-          console.log('PUT method not allowed, trying POST as fallback');
-          const postResponse = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${API_KEY}`,
-              'X-User-ID': TEST_USER_ID
-            },
-            body: JSON.stringify(requestData)
-          });
-
-          if (postResponse.ok) {
-            return await postResponse.json();
-          }
-
-          const errorData = await postResponse.json();
-          throw new Error(errorData.error || 'Failed to update prompt');
-        }
-
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update prompt');
-      } catch (fetchError) {
-        console.error('Error with PUT request:', fetchError);
-        throw fetchError;
       }
+
+      return await response.json();
     } catch (error) {
       console.error(`Error updating prompt ${id}:`, error);
       throw error;
