@@ -675,7 +675,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     whileHover="hover"
                                     whileTap="tap"
                                     onClick={onPin}
-                                    className={styles.actions.pin(isDarkMode, message.pinned)}
+                                    className={styles.actions.pin(isDarkMode, !!message.pinned)}
                                     aria-label={message.pinned ? 'Unpin message' : 'Pin message'}
                                     aria-pressed={message.pinned}
                                 >
