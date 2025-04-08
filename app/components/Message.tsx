@@ -94,7 +94,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
     // Fetch presigned URL for a file
     const fetchPresignedUrl = async (fileId: string, fileUrl: string) => {
         try {
-            const result = await downloadFileApi(fileUrl);
+            const result = await apiService.downloadFile(fileUrl);
             if (result && result.url) {
                 return result.url;
             }
