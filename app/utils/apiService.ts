@@ -205,7 +205,7 @@ export const apiService = {
    */
   createTicket: async (ticketDetails: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.createTicket, 'POST', ticketDetails);
+      return await makeRequest(LAMBDA_ENDPOINTS.createTicket, 'POST', { ...ticketDetails, userId: TEST_USER_ID });
     } catch (error) {
       console.error('Error creating ticket:', error);
       throw error;
