@@ -144,51 +144,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
         return lines.map(line => line.slice(minIndent)).join('\n').trim();
     };
 
-    // Animation variants
-    const messageVariants = {
-        initial: {
-            opacity: 0,
-            y: 10,
-            scale: 0.98,
-            boxShadow: isDarkMode ? '0 4px 6px -1px rgba(0, 0, 0, 0.2)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        },
-        animate: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            boxShadow: isHovered
-                ? isDarkMode
-                    ? '0 10px 25px -5px rgba(30, 64, 175, 0.3), 0 8px 10px -6px rgba(30, 64, 175, 0.3)'
-                    : '0 10px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)'
-                : isDarkMode
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-            transition: {
-                type: "spring",
-                stiffness: 500,
-                damping: 30,
-                mass: 1
-            }
-        },
-        hover: {
-            scale: 1.01,
-            boxShadow: isDarkMode
-                ? '0 20px 25px -5px rgba(30, 64, 175, 0.3), 0 8px 10px -6px rgba(30, 64, 175, 0.3)'
-                : '0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)',
-            transition: {
-                type: "spring",
-                stiffness: 400,
-                damping: 20
-            }
-        }
-    };
-
-    // Button animation variants
-    const buttonVariants = {
-        idle: { scale: 1 },
-        hover: { scale: 1.1 },
-        tap: { scale: 0.9 }
-    };
+    // Using animation variants from messageStyles.ts
 
     useEffect(() => {
         // Get message content regardless of sender
