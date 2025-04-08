@@ -257,12 +257,7 @@ export const apiService = {
       // Make the request directly with fetch
       const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`,
-          'X-User-ID': TEST_USER_ID
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileKey, userId: TEST_USER_ID })
       });
 
