@@ -2,10 +2,18 @@
 "use client";
 import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ThemeProvider } from './context/ThemeContext';
-import { ChatHistoryProvider } from './context/ChatHistoryContext';
-import { PromptsProvider } from './context/PromptsContext';
 
+// Import legacy providers that haven't been migrated yet
+import { ChatProvider } from './context/ChatContext';
+import { ArtifactProvider } from './context/ArtifactContext';
+
+// Initialize Zustand stores
+import './store/themeStore';
+import './store/chatHistoryStore';
+import './store/artifactStore';
+import './store/apiStore';
+import './store/promptsStore';
+import './store/chatStore';
 
 interface ProviderProps {
     children: React.ReactNode;
@@ -29,13 +37,13 @@ export default function Providers({ children }: ProviderProps) {
         }
     }, [pathname, router]);
 
+    // We're gradually migrating from Context to Zustand
+    // The following providers will eventually be removed
     return (
-        <ThemeProvider initialDarkMode={true}>
-            <ChatHistoryProvider>
-                <PromptsProvider>
-                    {children}
-                </PromptsProvider>
-            </ChatHistoryProvider>
-        </ThemeProvider>
+        <ChatProvider>
+            <ArtifactProvider>
+                {children}
+            </ArtifactProvider>
+        </ChatProvider>
     );
 }
