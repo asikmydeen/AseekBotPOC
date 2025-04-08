@@ -36,19 +36,13 @@ export default function Providers({ children }: ProviderProps) {
         }
     }, [pathname, router]);
 
-    // We're gradually migrating from Context to Zustand
-    // The following providers will eventually be removed
     return (
         <>
             {/* Initialize theme */}
             <ThemeInitializer />
 
-            {/* Legacy providers */}
-            <ChatProvider>
-                <ArtifactProvider>
-                    {children}
-                </ArtifactProvider>
-            </ChatProvider>
+            {/* Render children directly - all state is now managed by Zustand */}
+            {children}
         </>
     );
 }
