@@ -426,7 +426,7 @@ export function useApiRequest<T, P extends any[]>(
   requestFn: (...args: P) => Promise<T>
 ) {
   const requestId = generateRequestId();
-  const isLoading = useApiStore((state) => !!state.requests[requestId]?.status === 'pending');
+  const isLoading = useApiStore((state) => state.requests[requestId]?.status === 'pending');
   const response = useApiStore((state) => state.responses[requestId]?.data as T | undefined);
   const error = useApiStore((state) => state.errors[requestId]);
 
