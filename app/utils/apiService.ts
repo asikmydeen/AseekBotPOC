@@ -35,6 +35,8 @@ export async function makeRequest<T = any>(
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      'X-User-ID': TEST_USER_ID,
       ...options.headers,
     };
 
