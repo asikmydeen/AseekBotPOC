@@ -13,14 +13,12 @@ import useChatMessages from '../../hooks/useChatMessages';
 import useFileUpload from '../../hooks/useFileUpload';
 import useTicketSystem from '../../hooks/useTicketSystem';
 import useFeedback from '../../hooks/useFeedback';
-import { ChatProvider } from '../../context/ChatContext';
 import DocumentAnalysisPrompt from './DocumentAnalysisPrompt';
 import FileUploadSection from './FileUploadSection';
 import ChatFooter from './ChatFooter';
 import useAgentStyling from '../../hooks/useAgentStyling';
 import useFileActions from '../../hooks/useFileActions';
 import { MessageType, TicketDetails, UploadedFile } from '../../types/shared';
-import { ArtifactProvider } from '../../context/ArtifactContext';
 import useMessageArtifacts from '../../hooks/useMessageArtifacts';
 import ArtifactPanel from '../ArtifactPanel';
 
