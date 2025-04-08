@@ -412,8 +412,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className={`mt-4 p-5 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-gray-100'} shadow-lg border ${isDarkMode ? 'dark-border' : 'border-gray-300'
-                    }`}
+                className={`mt-4 p-5 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-gray-100'} shadow-lg border ${isDarkMode ? 'dark-border' : 'border-gray-300'}`}
             >
                 <div className="flex justify-between items-center mb-3">
                     <motion.h3
@@ -471,12 +470,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.4, type: "spring" }}
-                            className={`prose max-w-none ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'
-                                } prose-headings:${isDarkMode ? 'dark-primary' : 'text-blue-600'
-                                } prose-p:mt-2 prose-ul:mt-2 prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal
-              prose-table:border-collapse prose-table:w-full prose-thead:bg-gray-700 prose-th:p-2 prose-th:border
-              prose-th:border-gray-600 prose-td:border prose-td:border-gray-600 prose-td:p-2 ${isDarkMode ? 'prose-thead:text-gray-200' : 'prose-thead:text-gray-800'
-                                } ${isDarkMode ? 'prose-td:border-gray-600' : 'prose-td:border-gray-300'}`}
+                            className={getMarkdownContentClass(isDarkMode)}
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
                     )}
@@ -516,8 +510,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
-                        className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'dark-success-bg border dark-border' : 'bg-green-50 border border-green-200'
-                            }`}
+                        className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'dark-success-bg border dark-border' : 'bg-green-50 border border-green-200'}`}
                     >
                         <p className={`text-sm font-medium ${isDarkMode ? 'dark-success' : 'text-green-600'}`}>
                             Ticket Created: {message.ticket.id}
