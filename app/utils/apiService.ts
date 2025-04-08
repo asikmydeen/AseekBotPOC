@@ -300,7 +300,25 @@ export const apiService = {
    */
   updatePrompt: async (id: string, promptData: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), 'PUT', { ...promptData, userId: TEST_USER_ID });
+      // Add userId to the request body
+      const requestData = {
+        ...promptData,
+        userId: TEST_USER_ID
+      };
+
+      // Make the request directly with fetch
+      const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update prompt');
+      }
+
+      return await response.json();
     } catch (error) {
       console.error(`Error updating prompt ${id}:`, error);
       throw error;
