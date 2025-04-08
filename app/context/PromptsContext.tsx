@@ -1,13 +1,7 @@
 // app/context/PromptsContext.tsx
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import {
-    getPromptsApi,
-    getPromptByIdApi,
-    createPromptApi,
-    updatePromptApi,
-    deletePromptApi
-} from '../api/advancedApi';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { usePromptsStore } from '../store/promptsStore';
 import {
     Prompt,
     PromptType,
@@ -15,6 +9,7 @@ import {
     UpdatePromptRequest
 } from '../types/shared';
 
+// Define the shape of our context
 interface PromptsContextType {
     // State
     prompts: Prompt[];
@@ -39,226 +34,27 @@ const PromptsContext = createContext<PromptsContextType | undefined>(undefined);
 
 // Props for the PromptsProvider
 interface PromptsProviderProps {
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
-// Provider component
+// Provider component that uses Zustand store
 export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) => {
-    const [prompts, setPrompts] = useState<Prompt[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<Error | null>(null);
-    const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
-
-    // Current filter state
-    const [currentFilters, setCurrentFilters] = useState<{
-        type?: PromptType;
-        tag?: string;
-        onlyMine?: boolean;
-    }>({});
-
-    // Type-safe version of fetchPrompts for PromptsContext.tsx
-    const fetchPrompts = useCallback(async (filters?: {
-        type?: PromptType;
-        tag?: string;
-        onlyMine?: boolean;
-    }) => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const mergedFilters = { ...currentFilters, ...filters };
-            setCurrentFilters(mergedFilters);
-
-            // Get prompts from API
-            const response = await getPromptsApi(mergedFilters);
-            console.log('[DEBUG] Prompts API Response:', response);
-
-            // Check for API error
-            if (response.error) {
-                console.error('[DEBUG] API returned error:', response.error);
-                throw new Error(response.error);
-            }
-
-            // Type-safe extraction logic
-            let promptsData: Prompt[] = [];
-
-            if (Array.isArray(response)) {
-                // If response itself is an array
-                promptsData = response as Prompt[];
-            } else if (response.prompts && Array.isArray(response.prompts)) {
-                // If response has a prompts property
-                promptsData = response.prompts as Prompt[];
-            } else if (response.data && Array.isArray(response.data)) {
-                // Fallback to data property
-                promptsData = response.data as Prompt[];
-            }
-
-            console.log('[DEBUG] Extracted prompts data:', promptsData);
-            console.log('[DEBUG] Number of prompts:', promptsData.length);
-
-            // Update state with the extracted prompts
-            setPrompts(promptsData);
-
-            // Log if no prompts were found
-            if (promptsData.length === 0) {
-                console.warn('[DEBUG] No prompts were found in the API response');
-            }
-        } catch (err) {
-            console.error('[DEBUG] Error fetching prompts:', err);
-            setError(err instanceof Error ? err : new Error('Failed to fetch prompts'));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [currentFilters]);
-
-    // Get a single prompt by ID
-    const getPromptById = useCallback(async (promptId: string): Promise<Prompt | null> => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await getPromptByIdApi(promptId);
-
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            // Return the prompt data
-            return response as unknown as Prompt;
-        } catch (err) {
-            console.error(`Error fetching prompt ${promptId}:`, err);
-            setError(err instanceof Error ? err : new Error(`Failed to fetch prompt ${promptId}`));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Create a new prompt
-    const createPrompt = useCallback(async (promptData: CreatePromptRequest): Promise<Prompt | null> => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await createPromptApi(promptData);
-
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            // Get the created prompt
-            const newPrompt = response as unknown as Prompt;
-
-            // Update the prompts list
-            setPrompts(prev => [newPrompt, ...prev]);
-
-            return newPrompt;
-        } catch (err) {
-            console.error('Error creating prompt:', err);
-            setError(err instanceof Error ? err : new Error('Failed to create prompt'));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Update an existing prompt
-    const updatePrompt = useCallback(async (promptId: string, promptData: UpdatePromptRequest): Promise<Prompt | null> => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await updatePromptApi(promptId, promptData);
-
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            // Get the updated prompt
-            const updatedPrompt = response as unknown as Prompt;
-
-            // Update the prompts list
-            setPrompts(prev =>
-                prev.map(p => p.promptId === promptId ? updatedPrompt : p)
-            );
-
-            // Also update selected prompt if this was the one selected
-            if (selectedPrompt?.promptId === promptId) {
-                setSelectedPrompt(updatedPrompt);
-            }
-
-            return updatedPrompt;
-        } catch (err) {
-            console.error(`Error updating prompt ${promptId}:`, err);
-            setError(err instanceof Error ? err : new Error(`Failed to update prompt ${promptId}`));
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [selectedPrompt]);
-
-    // Delete a prompt
-    const deletePrompt = useCallback(async (promptId: string): Promise<boolean> => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await deletePromptApi(promptId);
-
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            // Remove the deleted prompt from the list
-            setPrompts(prev => prev.filter(p => p.promptId !== promptId));
-
-            // Clear selected prompt if this was the one selected
-            if (selectedPrompt?.promptId === promptId) {
-                setSelectedPrompt(null);
-            }
-
-            return true;
-        } catch (err) {
-            console.error(`Error deleting prompt ${promptId}:`, err);
-            setError(err instanceof Error ? err : new Error(`Failed to delete prompt ${promptId}`));
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [selectedPrompt]);
-
-    // Select a prompt
-    const selectPrompt = useCallback((prompt: Prompt | null) => {
-        setSelectedPrompt(prompt);
-    }, []);
-
-    // Filter prompts by type
-    const filterPromptsByType = useCallback(async (type: PromptType | null) => {
-        const filters = type ? { ...currentFilters, type } : { ...currentFilters };
-
-        if (!type && filters.type) {
-            delete filters.type;
-        }
-
-        await fetchPrompts(filters);
-    }, [currentFilters, fetchPrompts]);
-
-    // Filter prompts by tag
-    const filterPromptsByTag = useCallback(async (tag: string | null) => {
-        const filters = tag ? { ...currentFilters, tag } : { ...currentFilters };
-
-        if (!tag && filters.tag) {
-            delete filters.tag;
-        }
-
-        await fetchPrompts(filters);
-    }, [currentFilters, fetchPrompts]);
-
-    // Clear all filters
-    const clearFilters = useCallback(async () => {
-        setCurrentFilters({});
-        await fetchPrompts({});
-    }, [fetchPrompts]);
+    // Get state and actions from the Zustand store
+    const {
+        prompts,
+        isLoading,
+        error,
+        selectedPrompt,
+        fetchPrompts,
+        getPromptById,
+        createPrompt,
+        updatePrompt,
+        deletePrompt,
+        selectPrompt,
+        filterPromptsByType,
+        filterPromptsByTag,
+        clearFilters
+    } = usePromptsStore();
 
     // Load prompts on mount
     useEffect(() => {
@@ -266,7 +62,8 @@ export const PromptsProvider: React.FC<PromptsProviderProps> = ({ children }) =>
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const value = {
+    // Create the context value from the Zustand store
+    const value: PromptsContextType = {
         prompts,
         isLoading,
         error,
