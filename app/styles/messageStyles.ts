@@ -8,6 +8,10 @@ type SpinnerTransition = {
   ease: string;
 };
 
+type SpinnerAnimation = {
+  rotate: number;
+};
+
 type FileItemHoverStyle = {
   scale: number;
   backgroundColor: string;
@@ -17,6 +21,80 @@ type FileItemHoverStyle = {
 type FileActionButtonHoverStyle = {
   scale: number;
   color: string;
+};
+
+// Component-specific style interfaces
+interface MessageStyles {
+  wrapper: string;
+  flexContainer: string;
+  avatar: {
+    container: string;
+    inner: string;
+    icon: string;
+  };
+  content: {
+    container: string;
+    markdown: string;
+    typing: {
+      container: string;
+      text: string;
+      spinner: {
+        wrapper: string;
+        icon: string;
+        animation: SpinnerAnimation;
+        transition: SpinnerTransition;
+      };
+    };
+  };
+  attachments: {
+    container: string;
+    header: string;
+    list: string;
+    item: string;
+    itemHover: FileItemHoverStyle;
+    icon: string;
+    content: string;
+    name: string;
+    size: string;
+    actions: string;
+    actionButton: string;
+    actionButtonHover: FileActionButtonHoverStyle;
+    showMore: string;
+  };
+  imageDialog: {
+    overlay: string;
+    container: string;
+    title: string;
+    content: string;
+    buttons: string;
+    cancelButton: string;
+    confirmButton: string;
+  };
+  actions: {
+    container: string;
+    button: string;
+    reaction: (isDarkMode: boolean, isActive: boolean | null, isThumbsUp: boolean) => string;
+    pin: (isDarkMode: boolean, isPinned: boolean) => string;
+    citation: (isDarkMode: boolean, isActive: boolean) => string;
+  };
+  report: {
+    container: string;
+    title: string;
+    buttons: string;
+    toggleButton: string;
+    downloadButton: string;
+  };
+  citations: {
+    container: string;
+    title: string;
+    list: string;
+  };
+  ticket: {
+    container: string;
+    title: string;
+    status: string;
+  };
+  timestamp: string;
 };
 
 /**
