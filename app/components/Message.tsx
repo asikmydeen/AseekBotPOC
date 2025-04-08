@@ -483,10 +483,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             role="region"
                             aria-label="Citations panel"
                         >
-                            <h4 className={`text-sm font-bold mb-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`}>
+                            <h4 className={styles.citations.title}>
                                 Citations
                             </h4>
-                            <ul className={`list-disc pl-5 text-sm ${isDarkMode ? 'dark-text' : 'text-gray-600'} space-y-1`}>
+                            <ul className={styles.citations.list}>
                                 {report.citations.map((citation, idx) => (
                                     <motion.li
                                         key={idx}
@@ -508,10 +508,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                         transition={{ duration: 0.3, delay: 0.3 }}
                         className={styles.ticket.container}
                     >
-                        <p className={`text-sm font-medium ${isDarkMode ? 'dark-success' : 'text-green-600'}`}>
+                        <p className={styles.ticket.title}>
                             Ticket Created: {message.ticket.id}
                         </p>
-                        <p className={`text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`}>
+                        <p className={styles.ticket.status}>
                             Status: {message.ticket.status}
                         </p>
                     </motion.div>
@@ -585,7 +585,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75"
+                                className={styles.imageDialog.overlay}
                                 onClick={() => setShowImageConfirmation(false)}
                             >
                                 <motion.div
@@ -596,10 +596,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     className={styles.imageDialog.container}
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'dark-text' : 'text-gray-900'}`}>
+                                    <h3 className={styles.imageDialog.title}>
                                         View Image
                                     </h3>
-                                    <p className={`mb-4 ${isDarkMode ? 'dark-text' : 'text-gray-700'}`}>
+                                    <p className={styles.imageDialog.content}>
                                         Would you like to view this image in full size?
                                     </p>
                                     <div className={styles.imageDialog.buttons}>
@@ -638,10 +638,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 whileHover="hover"
                                 whileTap="tap"
                                 onClick={() => onMultimediaClick(message.multimedia!)}
-                                className={`mt-3 px-4 py-2 rounded-lg flex items-center ${isDarkMode
-                                        ? 'dark-primary-bg hover:bg-blue-700 text-blue-100'
-                                        : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                                    } transition-colors shadow-md`}
+                                className={styles.attachments.showMore}
                                 aria-label={`View ${message.multimedia.type}`}
                             >
                                 <FaExternalLinkAlt className="mr-2" size={14} />
@@ -654,7 +651,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.3, duration: 0.3 }}
-                                className="flex items-center gap-2 mt-4 justify-end"
+                                className={styles.actions.container}
                             >
                                 <motion.button
                                     variants={buttonAnimationVariants}
