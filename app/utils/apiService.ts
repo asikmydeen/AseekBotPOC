@@ -222,7 +222,12 @@ export const apiService = {
           console.log('DELETE method not allowed, trying POST as fallback');
           const postResponse = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${API_KEY}`,
+              'X-User-ID': TEST_USER_ID
+            },
             body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
           });
 
