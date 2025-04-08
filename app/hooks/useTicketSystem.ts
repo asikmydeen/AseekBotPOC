@@ -65,7 +65,7 @@ const useTicketSystem = () => {
   const createTicket = useCallback(async () => {
     try {
       // Call the API to create a ticket
-      const response = await createTicketApi({
+      const response = await apiService.createTicket({
         subject: ticketDetails.title,
         description: ticketDetails.description,
         priority: ticketDetails.priority as 'low' | 'medium' | 'high',
