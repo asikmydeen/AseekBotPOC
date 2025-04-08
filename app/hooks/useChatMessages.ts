@@ -307,7 +307,7 @@ export default function useChatMessages({
           return prev < 90 ? prev + increment : 90;
         });
       }, 500);
-      const { sendMessage: apiSendMessage } = await import('../api/advancedApi');
+      const { sendMessage: apiSendMessage } = await import('../utils/apiMigrationAdapter');
       const response = await apiSendMessage(text, chatSessionId, attachments);
       if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {
         activeRequestIdsRef.current.add(response.requestId);
