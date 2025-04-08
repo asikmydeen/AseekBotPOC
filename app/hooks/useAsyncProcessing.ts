@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../utils/apiService';
 
+// Define the UnifiedApiResponse interface
+interface UnifiedApiResponse {
+  requestId?: string;
+  status?: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  progress?: number;
+  result?: any;
+  error?: string | { message?: string; name?: string };
+  message?: string;
+  timestamp?: string;
+  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+  updatedAt?: string;
+}
+
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
   if (!newStatus) return false;
