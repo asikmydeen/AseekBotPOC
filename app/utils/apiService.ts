@@ -241,7 +241,7 @@ export const apiService = {
    */
   createPrompt: async (promptData: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.createPrompt, 'POST', promptData);
+      return await makeRequest(LAMBDA_ENDPOINTS.createPrompt, 'POST', { ...promptData, userId: TEST_USER_ID });
     } catch (error) {
       console.error('Error creating prompt:', error);
       throw error;
