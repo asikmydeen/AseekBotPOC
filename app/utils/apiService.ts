@@ -257,7 +257,43 @@ export const apiService = {
    */
   getUserFiles: async () => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.getUserFiles, 'POST', { userId: TEST_USER_ID });
+      // Make the request directly with fetch
+      const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: TEST_USER_ID })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get user files');
+      }
+
+      const responseText = await response.text();
+
+      try {
+        if (!responseText.trim()) {
+          console.warn('getUserFiles: Empty response received');
+          return {
+            data: [],
+            url: '',
+            error: 'Empty response received.'
+          };
+        }
+
+        const parsedResponse = JSON.parse(responseText);
+        const filesData = Array.isArray(parsedResponse.data)
+          ? parsedResponse.data
+          : (parsedResponse.data ? [parsedResponse.data] : []);
+
+        return {
+          ...parsedResponse,
+          data: filesData
+        };
+      } catch (parseError) {
+        console.error('Error parsing getUserFiles response:', parseError);
+        throw new Error('Failed to parse response from server');
+      }
     } catch (error) {
       console.error('Error getting user files:', error);
       throw error;
