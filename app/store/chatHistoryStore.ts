@@ -77,10 +77,36 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
       // Create a new chat
       createChat: () => {
         const newChat = createNewChat();
-        set((state) => ({
-          activeChat: newChat,
-          chatHistory: [newChat, ...state.chatHistory]
-        }));
+        console.log('Creating new chat:', newChat.id);
+
+        // Save the current active chat to history if it has messages
+        set((state) => {
+          const { activeChat, chatHistory } = state;
+
+          // Only save the current chat if it has messages
+          if (activeChat && activeChat.messages && activeChat.messages.length > 0) {
+            console.log('Saving current chat to history:', activeChat.id);
+
+            // Check if the chat is already in history
+            const existingIndex = chatHistory.findIndex(chat => chat.id === activeChat.id);
+
+            if (existingIndex >= 0) {
+              // Update existing chat
+              chatHistory[existingIndex] = {
+                ...activeChat,
+                updatedAt: new Date().toISOString()
+              };
+            } else {
+              // Add to history if not already there
+              chatHistory.unshift(activeChat);
+            }
+          }
+
+          return {
+            activeChat: newChat,
+            chatHistory: [newChat, ...chatHistory.filter(chat => chat.id !== newChat.id)]
+          };
+        });
       },
 
       // Load a chat by ID
