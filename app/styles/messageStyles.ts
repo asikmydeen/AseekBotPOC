@@ -25,6 +25,11 @@ type FileActionButtonHoverStyle = {
 
 // Component-specific style interfaces
 export interface MessageStyles {
+  // Container styles
+  container: {
+    base: string;
+    relative: string;
+  };
   wrapper: string;
   flexContainer: string;
   avatar: {
@@ -48,11 +53,25 @@ export interface MessageStyles {
   };
   attachments: {
     container: string;
-    header: string;
+    header: {
+      container: string;
+      iconContainer: string;
+      icon: string;
+      count: string;
+    };
     list: string;
     item: string;
     itemHover: FileItemHoverStyle;
-    icon: string;
+    icon: {
+      container: string;
+      pdf: string;
+      word: string;
+      text: string;
+      csv: string;
+      excel: string;
+      image: string;
+      default: string;
+    };
     content: string;
     name: string;
     size: string;
@@ -60,6 +79,8 @@ export interface MessageStyles {
     actionButton: string;
     actionButtonHover: FileActionButtonHoverStyle;
     showMore: string;
+    toggleButton: string;
+    toggleButtonHover: any;
   };
   imageDialog: {
     overlay: string;
@@ -406,6 +427,10 @@ export const getSpinnerTransition = (): SpinnerTransition => {
  */
 export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): MessageStyles => {
   return {
+    container: {
+      base: `p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words`,
+      relative: `relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words`,
+    },
     wrapper: getMessageWrapperClass(sender),
     flexContainer: getMessageFlexContainerClass(sender),
     avatar: {
@@ -429,18 +454,34 @@ export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): M
     },
     attachments: {
       container: getAttachmentsContainerClass(isDarkMode),
-      header: `flex items-center mb-2`,
+      header: {
+        container: `flex items-center justify-between mb-2`,
+        iconContainer: `flex items-center`,
+        icon: `mr-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`,
+        count: `text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-700'}`
+      },
       list: getFileListContainerClass(),
       item: getFileItemClass(isDarkMode),
       itemHover: getFileItemHoverStyle(isDarkMode),
-      icon: `mr-3 text-lg ${isDarkMode ? 'dark-text' : 'text-gray-600'}`,
+      icon: {
+        container: `mr-3 text-lg`,
+        pdf: `text-red-500`,
+        word: `text-blue-500`,
+        text: `text-yellow-500`,
+        csv: `text-green-500`,
+        excel: `text-green-600`,
+        image: `text-purple-500`,
+        default: `text-gray-500`
+      },
       content: getFileContentContainerClass(),
       name: getFileNameClass(),
       size: getFileSizeClass(isDarkMode),
       actions: getFileActionsContainerClass(),
       actionButton: getFileButtonClass(isDarkMode),
       actionButtonHover: getFileActionButtonHoverStyle(isDarkMode),
-      showMore: getShowMoreFilesClass(isDarkMode)
+      showMore: getShowMoreFilesClass(isDarkMode),
+      toggleButton: `text-center p-2 rounded-lg text-sm ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-white text-gray-500 hover:bg-gray-100'} cursor-pointer transition-colors shadow-sm`,
+      toggleButtonHover: { backgroundColor: isDarkMode ? 'rgba(55, 65, 81, 1)' : 'rgba(243, 244, 246, 1)' }
     },
     imageDialog: {
       overlay: getImageConfirmationOverlayClass(),
