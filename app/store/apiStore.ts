@@ -32,7 +32,7 @@ interface ApiState {
   errors: Record<string, ApiError>;
   isLoading: boolean;
   activeRequestCount: number;
-  
+
   // Actions
   startRequest: (id: string, url: string, method: string, body?: any) => void;
   setResponse: (id: string, data: any, status: number) => void;
@@ -51,9 +51,9 @@ export const useApiStore = create<ApiState>((set) => ({
   errors: {},
   isLoading: false,
   activeRequestCount: 0,
-  
+
   // Start a new API request
-  startRequest: (id, url, method, body) => set((state) => {
+  startRequest: (id, url, method, body) => set((state): ApiState => {
     const newRequests = {
       ...state.requests,
       [id]: {
@@ -65,14 +65,14 @@ export const useApiStore = create<ApiState>((set) => ({
         status: 'pending',
       },
     };
-    
+
     return {
       requests: newRequests,
       isLoading: true,
       activeRequestCount: state.activeRequestCount + 1,
     };
   }),
-  
+
   // Set a successful response
   setResponse: (id, data, status) => set((state) => {
     const newResponses = {
@@ -84,7 +84,7 @@ export const useApiStore = create<ApiState>((set) => ({
         timestamp: Date.now(),
       },
     };
-    
+
     const newRequests = { ...state.requests };
     if (newRequests[id]) {
       newRequests[id] = {
@@ -92,9 +92,9 @@ export const useApiStore = create<ApiState>((set) => ({
         status: 'success',
       };
     }
-    
+
     const newActiveRequestCount = state.activeRequestCount - 1;
-    
+
     return {
       responses: newResponses,
       requests: newRequests,
@@ -102,7 +102,7 @@ export const useApiStore = create<ApiState>((set) => ({
       activeRequestCount: newActiveRequestCount,
     };
   }),
-  
+
   // Set an error response
   setError: (id, message, code) => set((state) => {
     const newErrors = {
@@ -114,7 +114,7 @@ export const useApiStore = create<ApiState>((set) => ({
         timestamp: Date.now(),
       },
     };
-    
+
     const newRequests = { ...state.requests };
     if (newRequests[id]) {
       newRequests[id] = {
@@ -122,9 +122,9 @@ export const useApiStore = create<ApiState>((set) => ({
         status: 'error',
       };
     }
-    
+
     const newActiveRequestCount = state.activeRequestCount - 1;
-    
+
     return {
       errors: newErrors,
       requests: newRequests,
@@ -132,20 +132,20 @@ export const useApiStore = create<ApiState>((set) => ({
       activeRequestCount: newActiveRequestCount,
     };
   }),
-  
+
   // Clear a specific request and its associated data
   clearRequest: (id) => set((state) => {
     const { [id]: _, ...newRequests } = state.requests;
     const { [id]: __, ...newResponses } = state.responses;
     const { [id]: ___, ...newErrors } = state.errors;
-    
+
     return {
       requests: newRequests,
       responses: newResponses,
       errors: newErrors,
     };
   }),
-  
+
   // Clear all requests, responses, and errors
   clearAll: () => set({
     requests: {},
