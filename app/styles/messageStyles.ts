@@ -309,7 +309,7 @@ export const getTypingTextClass = (): string => {
 /**
  * Get spinner animation style
  */
-export const getSpinnerAnimationStyle = (): CSSProperties => {
+export const getSpinnerAnimationStyle = (): any => {
   return {
     rotate: 360
   };
