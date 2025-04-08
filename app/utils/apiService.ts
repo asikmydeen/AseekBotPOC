@@ -200,7 +200,19 @@ export const apiService = {
     try {
       const s3Key = fileUrl.split('/').pop() || '';
 
-      return await makeRequest(LAMBDA_ENDPOINTS.deleteFile, 'POST', { s3Key, userId: TEST_USER_ID });
+      // Make the request directly with fetch
+      const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete file');
+      }
+
+      return await response.json();
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
