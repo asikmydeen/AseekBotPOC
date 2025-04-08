@@ -30,8 +30,7 @@ import {
     messageAnimationVariants,
     darkMessageAnimationVariants,
     buttonAnimationVariants,
-    getMessageStyles,
-    MessageStyles
+    getMessageStyles
 } from '../styles/messageStyles';
 
 interface MessageProps {
@@ -409,7 +408,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className={`mt-4 p-5 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-gray-100'} shadow-lg border ${isDarkMode ? 'dark-border' : 'border-gray-300'}`}
+                className={styles.report.container}
             >
                 <div className="flex justify-between items-center mb-3">
                     <motion.h3
@@ -479,7 +478,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'dark-info-bg border dark-border' : 'bg-blue-50 border border-blue-200'}`}
+                            className={styles.citations.container}
                             id="citation-panel"
                             role="region"
                             aria-label="Citations panel"
@@ -507,7 +506,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
-                        className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'dark-success-bg border dark-border' : 'bg-green-50 border border-green-200'}`}
+                        className={styles.ticket.container}
                     >
                         <p className={`text-sm font-medium ${isDarkMode ? 'dark-success' : 'text-green-600'}`}>
                             Ticket Created: {message.ticket.id}
@@ -594,7 +593,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0.9, opacity: 0 }}
                                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                    className={`p-6 rounded-xl ${isDarkMode ? 'dark-bg' : 'bg-white'} max-w-lg w-full shadow-2xl`}
+                                    className={styles.imageDialog.container}
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'dark-text' : 'text-gray-900'}`}>
@@ -603,7 +602,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     <p className={`mb-4 ${isDarkMode ? 'dark-text' : 'text-gray-700'}`}>
                                         Would you like to view this image in full size?
                                     </p>
-                                    <div className="flex justify-end gap-3">
+                                    <div className={styles.imageDialog.buttons}>
                                         <motion.button
                                             variants={buttonAnimationVariants}
                                             initial="idle"
