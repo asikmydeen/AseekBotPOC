@@ -253,13 +253,17 @@ interface HistoryListProps {
 const HistoryList: React.FC<HistoryListProps> = ({ isDarkMode }) => {
     const {
         activeChat,
-        pinnedChats,
-        recentChats,
         loadChat,
         removeChatFromHistory,
         renameChatHistory,
-        togglePinChat
+        togglePinChat,
+        getPinnedChats,
+        getRecentChats
     } = useChatHistory();
+
+    // Get the pinned and recent chats using the getter functions
+    const pinnedChats = getPinnedChats ? getPinnedChats() : [];
+    const recentChats = getRecentChats ? getRecentChats() : [];
 
     const [chatToRename, setChatToRename] = useState<{
         id: string;
