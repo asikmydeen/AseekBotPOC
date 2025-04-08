@@ -191,7 +191,7 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
 
     if (fileToRemove && fileToRemove.url) {
       // Call the API to delete file from S3
-      deleteFileApi(fileToRemove.url)
+      apiService.deleteFile(fileToRemove.url)
         .then(() => {
           setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
         })
