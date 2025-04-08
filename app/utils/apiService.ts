@@ -251,7 +251,7 @@ export const apiService = {
   downloadFile: async (fileUrlOrKey: string) => {
     try {
       const fileKey = fileUrlOrKey.includes('amazonaws.com/')
-        ? fileUrlOrKey.split('/').pop() || ''
+        ? extractS3KeyFromUrl(fileUrlOrKey)
         : fileUrlOrKey;
 
       // Make the request directly with fetch
