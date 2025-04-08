@@ -9,7 +9,7 @@
  * have been migrated to use the new API service directly.
  */
 
-import { apiService } from './apiService';
+import { apiService, TEST_USER_ID, API_KEY } from './apiService';
 import { TicketDetails, PromptType, CreatePromptRequest, UpdatePromptRequest, MultimediaData } from '../types/shared';
 import { ApiResponse } from '../utils/lambdaApi';
 
