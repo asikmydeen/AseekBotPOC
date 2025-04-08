@@ -178,6 +178,12 @@ export const apiService = {
       // Make the request with FormData
       const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
         method: 'POST',
+        headers: {
+          // Don't set Content-Type for FormData, browser will set it with boundary
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+          'X-User-ID': TEST_USER_ID
+        },
         body: formData,
       });
 
