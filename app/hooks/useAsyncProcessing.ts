@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { checkStatus, UnifiedApiResponse } from '../utils/apiMigrationAdapter';
+import { apiService } from '../utils/apiService';
 
 // Helper function to determine if a status is more advanced than another
 const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
