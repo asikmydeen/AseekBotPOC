@@ -200,19 +200,41 @@ export const apiService = {
     try {
       const s3Key = fileUrl.split('/').pop() || '';
 
-      // Make the request directly with fetch
-      const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
-      });
+      // Try DELETE method first
+      try {
+        const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
+        });
 
-      if (!response.ok) {
+        if (response.ok) {
+          return await response.json();
+        }
+
+        // If DELETE fails with 405 Method Not Allowed, try POST as fallback
+        if (response.status === 405) {
+          console.log('DELETE method not allowed, trying POST as fallback');
+          const postResponse = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
+          });
+
+          if (postResponse.ok) {
+            return await postResponse.json();
+          }
+
+          const errorData = await postResponse.json();
+          throw new Error(errorData.error || 'Failed to delete file');
+        }
+
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete file');
+      } catch (fetchError) {
+        console.error('Error with DELETE request:', fetchError);
+        throw fetchError;
       }
-
-      return await response.json();
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
