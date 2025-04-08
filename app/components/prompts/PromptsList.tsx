@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
-import { usePrompts } from '../../context/PromptsContext';
+import { usePrompts } from '../../hooks/usePrompts';
 import { Prompt, PromptType } from '../../types/shared';
 import PromptItem from './PromptItem';
 
