@@ -165,7 +165,7 @@ export const apiService = {
     try {
       const s3Key = fileUrl.split('/').pop() || '';
 
-      return await makeRequest(LAMBDA_ENDPOINTS.deleteFile, 'POST', { s3Key });
+      return await makeRequest(LAMBDA_ENDPOINTS.deleteFile, 'POST', { s3Key, userId: TEST_USER_ID });
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
