@@ -88,13 +88,13 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
 
     // Get file icon based on file type
     const getFileIcon = (fileType: string) => {
-        if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500" size={16} />;
-        if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className="text-blue-500" size={16} />;
-        if (fileType.includes('text') || fileType.includes('txt')) return <FaFile className="text-yellow-500" size={16} />;
-        if (fileType.includes('csv')) return <FaFileCsv className="text-green-500" size={16} />;
-        if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className="text-green-600" size={16} />;
-        if (fileType.includes('image')) return <FaFileImage className="text-purple-500" size={16} />;
-        return <FaFile className="text-gray-500" size={16} />;
+        if (fileType.includes('pdf')) return <FaFilePdf className={styles.attachments.icon.pdf} size={16} />;
+        if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className={styles.attachments.icon.word} size={16} />;
+        if (fileType.includes('text') || fileType.includes('txt')) return <FaFile className={styles.attachments.icon.text} size={16} />;
+        if (fileType.includes('csv')) return <FaFileCsv className={styles.attachments.icon.csv} size={16} />;
+        if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className={styles.attachments.icon.excel} size={16} />;
+        if (fileType.includes('image')) return <FaFileImage className={styles.attachments.icon.image} size={16} />;
+        return <FaFile className={styles.attachments.icon.default} size={16} />;
     };
 
     // Format file size for display
@@ -254,10 +254,10 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className={styles.attachments.container}
             >
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                        <FaPaperclip className={`mr-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`} />
-                        <span className={`text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-700'}`}>
+                <div className={styles.attachments.header.container}>
+                    <div className={styles.attachments.header.iconContainer}>
+                        <FaPaperclip className={styles.attachments.header.icon} />
+                        <span className={styles.attachments.header.count}>
                             {message.attachments.length} Attachment{message.attachments.length !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -266,7 +266,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setIsFileCollapsed(!isFileCollapsed)}
-                            className={`text-xs px-3 py-1 rounded-lg ${isDarkMode ? 'dark-active dark-primary hover:dark-hover' : 'bg-gray-200 text-blue-600 hover:bg-gray-300'} transition-colors`}
+                            className={styles.attachments.showMore}
                         >
                             {isFileCollapsed ? 'Show All' : 'Collapse'}
                         </motion.button>
@@ -306,18 +306,17 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     }
                                 }}                            >
                                 {getFileIcon(file.type)}
-                                <div className="ml-2 flex-grow min-w-0">
-                                    <div className="text-sm font-medium truncate">{file.name}</div>
-                                    <div className={`text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`}>
+                                <div className={styles.attachments.content}>
+                                    <div className={styles.attachments.name}>{file.name}</div>
+                                    <div className={styles.attachments.size}>
                                         {formatFileSize(file.size)}
                                     </div>
                                 </div>
-                                <div className="flex items-center">
+                                <div className={styles.attachments.actions}>
                                     <motion.button
-                                        whileHover={{ scale: 1.1, color: isDarkMode ? '#3B82F6' : '#2563EB' }}
+                                        whileHover={styles.attachments.actionButtonHover}
                                         whileTap={{ scale: 0.9 }}
-                                        className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'
-                                            }`}
+                                        className={styles.attachments.actionButton}
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             const fileId = `${file.name}-${file.size}`;
@@ -335,13 +334,12 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                         }}                                        aria-label="Open file"
                                         title="Open file"
                                     >
-                                        <FaExternalLinkAlt size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
+                                        <FaExternalLinkAlt size={14} className={styles.attachments.icon.default} />
                                     </motion.button>
                                     <motion.button
-                                        whileHover={{ scale: 1.1, color: isDarkMode ? '#3B82F6' : '#2563EB' }}
+                                        whileHover={styles.attachments.actionButtonHover}
                                         whileTap={{ scale: 0.9 }}
-                                        className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'
-                                            }`}
+                                        className={styles.attachments.actionButton}
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             const fileId = `${file.name}-${file.size}`;
@@ -357,7 +355,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                         }}                                        aria-label="Download file"
                                         title="Download file"
                                     >
-                                        <FaDownload size={14} className={isDarkMode ? 'dark-text' : 'text-gray-500'} />
+                                        <FaDownload size={14} className={styles.attachments.icon.default} />
                                     </motion.button>
                                 </div>
                             </motion.div>
@@ -367,9 +365,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                whileHover={{ backgroundColor: isDarkMode ? 'rgba(55, 65, 81, 1)' : 'rgba(243, 244, 246, 1)' }}
-                                className={`text-center p-2 rounded-lg text-sm ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-white text-gray-500 hover:bg-gray-100'
-                                    } cursor-pointer transition-colors shadow-sm`}
+                                whileHover={styles.attachments.toggleButtonHover}
+                                className={styles.attachments.toggleButton}
                                 onClick={() => setIsFileCollapsed(false)}
                             >
                                 + {message.attachments.length - 3} more attachment{message.attachments.length - 3 !== 1 ? 's' : ''}
@@ -545,7 +542,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                     initial="initial"
                     animate="animate"
                     whileHover="hover"
-                    className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${styles.content.container}`}
+                    className={styles.container.relative}
                 >
                     {isTyping ? (
                         <div className={styles.content.typing.container}>
