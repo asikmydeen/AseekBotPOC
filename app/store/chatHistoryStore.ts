@@ -88,17 +88,19 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
           activeChat: newChat,
           chatHistory: [newChat, ...state.chatHistory]
         }));
-        saveChat(newChat);
       },
 
       // Load a chat by ID
       loadChat: (chatId) => {
         set({ isChatLoading: true });
         try {
-          const chat = getChatById(chatId);
-          if (chat) {
-            set({ activeChat: chat });
-          }
+          set((state) => {
+            const chat = state.chatHistory.find(c => c.id === chatId);
+            if (chat) {
+              return { activeChat: chat };
+            }
+            return {};
+          });
         } catch (error) {
           console.error("Failed to load chat:", error);
         } finally {
@@ -126,14 +128,10 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
             chatHistory: updatedHistory
           };
         });
-
-        saveChat(updatedChat);
       },
 
       // Remove a chat from history
       removeChatFromHistory: (chatId) => {
-        deleteChat(chatId);
-
         set((state) => {
           const updatedHistory = state.chatHistory.filter(chat => chat.id !== chatId);
 
@@ -152,7 +150,6 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
             } else {
               // If no chats left, create a new one
               const newChat = createNewChat();
-              saveChat(newChat);
 
               return {
                 chatHistory: [newChat],
@@ -167,8 +164,6 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
 
       // Rename a chat
       renameChatHistory: (chatId, newTitle) => {
-        renameChat(chatId, newTitle);
-
         set((state) => {
           const updatedHistory = state.chatHistory.map(chat =>
             chat.id === chatId
@@ -190,8 +185,6 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
 
       // Toggle pinned status of a chat
       togglePinChat: (chatId) => {
-        toggleChatPinned(chatId);
-
         set((state) => {
           const updatedHistory = state.chatHistory.map(chat =>
             chat.id === chatId
