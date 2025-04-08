@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { TicketStep, TicketDetails } from '../types/shared';
-import { createTicketApi } from '../api/advancedApi';
+import { apiService } from '../utils/apiService';
 
 /**
  * Custom hook to manage the ticket system functionality
