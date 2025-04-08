@@ -131,6 +131,13 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
       updateChatMessages: (messages) => {
         const { activeChat } = get();
 
+        if (!activeChat) {
+          console.error('No active chat to update messages');
+          return;
+        }
+
+        console.log('Updating messages for chat:', activeChat.id, 'with', messages.length, 'messages');
+
         const updatedChat = {
           ...activeChat,
           messages,
@@ -138,9 +145,18 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
         };
 
         set((state) => {
-          const updatedHistory = state.chatHistory.map(chat =>
-            chat.id === activeChat.id ? updatedChat : chat
-          );
+          // Find if the chat is already in history
+          const existingIndex = state.chatHistory.findIndex(chat => chat.id === activeChat.id);
+
+          let updatedHistory;
+          if (existingIndex >= 0) {
+            // Update existing chat in history
+            updatedHistory = [...state.chatHistory];
+            updatedHistory[existingIndex] = updatedChat;
+          } else {
+            // Add to history if not already there
+            updatedHistory = [updatedChat, ...state.chatHistory.filter(chat => chat.id !== updatedChat.id)];
+          }
 
           return {
             activeChat: updatedChat,
