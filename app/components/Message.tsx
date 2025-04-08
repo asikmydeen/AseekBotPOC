@@ -54,7 +54,8 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
     const [showImageConfirmation, setShowImageConfirmation] = useState<boolean>(false);
     const [currentImage, setCurrentImage] = useState<string | null>(null);
     const [parsedContent, setParsedContent] = useState<string>('');
-    // We'll use the hover state in the motion component
+    // Get all styles for the message component
+    const styles = getMessageStyles(isDarkMode, message.sender);
 
     // Helper function to get message content with improved priority and logging
     const getMessageContent = useCallback((): string => {
@@ -252,7 +253,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className={getAttachmentsContainerClass(isDarkMode)}
+                className={styles.attachments.container}
             >
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
@@ -466,7 +467,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.4, type: "spring" }}
-                            className={getMarkdownContentClass(isDarkMode)}
+                            className={styles.content.markdown}
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
                     )}
@@ -553,30 +554,24 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                     initial="initial"
                     animate="animate"
                     whileHover="hover"
-                    className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(message.sender, isDarkMode)}`}
+                    className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${styles.content.container}`}
                 >
                     {isTyping ? (
-                        <div className="flex items-center">
-                            <p className="text-base leading-relaxed">
+                        <div className={styles.content.typing.container}>
+                            <p className={styles.content.typing.text}>
                                 {displayedText}
                             </p>
                             <motion.span
-                                animate={{
-                                    rotate: 360
-                                }}
-                                transition={{
-                                    duration: 1,
-                                    repeat: Infinity,
-                                    ease: "linear"
-                                }}
-                                className="ml-2"
+                                animate={styles.content.typing.spinner.animation}
+                                transition={styles.content.typing.spinner.transition}
+                                className={styles.content.typing.spinner.wrapper}
                             >
-                                <FaSpinner className="text-sm opacity-70" />
+                                <FaSpinner className={styles.content.typing.spinner.icon} />
                             </motion.span>
                         </div>
                     ) : (
                         <div
-                            className={getMarkdownContentClass(isDarkMode)}
+                            className={styles.content.markdown}
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
                         />
                     )}
