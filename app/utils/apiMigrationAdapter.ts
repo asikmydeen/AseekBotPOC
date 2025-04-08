@@ -2,26 +2,53 @@
 /**
  * This adapter provides the same interface as the old advancedApi.ts functions
  * but uses the new Zustand-based API service under the hood.
- * 
+ *
  * This allows for a gradual migration without breaking existing components.
- * 
+ *
  * IMPORTANT: This file is temporary and should be removed once all components
  * have been migrated to use the new API service directly.
  */
 
 import { apiService } from './apiService';
-import { UnifiedApiResponse } from '../api/advancedApi';
-import { TicketDetails, PromptType, CreatePromptRequest, UpdatePromptRequest } from '../types/shared';
+import { TicketDetails, PromptType, CreatePromptRequest, UpdatePromptRequest, MultimediaData } from '../types/shared';
+import { ApiResponse } from '../utils/lambdaApi';
 
-// Re-export utility functions and types from advancedApi.ts
-export { 
-  normalizeS3Url, 
-  extractS3KeyFromUrl, 
-  standardizeFileObject, 
-  standardizeFileObjects,
-  UnifiedApiResponse,
-  AsyncRequestOptions
+// Import utility functions from advancedApi.ts
+import {
+  normalizeS3Url,
+  extractS3KeyFromUrl,
+  standardizeFileObject,
+  standardizeFileObjects
 } from '../api/advancedApi';
+
+// Re-export utility functions
+export {
+  normalizeS3Url,
+  extractS3KeyFromUrl,
+  standardizeFileObject,
+  standardizeFileObjects
+};
+
+// Define interfaces that were previously imported from advancedApi.ts
+export interface UnifiedApiResponse extends ApiResponse {
+  requestId?: string;
+  status?: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  progress?: number;
+  result?: any;
+  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+  updatedAt?: string;
+  stepFunctionsExecution?: {
+    executionArn: string;
+    startTime: string;
+  };
+}
+
+// Options for async requests
+export interface AsyncRequestOptions {
+  sessionId?: string;
+  history?: any[];
+  attachments?: any[];
+}
 
 /**
  * Sends a message to the API
@@ -73,8 +100,8 @@ export async function checkStatus(requestId: string): Promise<UnifiedApiResponse
  * Uploads a file to the API
  */
 export async function uploadFileApi(
-  file: File, 
-  sessionId?: string, 
+  file: File,
+  sessionId?: string,
   p0?: string
 ): Promise<UnifiedApiResponse> {
   try {
@@ -249,7 +276,7 @@ export async function createPromptApi(promptData: CreatePromptRequest): Promise<
  * Updates an existing prompt
  */
 export async function updatePromptApi(
-  promptId: string, 
+  promptId: string,
   promptData: UpdatePromptRequest
 ): Promise<UnifiedApiResponse> {
   try {
