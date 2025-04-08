@@ -225,8 +225,8 @@ export default function AppSidebar({
                 return;
             }
 
-            // Call the deleteFileApi to delete the file
-            const response = await deleteFileApi(fileKey);
+            // Call the API service to delete the file
+            const response = await apiService.deleteFile(fileKey);
 
             if (response && response.success) {
                 console.log('File deleted successfully');
