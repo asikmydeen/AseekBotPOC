@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPushed, FaTrash, FaPen, FaEllipsisV, FaClock, FaStar } from 'react-icons/fa';
-import { useChatHistory } from '../../context/ChatHistoryContext';
+import { useChatHistory } from '../../hooks/useChatHistory';
 
 interface HistoryItemProps {
     id: string;
