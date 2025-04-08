@@ -13,7 +13,6 @@ import {
     FaChevronUp,
     FaBook,
     FaThumbtack,
-    FaUser,
     FaRobot,
     FaSpinner,
     FaPaperclip,
@@ -39,7 +38,7 @@ interface MessageProps {
     id?: string;
 }
 
-function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownload, isDarkMode, showCitations, id }: MessageProps) {
+function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMode, showCitations, id }: MessageProps) {
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const [showCitationPanel, setShowCitationPanel] = useState<boolean>(false);
     const [displayedText, setDisplayedText] = useState<string>('');
@@ -50,6 +49,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
     const [parsedContent, setParsedContent] = useState<string>('');
     const [isHovered, setIsHovered] = useState<boolean>(false);
 
+    // We'll keep this ref for potential future use with typing animations
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Helper function to get message content with improved priority and logging
@@ -103,7 +103,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
     };
 
     // Fetch presigned URL for a file
-    const fetchPresignedUrl = async (fileId: string, fileUrl: string) => {
+    const fetchPresignedUrl = async (_fileId: string, fileUrl: string) => {
         try {
             const result = await apiService.downloadFile(fileUrl);
             if (result && result.url) {
@@ -197,7 +197,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
         const renderer = new marked.Renderer();
 
         // Custom image renderer to make images clickable
-        renderer.image = ({ href, title, text }) => {
+        renderer.image = ({ href, text }) => {
             return `<div class="image-thumbnail">
                 <img src="${href}" alt="${text || 'Image'}" class="thumbnail" data-full-url="${href}" />
                 <div class="image-overlay">Click to view</div>
