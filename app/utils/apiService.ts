@@ -265,7 +265,7 @@ export const apiService = {
    */
   deletePrompt: async (id: string) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.deletePrompt.replace(':id', id), 'DELETE');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.deletePrompt.replace(':id', id)}?userId=${TEST_USER_ID}`, 'DELETE');
     } catch (error) {
       console.error(`Error deleting prompt ${id}:`, error);
       throw error;
