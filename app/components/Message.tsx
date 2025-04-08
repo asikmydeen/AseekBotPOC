@@ -55,8 +55,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
     const [showImageConfirmation, setShowImageConfirmation] = useState<boolean>(false);
     const [currentImage, setCurrentImage] = useState<string | null>(null);
     const [parsedContent, setParsedContent] = useState<string>('');
-    // State for hover effects
-    const [isHovered, setIsHovered] = useState<boolean>(false);
+    // We'll use the hover state in the motion component
 
     // Helper function to get message content with improved priority and logging
     const getMessageContent = useCallback((): string => {
@@ -555,8 +554,6 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                     initial="initial"
                     animate="animate"
                     whileHover="hover"
-                    onHoverStart={() => setIsHovered(true)}
-                    onHoverEnd={() => setIsHovered(false)}
                     className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(message.sender, isDarkMode)}`}
                 >
                     {isTyping ? (
