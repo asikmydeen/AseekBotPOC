@@ -16,7 +16,7 @@ import {
 } from 'react-icons/md';
 import { FiHelpCircle, FiCode } from 'react-icons/fi';
 import { TicketIcon } from '@heroicons/react/24/outline';
-import { useChatHistory } from '../../context/ChatHistoryContext';
+import { useChatHistory } from '../../hooks/useChatHistory';
 
 interface ChatHeaderProps {
   isDarkMode: boolean;
