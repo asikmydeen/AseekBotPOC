@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import AppSidebar from './components/AppSidebar';
 import { useChatHistory } from './context/ChatHistoryContext';
-import { getUserFilesApi } from './api/advancedApi';
+import { getUserFilesApi } from './utils/apiMigrationAdapter';
 import { UploadedFile } from './types/shared';
 
 // Dynamically import ChatInterface with SSR disabled
