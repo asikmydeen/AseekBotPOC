@@ -49,15 +49,8 @@ interface ChatHistoryState {
   setIsChatLoading: (isLoading: boolean) => void;
 }
 
-const defaultChat: ChatHistoryEntry = {
-  id: 'default-chat',
-  title: 'New Chat',
-  messages: [],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  pinned: false,
-  chatSessionId: ''
-};
+// Create a default chat for initial state
+const defaultChat = createNewChat();
 
 export const useChatHistoryStore = create<ChatHistoryState>()(
   persist(
