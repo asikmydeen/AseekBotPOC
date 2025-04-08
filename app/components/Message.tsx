@@ -28,19 +28,11 @@ import { MessageType, MultimediaData } from '../types/shared';
 import UserThumbnail from './UserThumbnail';
 import {
     messageAnimationVariants,
+    darkMessageAnimationVariants,
     buttonAnimationVariants,
     getMessageContainerClass,
-    getAvatarContainerClass,
     getMarkdownContentClass,
-    getAttachmentsContainerClass,
-    getReportContainerClass,
-    getButtonClass,
-    getCitationPanelClass,
-    getTicketInfoClass,
-    getImageConfirmationDialogClass,
-    getFileItemClass,
-    getFileButtonClass,
-    getTimestampClass
+    getAttachmentsContainerClass
 } from '../styles/messageStyles';
 
 interface MessageProps {
@@ -568,10 +560,9 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 </motion.div>
 
                 <motion.div
-                    custom={isDarkMode}
-                    variants={messageAnimationVariants}
+                    variants={isDarkMode ? darkMessageAnimationVariants : messageAnimationVariants}
                     initial="initial"
-                    animate={(isHovered) => `animate`}
+                    animate="animate"
                     whileHover="hover"
                     onHoverStart={() => setIsHovered(true)}
                     onHoverEnd={() => setIsHovered(false)}
