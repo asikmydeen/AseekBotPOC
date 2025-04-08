@@ -4,6 +4,24 @@
 // Import types
 import { CSSProperties } from 'react';
 
+// Animation types
+type SpinnerTransition = {
+  duration: number;
+  repeat: number;
+  ease: string;
+};
+
+type FileItemHoverStyle = {
+  scale: number;
+  backgroundColor: string;
+  boxShadow: string;
+};
+
+type FileActionButtonHoverStyle = {
+  scale: number;
+  color: string;
+};
+
 /**
  * Animation variants for message containers
  */
@@ -227,4 +245,345 @@ export const getFileButtonClass = (isDarkMode: boolean): string => {
  */
 export const getTimestampClass = (isDarkMode: boolean): string => {
   return `text-xs rounded-full px-2 py-1 ${isDarkMode ? 'dark-bg dark-text' : 'bg-gray-100 text-gray-500'}`;
+};
+
+/**
+ * Get message wrapper class based on sender
+ */
+export const getMessageWrapperClass = (sender: 'user' | 'bot'): string => {
+  return `mb-8 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+};
+
+/**
+ * Get message flex container class based on sender
+ */
+export const getMessageFlexContainerClass = (sender: 'user' | 'bot'): string => {
+  return `flex items-start gap-3 ${sender === 'user' ? 'flex-row-reverse justify-start' : 'flex-row'}`;
+};
+
+/**
+ * Get avatar container class based on position
+ */
+export const getAvatarPositionClass = (isUser: boolean): string => {
+  return `flex-shrink-0 ${isUser ? 'ml-2' : 'mr-2'}`;
+};
+
+/**
+ * Get avatar inner container class based on sender and theme
+ */
+export const getAvatarInnerClass = (isUser: boolean, isDarkMode: boolean): string => {
+  return `w-10 h-10 rounded-full flex items-center justify-center shadow-md ${isUser
+    ? isDarkMode ? 'dark-active' : 'bg-gray-200'
+    : isDarkMode ? 'dark-info-bg' : 'bg-blue-100'
+  }`;
+};
+
+/**
+ * Get user thumbnail class based on theme
+ */
+export const getUserThumbnailClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'dark-text' : 'text-gray-600';
+};
+
+/**
+ * Get bot icon class based on theme
+ */
+export const getBotIconClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'dark-primary' : 'text-blue-600';
+};
+
+/**
+ * Get typing indicator container class
+ */
+export const getTypingIndicatorClass = (): string => {
+  return 'flex items-center';
+};
+
+/**
+ * Get typing text class
+ */
+export const getTypingTextClass = (): string => {
+  return 'text-base leading-relaxed';
+};
+
+/**
+ * Get spinner animation style
+ */
+export const getSpinnerAnimationStyle = (): CSSProperties => {
+  return {
+    rotate: 360
+  };
+};
+
+/**
+ * Get spinner transition
+ */
+export const getSpinnerTransition = (): SpinnerTransition => {
+  return {
+    duration: 1,
+    repeat: Infinity,
+    ease: "linear"
+  };
+};
+
+/**
+ * Get spinner wrapper class
+ */
+export const getSpinnerWrapperClass = (): string => {
+  return 'ml-2';
+};
+
+/**
+ * Get spinner icon class
+ */
+export const getSpinnerIconClass = (): string => {
+  return 'text-sm opacity-70';
+};
+
+/**
+ * Get image confirmation overlay class
+ */
+export const getImageConfirmationOverlayClass = (): string => {
+  return 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75';
+};
+
+/**
+ * Get dialog title class based on theme
+ */
+export const getDialogTitleClass = (isDarkMode: boolean): string => {
+  return `text-xl font-bold mb-3 ${isDarkMode ? 'dark-text' : 'text-gray-900'}`;
+};
+
+/**
+ * Get dialog content class based on theme
+ */
+export const getDialogContentClass = (isDarkMode: boolean): string => {
+  return `mb-4 ${isDarkMode ? 'dark-text' : 'text-gray-700'}`;
+};
+
+/**
+ * Get dialog button container class
+ */
+export const getDialogButtonContainerClass = (): string => {
+  return 'flex justify-end gap-3';
+};
+
+/**
+ * Get cancel button class based on theme
+ */
+export const getCancelButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-lg ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} transition-colors shadow-md`;
+};
+
+/**
+ * Get confirm button class based on theme
+ */
+export const getConfirmButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-lg ${isDarkMode ? 'dark-primary-bg text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'} transition-colors shadow-md`;
+};
+
+/**
+ * Get multimedia button class based on theme
+ */
+export const getMultimediaButtonClass = (isDarkMode: boolean): string => {
+  return `mt-3 px-4 py-2 rounded-lg flex items-center ${isDarkMode
+    ? 'dark-primary-bg hover:bg-blue-700 text-blue-100'
+    : 'bg-blue-100 hover:bg-blue-200 text-blue-800'} transition-colors shadow-md`;
+};
+
+/**
+ * Get action buttons container class
+ */
+export const getActionButtonsContainerClass = (): string => {
+  return 'flex items-center gap-2 mt-4 justify-end';
+};
+
+/**
+ * Get reaction button class based on theme and active state
+ */
+export const getReactionButtonClass = (isDarkMode: boolean, isActive: boolean | null, isThumbsUp: boolean): string => {
+  if (isActive !== null) {
+    return `p-2 rounded-full transition-colors ${isActive === isThumbsUp
+      ? isDarkMode
+        ? 'dark-success-bg text-white'
+        : 'bg-green-100 text-green-600'
+      : isDarkMode
+        ? 'dark-error-bg text-white'
+        : 'bg-red-100 text-red-600'
+    }`;
+  }
+  return `p-2 rounded-full transition-colors ${isDarkMode
+    ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
+    : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+  }`;
+};
+
+/**
+ * Get pin button class based on theme and pinned state
+ */
+export const getPinButtonClass = (isDarkMode: boolean, isPinned: boolean): string => {
+  return `p-2 rounded-full transition-colors ${isPinned
+    ? isDarkMode
+      ? 'dark-primary-bg text-white'
+      : 'bg-blue-100 text-blue-600'
+    : isDarkMode
+      ? 'dark-bg dark-text hover:dark-hover hover:dark-text'
+      : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+  }`;
+};
+
+/**
+ * Get file list container class
+ */
+export const getFileListContainerClass = (): string => {
+  return 'space-y-2';
+};
+
+/**
+ * Get file item animation style for hover
+ */
+export const getFileItemHoverStyle = (isDarkMode: boolean): FileItemHoverStyle => {
+  return {
+    scale: 1.02,
+    backgroundColor: isDarkMode ? 'rgba(55, 65, 81, 1)' : 'rgba(255, 255, 255, 1)',
+    boxShadow: isDarkMode
+      ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
+      : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
+  };
+};
+
+/**
+ * Get file content container class
+ */
+export const getFileContentContainerClass = (): string => {
+  return 'ml-2 flex-grow min-w-0';
+};
+
+/**
+ * Get file name class
+ */
+export const getFileNameClass = (): string => {
+  return 'text-sm font-medium truncate';
+};
+
+/**
+ * Get file size class based on theme
+ */
+export const getFileSizeClass = (isDarkMode: boolean): string => {
+  return `text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`;
+};
+
+/**
+ * Get file actions container class
+ */
+export const getFileActionsContainerClass = (): string => {
+  return 'flex items-center';
+};
+
+/**
+ * Get file action button hover style
+ */
+export const getFileActionButtonHoverStyle = (isDarkMode: boolean): FileActionButtonHoverStyle => {
+  return { scale: 1.1, color: isDarkMode ? '#3B82F6' : '#2563EB' };
+};
+
+/**
+ * Get file action icon class based on theme
+ */
+export const getFileActionIconClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'dark-text' : 'text-gray-500';
+};
+
+/**
+ * Get show more files button class based on theme
+ */
+export const getShowMoreFilesClass = (isDarkMode: boolean): string => {
+  return `text-xs px-3 py-1 rounded-lg ${isDarkMode ? 'dark-active dark-primary hover:dark-hover' : 'bg-gray-200 text-blue-600 hover:bg-gray-300'} transition-colors`;
+};
+
+/**
+ * Get paperclip icon class based on theme
+ */
+export const getPaperclipIconClass = (isDarkMode: boolean): string => {
+  return `mr-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`;
+};
+
+/**
+ * Get attachment count class based on theme
+ */
+export const getAttachmentCountClass = (isDarkMode: boolean): string => {
+  return `text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-700'}`;
+};
+
+/**
+ * Get more files indicator class based on theme
+ */
+export const getMoreFilesIndicatorClass = (isDarkMode: boolean): string => {
+  return `text-center p-2 rounded-lg text-sm ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-white text-gray-500 hover:bg-gray-100'} cursor-pointer transition-colors shadow-sm`;
+};
+
+/**
+ * Get report title class based on theme
+ */
+export const getReportTitleClass = (isDarkMode: boolean): string => {
+  return `text-xl font-bold flex items-center ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`;
+};
+
+/**
+ * Get report button container class
+ */
+export const getReportButtonContainerClass = (): string => {
+  return 'flex gap-2';
+};
+
+/**
+ * Get report toggle button class based on theme
+ */
+export const getReportToggleButtonClass = (isDarkMode: boolean): string => {
+  return `p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
+};
+
+/**
+ * Get report download button class based on theme
+ */
+export const getReportDownloadButtonClass = (isDarkMode: boolean): string => {
+  return `p-2 rounded-full ${isDarkMode ? 'dark-active dark-text hover:dark-hover' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
+};
+
+/**
+ * Get citation button class based on theme and active state
+ */
+export const getCitationButtonClass = (isDarkMode: boolean, isActive: boolean): string => {
+  return `p-2 rounded-full ${isDarkMode
+    ? `bg-gray-700 ${isActive ? 'text-blue-400' : 'text-gray-300'} hover:bg-gray-600`
+    : `bg-gray-200 ${isActive ? 'text-blue-600' : 'text-gray-600'} hover:bg-gray-300`
+  }`;
+};
+
+/**
+ * Get citation title class based on theme
+ */
+export const getCitationTitleClass = (isDarkMode: boolean): string => {
+  return `text-sm font-bold mb-2 ${isDarkMode ? 'dark-primary' : 'text-blue-600'}`;
+};
+
+/**
+ * Get citation list class based on theme
+ */
+export const getCitationListClass = (isDarkMode: boolean): string => {
+  return `list-disc pl-5 text-sm ${isDarkMode ? 'dark-text' : 'text-gray-600'} space-y-1`;
+};
+
+/**
+ * Get ticket title class based on theme
+ */
+export const getTicketTitleClass = (isDarkMode: boolean): string => {
+  return `text-sm font-medium ${isDarkMode ? 'dark-success' : 'text-green-600'}`;
+};
+
+/**
+ * Get ticket status class based on theme
+ */
+export const getTicketStatusClass = (isDarkMode: boolean): string => {
+  return `text-xs ${isDarkMode ? 'dark-text' : 'text-gray-500'}`;
 };
