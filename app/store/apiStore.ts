@@ -68,8 +68,15 @@ export const useApiStore = create<ApiState>((set) => ({
 
     return {
       requests: newRequests as Record<string, ApiRequest>,
+      responses: state.responses,
+      errors: state.errors,
       isLoading: true,
       activeRequestCount: state.activeRequestCount + 1,
+      startRequest: state.startRequest,
+      setResponse: state.setResponse,
+      setError: state.setError,
+      clearRequest: state.clearRequest,
+      clearAll: state.clearAll,
     };
   }),
 

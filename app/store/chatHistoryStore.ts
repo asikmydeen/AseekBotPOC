@@ -207,13 +207,28 @@ export const useChatHistoryStore = create<ChatHistoryState>()(
         activeChat: state.activeChat
       }),
       onRehydrateStorage: () => (state) => {
-        // If there's no chat history, initialize with a new chat
-        if (!state || !state.chatHistory || state.chatHistory.length === 0) {
-          const newChat = createNewChat();
-          state?.setActiveChat(newChat);
-          if (state?.chatHistory) {
-            state.chatHistory.push(newChat);
+        if (state) {
+          console.log('Rehydrated chat history:', state.chatHistory?.length || 0, 'chats');
+
+          // If there's no chat history, initialize with a new chat
+          if (!state.chatHistory || state.chatHistory.length === 0) {
+            console.log('No chat history found, creating a new chat');
+            const newChat = createNewChat();
+            state.setActiveChat(newChat);
+            state.chatHistory = [newChat];
+          } else {
+            console.log('Chat history found, setting active chat');
+            // Make sure we have an active chat
+            if (!state.activeChat || !state.activeChat.id) {
+              // Set the most recent chat as active
+              const mostRecent = [...state.chatHistory].sort(
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              )[0];
+              state.setActiveChat(mostRecent);
+            }
           }
+        } else {
+          console.log('No state found during rehydration');
         }
       }
     }
