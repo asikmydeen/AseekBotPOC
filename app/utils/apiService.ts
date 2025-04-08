@@ -97,6 +97,7 @@ export const apiService = {
       // Create form data
       const formData = new FormData();
       formData.append('message', message);
+      formData.append('userId', TEST_USER_ID);
 
       // Include chatId if it exists (for continuing conversations)
       if (chatSessionId) {
