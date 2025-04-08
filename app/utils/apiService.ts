@@ -33,6 +33,7 @@ export async function makeRequest<T = any>(
     // Prepare headers
     const headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...options.headers,
     };
 
@@ -50,9 +51,12 @@ export async function makeRequest<T = any>(
         delete (requestOptions.headers as any)['Content-Type'];
         requestOptions.body = body;
       } else {
-        requestOptions.body = JSON.stringify(body);
+        // Make sure body is properly stringified JSON
+        requestOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
       }
     }
+
+    console.log(`Making ${method} request to ${url}`, { body, requestOptions });
 
     // Make the request
     const response = await fetch(url, requestOptions);
@@ -64,7 +68,18 @@ export async function makeRequest<T = any>(
       data = await response.json();
     } else {
       data = await response.text();
+      // Try to parse as JSON anyway if it looks like JSON
+      if (typeof data === 'string' && data.trim().startsWith('{')) {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          // If it fails to parse, keep it as text
+          console.warn('Failed to parse response as JSON:', e);
+        }
+      }
     }
+
+    console.log(`Response from ${url}:`, { status: response.status, data });
 
     // Handle non-2xx responses
     if (!response.ok) {
@@ -79,6 +94,7 @@ export async function makeRequest<T = any>(
     return data as T;
   } catch (error) {
     // Handle any errors
+    console.error('API request failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     setError(requestId, errorMessage);
     throw error;
