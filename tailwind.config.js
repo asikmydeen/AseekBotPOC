@@ -15,5 +15,5 @@ module.exports = {
             },
         },
     },
-    plugins: [], // No need to add prose plugin; it's built into Tailwind
+    plugins: [require('@tailwindcss/typography')], // Add typography plugin for better prose styling
 };
