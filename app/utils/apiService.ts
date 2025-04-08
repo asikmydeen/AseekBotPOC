@@ -413,7 +413,12 @@ export const apiService = {
           console.log('PUT method not allowed, trying POST as fallback');
           const postResponse = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${API_KEY}`,
+              'X-User-ID': TEST_USER_ID
+            },
             body: JSON.stringify(requestData)
           });
 
