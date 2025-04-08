@@ -2,6 +2,33 @@
 import { useApiStore } from '../store/apiStore';
 import { LAMBDA_ENDPOINTS } from './lambdaApi';
 
+/**
+ * Extracts the S3 key from a file URL
+ */
+function extractS3KeyFromUrl(fileUrl: string): string {
+  if (!fileUrl) {
+    throw new Error('Invalid file URL');
+  }
+
+  // Handle standard S3 URL format: https://<bucket-name>.s3.<region>.amazonaws.com/<key>
+  if (fileUrl.includes('amazonaws.com/')) {
+    const s3Key = fileUrl.split('amazonaws.com/')[1];
+    if (!s3Key) {
+      throw new Error('Invalid file URL format');
+    }
+    return s3Key;
+  }
+  // Handle CloudFront or custom domain URLs
+  else if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+    // Assume it's already a partial path or key
+    return fileUrl;
+  }
+  // Handle simple key
+  else {
+    return fileUrl;
+  }
+}
+
 // Placeholder for user ID and auth token - can be replaced with actual values when integrating with user management
 export const TEST_USER_ID = 'test-user';
 export const API_KEY = 'aseekbot-dev-key'; // This is a placeholder API key
@@ -198,7 +225,7 @@ export const apiService = {
    */
   deleteFile: async (fileUrl: string) => {
     try {
-      const s3Key = fileUrl.split('/').pop() || '';
+      const s3Key = extractS3KeyFromUrl(fileUrl);
 
       const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
         method: 'POST',
