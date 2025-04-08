@@ -249,7 +249,7 @@ function ChatApp() {
   useEffect(() => {
     async function fetchFiles() {
       try {
-        const filesResponse = await getUserFilesApi();
+        const filesResponse = await apiService.getUserFiles();
         // Check if response has data and no errors
         if (filesResponse && filesResponse.data && !filesResponse.error) {
           const filesArray = Array.isArray(filesResponse.data) ? filesResponse.data : [];
