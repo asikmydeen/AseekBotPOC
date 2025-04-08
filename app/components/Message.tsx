@@ -32,7 +32,27 @@ import {
     buttonAnimationVariants,
     getMessageContainerClass,
     getMarkdownContentClass,
-    getAttachmentsContainerClass
+    getAttachmentsContainerClass,
+    getMessageWrapperClass,
+    getMessageFlexContainerClass,
+    getAvatarPositionClass,
+    getAvatarInnerClass,
+    getUserThumbnailClass,
+    getBotIconClass,
+    getTypingIndicatorClass,
+    getTypingTextClass,
+    getSpinnerAnimationStyle,
+    getSpinnerTransition,
+    getSpinnerWrapperClass,
+    getSpinnerIconClass,
+    getImageConfirmationOverlayClass,
+    getImageConfirmationDialogClass,
+    getDialogTitleClass,
+    getDialogContentClass,
+    getDialogButtonContainerClass,
+    getCancelButtonClass,
+    getConfirmButtonClass,
+    getActionButtonsContainerClass
 } from '../styles/messageStyles';
 
 interface MessageProps {
