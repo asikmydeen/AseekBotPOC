@@ -264,7 +264,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className={`mt-3 p-3 rounded-xl ${isDarkMode ? 'dark-card-bg' : 'attachment-bg-light'} shadow-md`}
+                className={getAttachmentsContainerClass(isDarkMode)}
             >
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
@@ -568,20 +568,14 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                 </motion.div>
 
                 <motion.div
-                    variants={messageVariants}
+                    custom={isDarkMode}
+                    variants={messageAnimationVariants}
                     initial="initial"
-                    animate="animate"
+                    animate={(isHovered) => `animate`}
                     whileHover="hover"
                     onHoverStart={() => setIsHovered(true)}
                     onHoverEnd={() => setIsHovered(false)}
-                    className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${message.sender === 'user'
-                            ? isDarkMode
-                                ? 'bg-gradient-to-br from-gray-800 to-gray-900 dark-text border dark-border text-left'
-                                : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border border-gray-200 text-left'
-                            : isDarkMode
-                                ? 'bg-gradient-to-br from-blue-900 to-blue-950 dark-text border dark-border'
-                                : 'bg-gradient-to-br from-blue-100 to-blue-200 text-gray-900 border border-blue-300'
-                        }`}
+                    className={`relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(message.sender, isDarkMode)}`}
                 >
                     {isTyping ? (
                         <div className="flex items-center">
@@ -604,18 +598,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                         </div>
                     ) : (
                         <div
-                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden
-                                ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'}
-                                prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'}
-                                prose-img:max-w-full prose-img:rounded-md prose-img:my-2
-                                prose-pre:max-w-full prose-pre:overflow-x-auto
-                                prose-code:text-sm prose-code:p-1 prose-code:rounded
-                                prose-code:before:content-none prose-code:after:content-none
-                                ${isDarkMode ? 'prose-code:bg-gray-800' : 'prose-code:bg-gray-100'}
-                                prose-headings:mt-4 prose-headings:mb-2
-                                prose-p:my-2 prose-ul:my-2 prose-ol:my-2
-                                prose-li:my-1 prose-blockquote:my-2
-                                prose-table:my-2 prose-hr:my-4`}
+                            className={getMarkdownContentClass(isDarkMode)}
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
                         />
                     )}
@@ -649,7 +632,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                     </p>
                                     <div className="flex justify-end gap-3">
                                         <motion.button
-                                            variants={buttonVariants}
+                                            variants={buttonAnimationVariants}
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
@@ -660,7 +643,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                             Cancel
                                         </motion.button>
                                         <motion.button
-                                            variants={buttonVariants}
+                                            variants={buttonAnimationVariants}
                                             initial="idle"
                                             whileHover="hover"
                                             whileTap="tap"
@@ -678,7 +661,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
 
                         {message.multimedia && !isTyping && (
                             <motion.button
-                                variants={buttonVariants}
+                                variants={buttonAnimationVariants}
                                 initial="idle"
                                 whileHover="hover"
                                 whileTap="tap"
@@ -702,7 +685,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 className="flex items-center gap-2 mt-4 justify-end"
                             >
                                 <motion.button
-                                    variants={buttonVariants}
+                                    variants={buttonAnimationVariants}
                                     initial="idle"
                                     whileHover="hover"
                                     whileTap="tap"
@@ -722,7 +705,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 </motion.button>
 
                                 <motion.button
-                                    variants={buttonVariants}
+                                    variants={buttonAnimationVariants}
                                     initial="idle"
                                     whileHover="hover"
                                     whileTap="tap"
@@ -742,7 +725,7 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, isDarkMod
                                 </motion.button>
 
                                 <motion.button
-                                    variants={buttonVariants}
+                                    variants={buttonAnimationVariants}
                                     initial="idle"
                                     whileHover="hover"
                                     whileTap="tap"
