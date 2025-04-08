@@ -1,4 +1,5 @@
 // app/hooks/usePrompts.ts
+import { useEffect } from 'react';
 import { usePromptsStore } from '../store/promptsStore';
 
 /**
@@ -21,7 +22,15 @@ export function usePrompts() {
     filterPromptsByTag,
     clearFilters
   } = usePromptsStore();
-  
+
+  // Fetch prompts on mount (similar to what the original context provider did)
+  useEffect(() => {
+    // Only fetch if we don't already have prompts and we're not already loading
+    if (prompts.length === 0 && !isLoading) {
+      fetchPrompts();
+    }
+  }, [prompts.length, isLoading, fetchPrompts]);
+
   return {
     prompts,
     isLoading,
