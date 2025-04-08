@@ -205,14 +205,16 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
         };
 
         // Custom link renderer to open links in new tab
-        renderer.link = (href, title, text) => {
+        renderer.link = (link) => {
+            const { href, title, text } = link;
             return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
         };
 
         // Custom code renderer to improve code block styling
-        renderer.code = (code, language) => {
-            return `<pre class="${language ? `language-${language}` : ''}">
-                <code class="${language ? `language-${language}` : ''}">${code}</code>
+        renderer.code = (code) => {
+            const { text, lang } = code;
+            return `<pre class="${lang ? `language-${lang}` : ''}">
+                <code class="${lang ? `language-${lang}` : ''}">${text}</code>
             </pre>`;
         };
 
@@ -630,10 +632,18 @@ function EnhancedMessage({ message, onMultimediaClick, onReact, onPin, onDownloa
                         </div>
                     ) : (
                         <div
-                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'
-                                } prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'
-                                } prose-img:max-w-full prose-img:rounded-md prose-img:my-2
-              prose-pre:max-w-full prose-pre:overflow-x-auto`}
+                            className={`text-base leading-relaxed prose max-w-none break-words overflow-hidden
+                                ${isDarkMode ? 'prose-invert dark-text' : 'text-gray-900'}
+                                prose-a:${isDarkMode ? 'dark-primary' : 'text-blue-600'}
+                                prose-img:max-w-full prose-img:rounded-md prose-img:my-2
+                                prose-pre:max-w-full prose-pre:overflow-x-auto
+                                prose-code:text-sm prose-code:p-1 prose-code:rounded
+                                prose-code:before:content-none prose-code:after:content-none
+                                ${isDarkMode ? 'prose-code:bg-gray-800' : 'prose-code:bg-gray-100'}
+                                prose-headings:mt-4 prose-headings:mb-2
+                                prose-p:my-2 prose-ul:my-2 prose-ol:my-2
+                                prose-li:my-1 prose-blockquote:my-2
+                                prose-table:my-2 prose-hr:my-4`}
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
                         />
                     )}
