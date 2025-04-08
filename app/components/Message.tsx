@@ -26,6 +26,22 @@ import {
 } from 'react-icons/fa';
 import { MessageType, MultimediaData } from '../types/shared';
 import UserThumbnail from './UserThumbnail';
+import {
+    messageAnimationVariants,
+    buttonAnimationVariants,
+    getMessageContainerClass,
+    getAvatarContainerClass,
+    getMarkdownContentClass,
+    getAttachmentsContainerClass,
+    getReportContainerClass,
+    getButtonClass,
+    getCitationPanelClass,
+    getTicketInfoClass,
+    getImageConfirmationDialogClass,
+    getFileItemClass,
+    getFileButtonClass,
+    getTimestampClass
+} from '../styles/messageStyles';
 
 interface MessageProps {
     message: MessageType;
