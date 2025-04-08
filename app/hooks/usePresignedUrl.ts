@@ -50,7 +50,7 @@ export function usePresignedUrl(
     setError(null);
 
     try {
-      const result = await downloadFileApi(fileUrl);
+      const result = await apiService.downloadFile(fileUrl);
 
       // Look for URL in multiple possible locations in the response
       let url: string | null = null;
