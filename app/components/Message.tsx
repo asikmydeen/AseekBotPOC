@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { marked } from 'marked';
 import html2pdf from 'html2pdf.js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { downloadFileApi } from '../api/advancedApi';
+import { apiService } from '../utils/apiService';
 import {
     FaThumbsUp,
     FaThumbsDown,
