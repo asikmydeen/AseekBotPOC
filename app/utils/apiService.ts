@@ -191,7 +191,7 @@ export const apiService = {
    */
   getUserFiles: async () => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.getUserFiles, 'GET');
+      return await makeRequest(LAMBDA_ENDPOINTS.getUserFiles, 'POST', { userId: TEST_USER_ID });
     } catch (error) {
       console.error('Error getting user files:', error);
       throw error;
