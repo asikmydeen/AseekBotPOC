@@ -1,6 +1,6 @@
 // app/hooks/usePresignedUrl.ts
 import { useState, useEffect, useCallback } from 'react';
-import { downloadFileApi } from '../api/advancedApi';
+import { apiService } from '../utils/apiService';
 
 interface FileAttachment {
   url?: string;
