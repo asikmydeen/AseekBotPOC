@@ -24,7 +24,7 @@ type FileActionButtonHoverStyle = {
 };
 
 // Component-specific style interfaces
-interface MessageStyles {
+export interface MessageStyles {
   wrapper: string;
   flexContainer: string;
   avatar: {
@@ -384,7 +384,7 @@ export const getTypingTextClass = (): string => {
 /**
  * Get spinner animation style
  */
-export const getSpinnerAnimationStyle = (): any => {
+export const getSpinnerAnimationStyle = (): SpinnerAnimation => {
   return {
     rotate: 360
   };
@@ -398,6 +398,84 @@ export const getSpinnerTransition = (): SpinnerTransition => {
     duration: 1,
     repeat: Infinity,
     ease: "linear"
+  };
+};
+
+/**
+ * Get all message styles
+ */
+export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): MessageStyles => {
+  return {
+    wrapper: getMessageWrapperClass(sender),
+    flexContainer: getMessageFlexContainerClass(sender),
+    avatar: {
+      container: getAvatarPositionClass(sender === 'user'),
+      inner: getAvatarInnerClass(sender === 'user', isDarkMode),
+      icon: sender === 'user' ? getUserThumbnailClass(isDarkMode) : getBotIconClass(isDarkMode)
+    },
+    content: {
+      container: getMessageContainerClass(sender, isDarkMode),
+      markdown: getMarkdownContentClass(isDarkMode),
+      typing: {
+        container: getTypingIndicatorClass(),
+        text: getTypingTextClass(),
+        spinner: {
+          wrapper: getSpinnerWrapperClass(),
+          icon: getSpinnerIconClass(),
+          animation: getSpinnerAnimationStyle(),
+          transition: getSpinnerTransition()
+        }
+      }
+    },
+    attachments: {
+      container: getAttachmentsContainerClass(isDarkMode),
+      header: `flex items-center mb-2`,
+      list: getFileListContainerClass(),
+      item: getFileItemClass(isDarkMode),
+      itemHover: getFileItemHoverStyle(isDarkMode),
+      icon: `mr-3 text-lg ${isDarkMode ? 'dark-text' : 'text-gray-600'}`,
+      content: getFileContentContainerClass(),
+      name: getFileNameClass(),
+      size: getFileSizeClass(isDarkMode),
+      actions: getFileActionsContainerClass(),
+      actionButton: getFileButtonClass(isDarkMode),
+      actionButtonHover: getFileActionButtonHoverStyle(isDarkMode),
+      showMore: getShowMoreFilesClass(isDarkMode)
+    },
+    imageDialog: {
+      overlay: getImageConfirmationOverlayClass(),
+      container: getImageConfirmationDialogClass(isDarkMode),
+      title: getDialogTitleClass(isDarkMode),
+      content: getDialogContentClass(isDarkMode),
+      buttons: getDialogButtonContainerClass(),
+      cancelButton: getCancelButtonClass(isDarkMode),
+      confirmButton: getConfirmButtonClass(isDarkMode)
+    },
+    actions: {
+      container: getActionButtonsContainerClass(),
+      button: `p-2 rounded-full transition-colors`,
+      reaction: getReactionButtonClass,
+      pin: getPinButtonClass,
+      citation: getCitationButtonClass
+    },
+    report: {
+      container: getReportContainerClass(isDarkMode),
+      title: getReportTitleClass(isDarkMode),
+      buttons: getReportButtonContainerClass(),
+      toggleButton: getReportToggleButtonClass(isDarkMode),
+      downloadButton: getReportDownloadButtonClass(isDarkMode)
+    },
+    citations: {
+      container: getCitationPanelClass(isDarkMode),
+      title: getCitationTitleClass(isDarkMode),
+      list: getCitationListClass(isDarkMode)
+    },
+    ticket: {
+      container: getTicketInfoClass(isDarkMode),
+      title: getTicketTitleClass(isDarkMode),
+      status: getTicketStatusClass(isDarkMode)
+    },
+    timestamp: getTimestampClass(isDarkMode)
   };
 };
 
