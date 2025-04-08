@@ -149,7 +149,7 @@ export default function useChatMessages({
     if (!requestId || requestCancelledRef.current) return;
     try {
       console.log(`Polling status for request ${requestId}...`);
-      const statusResponse = await checkStatus(requestId);
+      const statusResponse = await apiService.checkStatus(requestId);
       console.log(`Received status for ${requestId}:`, statusResponse.status, `Progress: ${statusResponse.progress || 0}%`);
       setAsyncStatus(statusResponse.status || 'PROCESSING');
       setAsyncProgress(statusResponse.progress || 0);
