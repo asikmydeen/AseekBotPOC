@@ -31,8 +31,8 @@ import {
     FaFile
 } from 'react-icons/fa';
 import { apiService } from '../utils/apiService';
-import { useTheme } from '../context/ThemeContext';
-import { useChatHistory } from '../context/ChatHistoryContext';
+import { useTheme } from '../hooks/useTheme';
+import { useChatHistory } from '../hooks/useChatHistory';
 import { usePrompts } from '../context/PromptsContext';
 import usePromptsManager from '../hooks/usePromptsManager';
 import HistoryList from './chat/HistoryList';
