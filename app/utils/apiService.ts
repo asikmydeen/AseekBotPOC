@@ -147,15 +147,24 @@ export const apiService = {
         throw new Error('No file provided');
       }
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('userId', TEST_USER_ID);
+      // Create a payload with file metadata
+      const payload: any = {
+        userId: TEST_USER_ID,
+        file: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          // In a real implementation, you would need to upload the file to S3 first
+          // and then pass the S3 URL here
+          url: URL.createObjectURL(file) // This is just a temporary local URL
+        }
+      };
 
       if (sessionId) {
-        formData.append('sessionId', sessionId);
+        payload.sessionId = sessionId;
       }
 
-      return await makeRequest(LAMBDA_ENDPOINTS.uploadFile, 'POST', formData);
+      return await makeRequest(LAMBDA_ENDPOINTS.uploadFile, 'POST', payload);
     } catch (error) {
       console.error('Error uploading file:', error);
       throw error;
