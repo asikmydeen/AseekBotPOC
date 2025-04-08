@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   messageAnimationVariants,
   darkMessageAnimationVariants,
   buttonAnimationVariants,
@@ -44,7 +44,7 @@ function Message({
   const [showCitationPanel, setShowCitationPanel] = useState<boolean>(showCitations);
   const [imageDialogOpen, setImageDialogOpen] = useState<boolean>(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  
+
   // Get all styles for the message component
   const styles = getMessageStyles(isDarkMode, message.sender);
 
@@ -53,7 +53,7 @@ function Message({
     const content = message.formattedMessage || message.text || message.message || "";
     // Log content for debugging if it's empty or very short
     if (!content || content.length < 5) {
-      console.log('Message content issue:', { 
+      console.log('Message content issue:', {
         hasFormattedMessage: !!message.formattedMessage,
         hasText: !!message.text,
         hasMessage: !!message.message,
@@ -68,11 +68,11 @@ function Message({
   useEffect(() => {
     // Get message content regardless of sender
     const messageContent = getMessageContent();
-    
+
     // Handle empty content case
     if (!messageContent) {
-      const errorMessage = message.sender === 'bot' 
-        ? "Error: No message content available." 
+      const errorMessage = message.sender === 'bot'
+        ? "Error: No message content available."
         : "";
       setDisplayedText(errorMessage);
       setIsTyping(false);
@@ -133,8 +133,8 @@ function Message({
     <div id={id} className={styles.wrapper}>
       <div className={styles.flexContainer}>
         {/* Avatar */}
-        <MessageAvatar 
-          sender={message.sender} 
+        <MessageAvatar
+          sender={message.sender}
           isDarkMode={isDarkMode}
           styles={styles}
         />
@@ -148,7 +148,7 @@ function Message({
           className={styles.container.relative}
         >
           {/* Message Text Content */}
-          <MessageContent 
+          <MessageContent
             content={displayedText}
             isTyping={isTyping}
             isDarkMode={isDarkMode}
@@ -158,8 +158,14 @@ function Message({
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (
-            <MessageAttachments 
-              attachments={message.attachments}
+            <MessageAttachments
+              attachments={message.attachments?.map(file => ({
+                id: file.url,  // Using url as id since it's unique
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                url: file.url
+              }))}
               isDarkMode={isDarkMode}
               styles={styles}
               onDownload={handleFileDownload}
@@ -186,7 +192,7 @@ function Message({
 
           {/* Message Actions */}
           {message.sender === 'bot' && (
-            <MessageActions 
+            <MessageActions
               reaction={message.reaction === 'thumbs-up' ? true : message.reaction === 'thumbs-down' ? false : null}
               isPinned={!!message.pinned}
               showCitations={showCitationPanel}
@@ -202,7 +208,7 @@ function Message({
       </div>
 
       {/* Image Dialog */}
-      <ImageDialog 
+      <ImageDialog
         isOpen={imageDialogOpen}
         imageUrl={selectedImageUrl}
         onClose={() => setImageDialogOpen(false)}
