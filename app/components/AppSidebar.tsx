@@ -139,20 +139,7 @@ export default function AppSidebar({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const sidebarVariants = {
-        open: {
-            transform: 'translateX(0%)',
-            width: 'var(--sidebar-width-open, 300px)',
-            opacity: 1,
-            backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'var(--light-bg, #ffffff)'
-        },
-        closed: {
-            width: 'var(--sidebar-width-closed, 60px)',
-            transform: 'translateX(0%)',
-            opacity: 1,
-            backgroundColor: isDarkMode ? 'var(--dark-bg-color, #121212)' : 'var(--light-bg, #ffffff)'
-        }
-    };
+    // Using sidebarAnimationVariants from sidebarStyles.ts
 
     const toggleSidebar = () => {
         const newIsOpen = !isOpen;
@@ -164,7 +151,7 @@ export default function AppSidebar({
 
     const sidebarOverlay = isOpen && isMobile ? (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className={styles.overlay}
             onClick={toggleSidebar}
             aria-hidden="true"
         />
