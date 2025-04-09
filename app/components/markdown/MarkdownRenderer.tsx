@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { marked, Tokens } from 'marked';
+import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import MarkdownImage from './MarkdownImage';
 import MarkdownLink from './MarkdownLink';
@@ -27,86 +27,43 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     }
 
     // Configure custom renderer
-    const renderer = new marked.Renderer();
+    const renderer = {
+      image(href: string, title: string | null, text: string) {
+        return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
+      },
 
-    // Custom image renderer
-    renderer.image = (href: string, title: string | null, text: string) => {
-      // We'll replace this with a placeholder that we can identify later
-      return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
-    };
+      link(href: string, title: string | null, text: string) {
+        return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
+      },
 
-    // Custom link renderer
-    renderer.link = (href: string, title: string | null, text: string) => {
-      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
-    };
-
-    // Custom code renderer
-    renderer.code = (code, language) => {
-      return `<div class="markdown-code" data-code="${encodeURIComponent(code)}" data-language="${language || ''}"></div>`;
-    };
-
-    // Enhanced marked options
-    const options = {
-      gfm: true,           // GitHub Flavored Markdown
-      breaks: true,        // Convert \n to <br>
-      headerIds: true,     // Add IDs to headers
-      mangle: false,       // Don't mangle header IDs
-      pedantic: false,     // Don't be pedantic
-      smartLists: true,    // Use smarter list behavior
-      smartypants: true,   // Use smart typography
-      renderer,
+      code(code: string, language: string | undefined) {
+        return `<div class="markdown-code" data-code="${encodeURIComponent(code)}" data-language="${language || ''}"></div>`;
+      }
     };
 
     try {
-      // Parse markdown content
-      let parsed = marked.parse(content, options) as string;
+      // Parse markdown content with custom renderer
+      const parsed = marked(content, {
+        renderer: renderer as marked.Renderer,
+        gfm: true,           // GitHub Flavored Markdown
+        breaks: true,        // Convert \n to <br>
+        headerIds: true,     // Add IDs to headers
+        mangle: false,       // Don't mangle header IDs
+        pedantic: false,     // Don't be pedantic
+        smartLists: true,    // Use smarter list behavior
+        smartypants: true,   // Use smart typography
+      });
 
       // Sanitize the HTML to prevent XSS attacks
-      parsed = DOMPurify.sanitize(parsed);
-
-      setParsedContent(parsed);
+      setParsedContent(DOMPurify.sanitize(parsed));
     } catch (error) {
       console.error('Error parsing markdown:', error);
       setParsedContent(`<p>Error rendering content</p>`);
     }
   }, [content]);
 
-  // Function to process the HTML and replace placeholders with React components
-  const processContent = () => {
-    if (!parsedContent) return null;
-
-    const container = document.createElement('div');
-    container.innerHTML = parsedContent;
-
-    // Process images
-    const imageElements = container.querySelectorAll('.markdown-image');
-    imageElements.forEach((element) => {
-      const src = element.getAttribute('data-src') || '';
-      const alt = element.getAttribute('data-alt') || '';
-      const title = element.getAttribute('data-title') || '';
-
-      const imageComponent = (
-        <MarkdownImage
-          src={src}
-          alt={alt}
-          title={title}
-          onImageClick={onImageClick}
-          isDarkMode={isDarkMode}
-        />
-      );
-
-      // Replace the placeholder with the React component
-      // This is a simplified approach - in a real implementation, you'd need to handle this differently
-      // as you can't directly insert React components into HTML strings
-    });
-
-    // Process links and code blocks similarly...
-
-    return <div dangerouslySetInnerHTML={{ __html: container.innerHTML }} />;
-  };
-
-  // For simplicity, we'll still use dangerouslySetInnerHTML in this example
-  // In a production app, you'd want to use a more robust approach to convert the HTML to React components
+  // For now, we'll use dangerouslySetInnerHTML since that's what the current implementation uses
+  // In a future improvement, we could parse the HTML and convert it to React components
   return (
     <div className={`prose max-w-none ${isDarkMode ? 'prose-invert' : ''}`}>
       <div dangerouslySetInnerHTML={{ __html: parsedContent }} />
