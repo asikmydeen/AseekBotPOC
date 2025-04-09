@@ -6,6 +6,6 @@
 import AppSidebar from './sidebar/AppSidebar';
 
 // Re-export all the types and interfaces from the new component
-export * from './sidebar/AppSidebar';
+export type { UploadedFile, AppSidebarProps } from './sidebar/AppSidebar';
 
 export default AppSidebar;
