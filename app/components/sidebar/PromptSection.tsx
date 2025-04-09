@@ -60,6 +60,10 @@ const PromptSection: React.FC<PromptSectionProps> = ({
         onEditPrompt={onEditPrompt}
         onDeletePrompt={onDeletePrompt}
         maxHeight="calc(100vh - 220px)"
+        sessionId={sessionId}
+        chatId={chatId}
+        userId={userId}
+        onStatusUpdate={onStatusUpdate}
       />
     </div>
   );
