@@ -242,6 +242,9 @@ function ChatInterfaceComponent({
 
         // Clear any pending input
         setPendingInput('');
+
+        // Clear the prompt file mode flag
+        localStorage.removeItem('inPromptFileMode');
     }, [uploadedFiles.length, clearUploadedFiles, showDocumentAnalysisPrompt, clearDocumentAnalysisPrompt]);
 
     /**
