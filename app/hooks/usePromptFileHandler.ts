@@ -172,13 +172,24 @@ const usePromptFileHandler = ({
       // We'll add the user message directly to the API call
       // This way we avoid sending two separate messages
 
+      // Create a user message with the prompt and files
+      const fileNames = files.map(f => f.fileName).join(', ');
+      const userMessage = `Please analyze these documents: ${fileNames}`;
+
+      // Add the message to the chat UI by updating the status
+      if (currentStatusCallback) {
+        currentStatusCallback('STARTED', 0, userMessage, true);
+      }
+
       // Call API to send message with prompt and files
+      // We include the userMessage in the API call to avoid sending a separate message
       const response = await apiService.sendMessage({
         promptId: prompt.promptId,
         userId: currentUserId,
         sessionId: currentSessionId,
         chatId: currentChatId,
-        s3Files
+        s3Files,
+        message: userMessage  // Include the user message in the API call
       });
 
       if (response && response.requestId) {
