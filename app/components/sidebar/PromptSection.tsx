@@ -14,6 +14,10 @@ interface PromptSectionProps {
   onCreatePrompt: () => void;
   onEditPrompt: (prompt: Prompt) => void;
   onDeletePrompt: (promptId: string) => void;
+  sessionId?: string;
+  chatId?: string;
+  userId?: string;
+  onStatusUpdate?: (status: string, progress: number) => void;
 }
 
 const PromptSection: React.FC<PromptSectionProps> = ({
