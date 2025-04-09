@@ -2,6 +2,14 @@
 
 import { CSSProperties } from 'react';
 
+/**
+ * Extends the standard CSSProperties type to allow custom CSS variable names
+ * that are not part of the default CSSProperties type (like --sidebar-width-open).
+ */
+interface CustomCSSProperties extends CSSProperties {
+  [property: string]: string | number | undefined;
+}
+
 // Define animation variants
 export const sidebarAnimationVariants = {
   open: (isDarkMode: boolean) => ({
@@ -27,7 +35,7 @@ export const sidebarTransition = {
 };
 
 // Define CSS variables
-export const sidebarCSSVariables: CSSProperties = {
+export const sidebarCSSVariables: CustomCSSProperties = {
   '--sidebar-width-open': 'min(100vw, 300px)',
   '--sidebar-width-closed': '60px',
   '--light-bg': '#ffffff',
@@ -388,4 +396,3 @@ export const getSidebarStyles = (isDarkMode: boolean): SidebarStyles => {
     overlay: getSidebarOverlayClass(),
   };
 };
-
