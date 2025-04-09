@@ -403,33 +403,35 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
       {/* Variables Section */}
       {requiredVariables.length > 0 && (
         <div className="mb-4">
-          <h3 className={`text-base sm:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Required Information
+          <h3 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Required Variables
           </h3>
 
-          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'}`}>
-            {requiredVariables.map((variable) => (
-              <div key={variable} className="mb-3 last:mb-0">
-                <label className={`block mb-1 font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                  {formatVariableName(variable)}
-                </label>
-                <input
-                  type="text"
-                  value={variables[variable] || ''}
-                  onChange={(e) => handleVariableChange(variable, e.target.value)}
-                  className={`w-full p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  } border`}
-                  placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
-                />
-              </div>
-            ))}
+          <div className={`p-2 rounded ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'}`}>
+            <div className="space-y-2">
+              {requiredVariables.map((variable) => (
+                <div key={variable} className="flex flex-col">
+                  <label className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {formatVariableName(variable)}
+                  </label>
+                  <input
+                    type="text"
+                    value={variables[variable] || ''}
+                    onChange={(e) => handleVariableChange(variable, e.target.value)}
+                    className={`w-full p-1.5 text-sm rounded ${
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } border`}
+                    placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
           {error && (
-            <div className={`mt-2 p-2 rounded-md ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-100 text-red-700'}`}>
+            <div className={`mt-2 p-1.5 text-xs rounded ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-100 text-red-700'}`}>
               {error}
             </div>
           )}
