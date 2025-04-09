@@ -137,30 +137,60 @@ export async function makeRequest<T = any>(
 export const apiService = {
   /**
    * Sends a message to the chat API
+   * @param messageOrOptions - Either a string message or an options object with message details
+   * @param chatSessionId - The chat session ID (only used if messageOrOptions is a string)
+   * @param files - Optional files to attach (only used if messageOrOptions is a string)
    */
-  sendMessage: async (message: string, chatSessionId: string, files?: any[]) => {
+  sendMessage: async (messageOrOptions: string | {
+    promptId?: string;
+    message?: string;
+    userId: string;
+    sessionId: string;
+    chatId: string;
+    s3Files?: Array<{
+      name: string;
+      fileName: string;
+      s3Url: string;
+      mimeType: string;
+    }>;
+  }, chatSessionId?: string, files?: any[]) => {
     try {
-      // Create JSON payload
-      const payload: any = {
-        message,
-        userId: TEST_USER_ID
-      };
+      let payload: any;
 
-      // Include chatId if it exists (for continuing conversations)
-      if (chatSessionId) {
-        payload.chatId = chatSessionId;
+      // Handle the case where messageOrOptions is an object (new format)
+      if (typeof messageOrOptions === 'object') {
+        payload = { ...messageOrOptions };
+
+        // Ensure userId is set
+        if (!payload.userId) {
+          payload.userId = TEST_USER_ID;
+        }
+      }
+      // Handle the case where messageOrOptions is a string (old format)
+      else {
+        payload = {
+          message: messageOrOptions,
+          userId: TEST_USER_ID
+        };
+
+        // Include chatId if it exists (for continuing conversations)
+        if (chatSessionId) {
+          payload.chatId = chatSessionId;
+          payload.sessionId = chatSessionId;
+        }
+
+        // Add files if they exist
+        if (files && files.length > 0) {
+          payload.files = files.map(file => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            url: file.url || ''
+          }));
+        }
       }
 
-      // Add files if they exist
-      if (files && files.length > 0) {
-        payload.files = files.map(file => ({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url: file.url || ''
-        }));
-      }
-
+      console.log('Sending message with payload:', payload);
       return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
     } catch (error) {
       console.error('Error sending message:', error);
