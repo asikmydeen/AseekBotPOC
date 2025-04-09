@@ -29,6 +29,7 @@ export interface MessageStyles {
   container: {
     base: string;
     relative: string;
+    backgroundColor: { backgroundColor: string };
   };
   wrapper: string;
   flexContainer: string;
