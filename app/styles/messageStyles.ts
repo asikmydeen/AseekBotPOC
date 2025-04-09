@@ -432,8 +432,8 @@ export const getSpinnerTransition = (): SpinnerTransition => {
 export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): MessageStyles => {
   return {
     container: {
-      base: `p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words`,
-      relative: `relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words`,
+      base: `p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(sender, isDarkMode)}`,
+      relative: `relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(sender, isDarkMode)}`,
     },
     wrapper: getMessageWrapperClass(sender),
     flexContainer: getMessageFlexContainerClass(sender),
