@@ -242,7 +242,6 @@ const usePromptFileHandler = ({
   }, [isPolling, requestId]);
 
   return {
-    isDialogOpen,
     selectedPrompt,
     selectedFiles,
     variables,
@@ -251,7 +250,7 @@ const usePromptFileHandler = ({
     requiredFileCount,
     requiredVariables,
     openFileDialog,
-    closeFileDialog,
+    resetState,
     handleFileSelection
   };
 };
