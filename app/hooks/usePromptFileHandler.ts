@@ -108,12 +108,18 @@ const usePromptFileHandler = ({
         mimeType: file.type
       }));
 
+      // Capture current values to avoid closure issues
+      const currentUserId = userId;
+      const currentSessionId = sessionId;
+      const currentChatId = chatId;
+      const currentStatusCallback = onStatusUpdate;
+
       // Call API to send message with prompt and files
       const response = await apiService.sendMessage({
         promptId: prompt.promptId,
-        userId,
-        sessionId,
-        chatId,
+        userId: currentUserId,
+        sessionId: currentSessionId,
+        chatId: currentChatId,
         s3Files
       });
 
@@ -121,19 +127,22 @@ const usePromptFileHandler = ({
         setRequestId(response.requestId);
         setIsPolling(true);
 
-        if (onStatusUpdate) {
-          onStatusUpdate('PROCESSING', 10);
+        if (currentStatusCallback) {
+          currentStatusCallback('PROCESSING', 10);
         }
       }
 
-      closeFileDialog();
+      // Close the dialog after successful submission
+      setIsDialogOpen(false);
+      setSelectedFiles([]);
+      setVariables({});
     } catch (err) {
       console.error('Error submitting prompt:', err);
       setError(err instanceof Error ? err : new Error('Failed to submit prompt'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [userId, sessionId, chatId, closeFileDialog, onStatusUpdate]);
+  }, []);
 
   // Poll for status updates
   useEffect(() => {
