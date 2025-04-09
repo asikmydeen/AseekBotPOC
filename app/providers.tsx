@@ -42,8 +42,11 @@ export default function Providers({ children }: ProviderProps) {
             {/* Initialize theme */}
             <ThemeInitializer />
 
-            {/* Render children directly - all state is now managed by Zustand */}
-            {children}
+            {/* Global modal provider */}
+            <ModalProvider>
+                {/* Render children directly - all state is now managed by Zustand */}
+                {children}
+            </ModalProvider>
         </>
     );
 }
