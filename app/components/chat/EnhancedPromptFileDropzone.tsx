@@ -205,98 +205,79 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     >
       {/* File Dropzone Section */}
       <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            {promptTitle ? `Files for ${promptTitle}` : 'Upload Files'}
+          </h3>
+          <div>
+            <label
+              className={`cursor-pointer px-2 py-1 rounded text-xs ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-100 hover:bg-blue-200 text-blue-700'}`}
+            >
+              <input {...getInputProps()} className="hidden" />
+              Upload Local File
+            </label>
+          </div>
+        </div>
+
         {uploadedFiles.length === 0 ? (
           <div
             {...getRootProps()}
-            className={`border-3 border-dashed rounded-2xl p-4 sm:p-6 md:p-8 mb-4 text-center cursor-pointer transition-all duration-300
+            className={`border border-dashed rounded p-3 text-center cursor-pointer transition-all
               ${isDarkMode
                 ? isDragActive
-                  ? 'border-blue-400 bg-blue-900/20 shadow-inner shadow-blue-900/20'
-                  : 'border-gray-600 hover:border-blue-400 shadow-lg'
+                  ? 'border-blue-400 bg-blue-900/20'
+                  : 'border-gray-600 hover:border-blue-400'
                 : isDragActive
-                  ? 'border-blue-400 bg-blue-50 shadow-inner shadow-blue-500/10'
-                  : 'border-gray-300 hover:border-blue-400 shadow-md'
+                  ? 'border-blue-400 bg-blue-50'
+                  : 'border-gray-300 hover:border-blue-400'
               }`}
           >
-            <input {...getInputProps()} />
-            <motion.div
-              initial={{ scale: 1 }}
-              animate={isDragActive ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-              transition={{ duration: 0.5, repeat: isDragActive ? Infinity : 0 }}
-            >
-              <FiUploadCloud className={`mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-2 sm:mb-4 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <p className={`text-base sm:text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                {isDragActive ? 'Drop files here...' : 'Drag and drop files here, or click to select files'}
-              </p>
-              <p className={`text-xs sm:text-sm mt-1 sm:mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG
-              </p>
-            </motion.div>
+            <FiUploadCloud className={`mx-auto h-8 w-8 mb-1 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {isDragActive ? 'Drop files here...' : 'Drag files here or click to browse'}
+            </p>
           </div>
         ) : (
-          <motion.div
-            className={`rounded-2xl p-3 sm:p-4 md:p-6 mb-4 ${isDarkMode ? 'bg-gray-750 shadow-xl' : 'bg-gray-50 shadow-lg'}`}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                {promptTitle && (
-                  <h3 className={`text-sm sm:text-base font-medium mb-1 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                    Prompt: {promptTitle}
-                  </h3>
-                )}
-                <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
-                </h3>
-              </div>
-
-              {isUploading && (
-                <div className="w-full max-w-xs mx-auto h-2 bg-gray-300 rounded-full overflow-hidden mt-2 mb-3">
-                  <motion.div
-                    className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-2 sm:gap-3 mb-3 sm:mb-4 max-h-40 sm:max-h-60 overflow-y-auto pr-1 sm:pr-2">
+          <div className={`rounded p-2 ${isDarkMode ? 'bg-gray-750' : 'bg-gray-50'}`}>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {uploadedFiles.map((file, index) => (
-                <motion.div
+                <div
                   key={`${file.name}-${index}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  className={`flex items-center justify-between p-2 sm:p-3 rounded-xl ${
-                    isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50'
-                  } shadow-md transition-all duration-200`}
+                  className={`flex items-center justify-between p-1.5 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-white'} border border-transparent`}
                 >
-                  <div className="flex items-center">
-                    <FiFile className={`mr-2 sm:mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} size={20} />
-                    <div>
-                      <p className={`text-sm font-medium truncate max-w-[200px] ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <div className="flex items-center overflow-hidden">
+                    <FiFile className={`mr-2 flex-shrink-0 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} size={14} />
+                    <div className="truncate">
+                      <p className={`text-sm truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                         {file.name}
-                      </p>
-                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {formatFileSize(file.size)}
                       </p>
                     </div>
                   </div>
                   <button
-                    onClick={() => removeFile(index)}
-                    className={`p-1.5 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} transition-colors`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFile(index);
+                    }}
+                    className={`p-1 rounded-full ml-2 flex-shrink-0 ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
                     disabled={isUploading}
                   >
-                    <FiX size={18} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+                    <FiX size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
                   </button>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+
+            {isUploading && (
+              <div className="w-full h-1 bg-gray-300 rounded-full overflow-hidden mt-2">
+                <motion.div
+                  className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
