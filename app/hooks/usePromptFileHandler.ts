@@ -149,13 +149,17 @@ const usePromptFileHandler = ({
     let intervalId: NodeJS.Timeout;
 
     if (isPolling && requestId) {
+      // Store current values to avoid closure issues
+      const currentRequestId = requestId;
+      const currentStatusCallback = onStatusUpdate;
+
       intervalId = setInterval(async () => {
         try {
-          const statusResponse = await apiService.checkStatus(requestId);
+          const statusResponse = await apiService.checkStatus(currentRequestId);
 
           if (statusResponse) {
-            if (onStatusUpdate) {
-              onStatusUpdate(statusResponse.status, statusResponse.progress || 0);
+            if (currentStatusCallback) {
+              currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
             }
 
             // Stop polling when complete or error
@@ -164,6 +168,7 @@ const usePromptFileHandler = ({
               statusResponse.status === 'FAILED' ||
               statusResponse.status === 'ERROR'
             ) {
+              // Use function form of setState to avoid stale closures
               setIsPolling(false);
               setRequestId(null);
             }
@@ -180,7 +185,7 @@ const usePromptFileHandler = ({
         clearInterval(intervalId);
       }
     };
-  }, [isPolling, requestId, onStatusUpdate]);
+  }, [isPolling, requestId]);
 
   return {
     isDialogOpen,
