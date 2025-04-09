@@ -58,19 +58,38 @@ const useFileActions = ({
         // Check if we have a stored prompt
         let analysisText = pendingInput || 'Please analyze these documents';
         let storedPrompt = null;
+        let promptVariables: Record<string, string> = {};
 
         try {
+          // Get the prompt from localStorage
           const promptJson = localStorage.getItem('currentPrompt');
           if (promptJson) {
             storedPrompt = JSON.parse(promptJson);
+
+            // Get variables if they exist
+            const variablesJson = localStorage.getItem('promptVariables');
+            if (variablesJson) {
+              promptVariables = JSON.parse(variablesJson);
+              console.log('Using variables for analysis:', promptVariables);
+            }
+
             if (storedPrompt && storedPrompt.content) {
-              // Use the prompt content as the message
-              analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt`;
+              // Process the prompt content with variables
+              let processedContent = storedPrompt.content;
+
+              // Replace variables in the content
+              Object.entries(promptVariables).forEach(([key, value]) => {
+                const regex = new RegExp(`\$\{${key}\}`, 'g');
+                processedContent = processedContent.replace(regex, value);
+              });
+
+              // Use the processed content as the message
+              analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt with the following instructions: ${processedContent}`;
               console.log('Using stored prompt for analysis:', storedPrompt.title);
             }
           }
         } catch (error) {
-          console.error('Error parsing stored prompt:', error);
+          console.error('Error parsing stored prompt or variables:', error);
         }
 
         // Send message with files for analysis
@@ -84,8 +103,9 @@ const useFileActions = ({
           clearDocumentAnalysisPrompt();
         }
 
-        // Clear the stored prompt
+        // Clear the stored prompt and variables
         localStorage.removeItem('currentPrompt');
+        localStorage.removeItem('promptVariables');
 
         // Clear uploaded files and hide dropzone after a short delay
         setTimeout(() => {
