@@ -157,8 +157,21 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
     }
   };
 
+  console.log('Rendering FileSelectionDialog, isOpen:', isOpen);
+
+  // Add a div that will always be visible for debugging
+  if (isOpen) {
+    console.log('Dialog should be visible now');
+  }
+
   return (
-    <Transition appear show={isOpen} as={Fragment}>
+    <>
+      {isOpen && (
+        <div className="fixed top-0 left-0 bg-red-500 text-white p-2 z-[10000]">
+          Dialog should be visible (debug element)
+        </div>
+      )}
+      <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-[9999]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
