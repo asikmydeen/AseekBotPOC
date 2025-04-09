@@ -220,8 +220,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         fileKey: file.fileKey,
         size: file.fileSize,
         type: file.fileType,
-        url: file.presignedUrl || file.s3Url,
-        s3Url: file.s3Url
+        // Use the clean URL without query parameters
+        url: file.s3Url,
+        s3Url: file.s3Url,
+        // Store the original URL for reference if needed
+        originalS3Url: file.originalS3Url
       };
 
       setSelectedFiles(prev => [...prev, newFile]);
