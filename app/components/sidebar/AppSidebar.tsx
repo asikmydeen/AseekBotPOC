@@ -44,6 +44,10 @@ export interface AppSidebarProps {
   onToggle?: (isOpen: boolean) => void;
   onFileAddToChat?: (file: UploadedFile) => void;
   onFileDelete?: (fileKey: string) => void;
+  sessionId?: string;
+  chatId?: string;
+  userId?: string;
+  onStatusUpdate?: (status: string, progress: number) => void;
 }
 
 export default function AppSidebar({
