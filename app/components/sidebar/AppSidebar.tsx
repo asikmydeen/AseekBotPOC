@@ -27,7 +27,7 @@ import {
   SidebarOverlay
 } from './index';
 
-interface UploadedFile {
+export interface UploadedFile {
   fileId: string;
   fileName: string;
   fileKey: string;
@@ -37,7 +37,7 @@ interface UploadedFile {
   presignedUrl?: string;
 }
 
-interface AppSidebarProps {
+export interface AppSidebarProps {
   uploadedFiles: UploadedFile[];
   onFileClick: (fileUrl: string) => void;
   onPromptClick: (prompt: string) => void;
@@ -253,12 +253,12 @@ export default function AppSidebar({
 
   return (
     <>
-      <SidebarOverlay 
-        isVisible={isOpen && isMobile} 
-        styles={styles} 
-        onClose={toggleSidebar} 
+      <SidebarOverlay
+        isVisible={isOpen && isMobile}
+        styles={styles}
+        onClose={toggleSidebar}
       />
-      
+
       <motion.div
         className={styles.container}
         initial={false}
@@ -269,20 +269,20 @@ export default function AppSidebar({
         style={sidebarCSSVariables}
       >
         {/* Sidebar Header */}
-        <SidebarHeader 
-          isOpen={isOpen} 
-          styles={styles} 
-          onNewChat={handleNewChat} 
-          onToggle={toggleSidebar} 
+        <SidebarHeader
+          isOpen={isOpen}
+          styles={styles}
+          onNewChat={handleNewChat}
+          onToggle={toggleSidebar}
         />
 
         {/* Sidebar Tabs */}
         {isOpen && (
-          <SidebarTabs 
-            activeTab={activeTab} 
-            styles={styles} 
-            onTabChange={handleTabChange} 
-            isDarkMode={isDarkMode} 
+          <SidebarTabs
+            activeTab={activeTab}
+            styles={styles}
+            onTabChange={handleTabChange}
+            isDarkMode={isDarkMode}
           />
         )}
 
@@ -293,7 +293,7 @@ export default function AppSidebar({
           )}
 
           {isOpen && activeTab === 'files' && (
-            <FilesList 
+            <FilesList
               uploadedFiles={uploadedFiles}
               styles={styles}
               onAddToChat={handleAddToChatClick}
@@ -304,7 +304,7 @@ export default function AppSidebar({
           )}
 
           {isOpen && activeTab === 'prompts' && (
-            <PromptSection 
+            <PromptSection
               styles={styles}
               isDarkMode={isDarkMode}
               prompts={prompts}
@@ -322,7 +322,7 @@ export default function AppSidebar({
           )}
 
           {isOpen && activeTab === 'settings' && (
-            <SettingsSection 
+            <SettingsSection
               styles={styles}
               isDarkMode={isDarkMode}
               onToggleTheme={toggleTheme}
