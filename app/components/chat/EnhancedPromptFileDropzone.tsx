@@ -120,7 +120,11 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     }
   };
 
-  const handleFileSelect = (file: any) => {
+  const handleFileSelect = (file: any, event: React.MouseEvent) => {
+    // Prevent default behavior to avoid page refresh
+    event.preventDefault();
+    event.stopPropagation();
+
     // Check if file is already in uploadedFiles
     const isAlreadySelected = uploadedFiles.some(f =>
       (f.fileId && f.fileId === file.fileId) ||
@@ -157,24 +161,43 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         const newVariables = { ...variables };
         let variablesUpdated = false;
 
-        // Check for common variable names that might match the file
-        requiredVariables.forEach(variable => {
-          const lowerVar = variable.toLowerCase();
-          const lowerFileName = file.fileName.toLowerCase();
+        // Determine which variable this file should be assigned to
+        const lowerFileName = file.fileName.toLowerCase();
 
-          // If the variable is empty and the file name contains the variable name
-          if (!newVariables[variable] && (
-            lowerFileName.includes(lowerVar) ||
-            lowerFileName.includes(lowerVar.replace('_', '')) ||
-            lowerVar.includes('file') ||
-            lowerVar.includes('document') ||
-            lowerVar.includes('bid') && lowerFileName.includes('bid') ||
-            lowerVar.includes('sow') && lowerFileName.includes('sow')
-          )) {
-            newVariables[variable] = file.fileName;
+        // Check for SOW document
+        if (lowerFileName.includes('sow')) {
+          const sowVar = requiredVariables.find(v => v.toLowerCase().includes('sow'));
+          if (sowVar) {
+            newVariables[sowVar] = file.fileName;
             variablesUpdated = true;
           }
-        });
+        }
+        // Check for BID documents
+        else if (lowerFileName.includes('bid')) {
+          // Find bid variables
+          const bidVars = requiredVariables.filter(v => v.toLowerCase().includes('bid'));
+
+          // If we have multiple bid variables, try to assign to the first empty one
+          if (bidVars.length > 0) {
+            for (const bidVar of bidVars) {
+              if (!newVariables[bidVar] || newVariables[bidVar] === '') {
+                newVariables[bidVar] = file.fileName;
+                variablesUpdated = true;
+                break;
+              }
+            }
+          }
+        }
+        // For other documents, assign to any empty variable
+        else {
+          for (const variable of requiredVariables) {
+            if (!newVariables[variable] || newVariables[variable] === '') {
+              newVariables[variable] = file.fileName;
+              variablesUpdated = true;
+              break;
+            }
+          }
+        }
 
         if (variablesUpdated) {
           console.log('Updated variables based on file name:', newVariables);
@@ -183,19 +206,36 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         }
       }
 
-      // Add the file directly to the uploaded files
-      // This is more reliable than using custom events
-      const fileToAdd = {
-        ...newFile,
-        // Add these properties for compatibility
-        fileName: file.fileName,
-        fileKey: file.fileKey,
-        s3Url: file.s3Url
-      };
+      // Add the file directly using the provided addExternalFile function
+      try {
+        // Create a complete file object with all necessary properties
+        const fileToAdd = {
+          name: file.fileName,
+          fileName: file.fileName,
+          size: file.fileSize || 0,
+          fileSize: file.fileSize || 0,
+          type: file.fileType || 'application/octet-stream',
+          fileType: file.fileType || 'application/octet-stream',
+          url: file.s3Url || file.presignedUrl || '',
+          s3Url: file.s3Url || file.presignedUrl || '',
+          fileId: file.fileId || '',
+          fileKey: file.fileKey || '',
+          status: 'success',
+          progress: 100
+        };
 
-      // Call the parent's addExternalFile function directly
-      const event = new CustomEvent('addExternalFile', { detail: fileToAdd });
-      window.dispatchEvent(event);
+        // Use a direct approach instead of events
+        // First try to use the parent component's function
+        if (typeof window.addExternalFileToUpload === 'function') {
+          window.addExternalFileToUpload(fileToAdd);
+        } else {
+          // Fallback to the event approach
+          const event = new CustomEvent('addExternalFile', { detail: fileToAdd });
+          window.dispatchEvent(event);
+        }
+      } catch (error) {
+        console.error('Error adding file:', error);
+      }
     }
   };
 
