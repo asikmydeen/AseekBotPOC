@@ -37,7 +37,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
     // Custom link renderer
     renderer.link = ({ href, title, tokens }: marked.Tokens.Link) => {
-      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
+      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${tokens[0].text}</span>`;
     };
 
     // Custom code renderer
