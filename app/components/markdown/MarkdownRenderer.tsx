@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { marked } from 'marked';
+import { marked, Tokens } from 'marked';
 import DOMPurify from 'dompurify';
 import MarkdownImage from './MarkdownImage';
 import MarkdownLink from './MarkdownLink';
@@ -30,14 +30,14 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const renderer = new marked.Renderer();
 
     // Custom image renderer
-    renderer.image = ({ href, title, text }: { href: string; title: string | null; text: string }) => {
+    renderer.image = (href: string, title: string | null, text: string) => {
       // We'll replace this with a placeholder that we can identify later
       return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
     };
 
     // Custom link renderer
-    renderer.link = ({ href, title, tokens }: marked.Tokens.Link) => {
-      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${tokens[0].text}</span>`;
+    renderer.link = (href: string, title: string | null, text: string) => {
+      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
     };
 
     // Custom code renderer
