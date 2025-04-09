@@ -114,16 +114,24 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    console.log('Submitting files and variables');
+    console.log('Selected files:', selectedFiles);
+    console.log('Variables:', variables);
+
     // Validate required files
     if (requiredFileCount > 0 && selectedFiles.length < requiredFileCount) {
-      setError(`Please select at least ${requiredFileCount} file(s).`);
+      const errorMsg = `Please select at least ${requiredFileCount} file(s).`;
+      console.error(errorMsg);
+      setError(errorMsg);
       return;
     }
 
     // Validate required variables
     const missingVariables = requiredVariables.filter(variable => !variables[variable]);
     if (missingVariables.length > 0) {
-      setError(`Please fill in all required variables: ${missingVariables.join(', ')}`);
+      const errorMsg = `Please fill in all required variables: ${missingVariables.join(', ')}`;
+      console.error(errorMsg);
+      setError(errorMsg);
       return;
     }
 
@@ -131,11 +139,21 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
     setError(null);
 
     try {
-      onSubmit(selectedFiles, variables);
+      // Use setTimeout to break potential render cycles
+      setTimeout(() => {
+        try {
+          onSubmit(selectedFiles, variables);
+          console.log('Submit callback executed successfully');
+        } catch (error) {
+          console.error('Error in submit callback:', error);
+          setError('Failed to submit files. Please try again.');
+        } finally {
+          setIsSubmitting(false);
+        }
+      }, 0);
     } catch (error) {
       console.error('Error submitting files:', error);
       setError('Failed to submit files. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
