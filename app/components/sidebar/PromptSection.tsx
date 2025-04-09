@@ -28,7 +28,11 @@ const PromptSection: React.FC<PromptSectionProps> = ({
   onPromptSelect,
   onCreatePrompt,
   onEditPrompt,
-  onDeletePrompt
+  onDeletePrompt,
+  sessionId,
+  chatId,
+  userId,
+  onStatusUpdate
 }) => {
   return (
     <div>
