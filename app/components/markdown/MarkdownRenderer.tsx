@@ -51,10 +51,14 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
     };
 
-    renderer.link = function({ href, title, tokens }: { href: string; title?: string | null; tokens: Array<{ text: string }> }): string {
-      // Extract the text from tokens if available. Fallback to empty string if not.
-      const text = tokens && tokens.length > 0 ? tokens[0].text : '';
-      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
+    renderer.link = function({ href, title, tokens }: { href: string; title?: string | null; tokens: any[] }): string {
+      // Safely extract text from tokens that contain a 'text' property.
+      // If multiple tokens have text, join them with a space.
+      const linkText = tokens
+        .filter(token => typeof token === 'object' && token !== null && 'text' in token && typeof token.text === 'string')
+        .map(token => token.text)
+        .join(' ') || '';
+      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${linkText}</span>`;
     };
 
     renderer.code = function({ text, lang, escaped }: { text: string; lang?: string; escaped?: boolean }): string {
