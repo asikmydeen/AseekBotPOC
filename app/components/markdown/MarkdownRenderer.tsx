@@ -13,6 +13,25 @@ interface MarkdownRendererProps {
   onImageClick: (imageUrl: string) => void;
 }
 
+interface MarkedImage {
+  href: string;
+  title: string | null;
+  text: string;
+}
+
+interface MarkedLink {
+  href: string;
+  title: string | null;
+  tokens: marked.Token[];
+  text: string;
+}
+
+interface MarkedCode {
+  text: string;
+  lang: string | undefined;
+  escaped: boolean;
+}
+
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   isDarkMode,
@@ -30,35 +49,40 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const renderer = new marked.Renderer();
 
     // Override renderer methods
-    renderer.image = (href: string, title: string | null, text: string) => {
-      return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
+    renderer.image = (params: MarkedImage) => {
+      return `<div class="markdown-image" data-src="${params.href}" data-alt="${params.text || ''}" data-title="${params.title || ''}"></div>`;
     };
 
-    renderer.link = (href: string, title: string | null, text: string) => {
-      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
+    renderer.link = (params: MarkedLink) => {
+      return `<span class="markdown-link" data-href="${params.href}" data-title="${params.title || ''}">${params.text}</span>`;
     };
 
-    renderer.code = (code: string, language?: string) => {
-      return `<div class="markdown-code" data-code="${encodeURIComponent(code)}" data-language="${language || ''}"></div>`;
+    renderer.code = (params: MarkedCode) => {
+      return `<div class="markdown-code" data-code="${encodeURIComponent(params.text)}" data-language="${params.lang || ''}"></div>`;
     };
 
     try {
       // Set marked options
-      marked.setOptions({
+      const options: marked.MarkedOptions = {
         renderer: renderer,
         gfm: true,           // GitHub Flavored Markdown
         breaks: true,        // Convert \n to <br>
-        mangle: false,       // Don't mangle header IDs
         pedantic: false,     // Don't be pedantic
         smartLists: true,    // Use smarter list behavior
         smartypants: true    // Use smart typography
-      });
+      };
 
       // Parse markdown content
-      const parsed = marked.parse(content);
+      const parsed = marked.parse(content, options);
 
-      // Sanitize the HTML to prevent XSS attacks
-      setParsedContent(DOMPurify.sanitize(parsed));
+      // Handle the case where parsed might be a Promise
+      if (parsed instanceof Promise) {
+        parsed.then(result => {
+          setParsedContent(DOMPurify.sanitize(result));
+        });
+      } else {
+        setParsedContent(DOMPurify.sanitize(parsed));
+      }
     } catch (error) {
       console.error('Error parsing markdown:', error);
       setParsedContent(`<p>Error rendering content</p>`);
