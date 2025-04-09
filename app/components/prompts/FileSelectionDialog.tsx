@@ -337,6 +337,7 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
+    </>
   );
 };
 
