@@ -312,15 +312,15 @@ export default function AppSidebar({
                 style={sidebarCSSVariables}
             >
                 {/* Sidebar Header */}
-                <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'dark-border' : 'border-gray-200'}`}>
+                <div className={styles.header.container}>
                     {isOpen && (
                         <div className="flex items-center justify-between w-full">
-                            <h2 className="text-xl font-bold flex items-center">
+                            <h2 className={styles.header.title}>
                                 <span className="mr-2">AseekBot</span>
                             </h2>
                             <button
                                 onClick={handleNewChat}
-                                className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-800 dark-text' : 'hover:bg-gray-100 text-gray-800'}`}
+                                className={styles.header.newChatButton}
                                 aria-label="New Chat"
                                 title="New Chat"
                             >
@@ -330,7 +330,7 @@ export default function AppSidebar({
                     )}
                     <button
                         onClick={toggleSidebar}
-                        className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                        className={styles.header.toggleButton}
                         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
                     >
                         {isOpen ? <MdChevronLeft size={24} /> : <MdChevronRight size={24} />}
