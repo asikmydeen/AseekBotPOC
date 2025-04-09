@@ -17,6 +17,10 @@ interface PromptsListProps {
     onCreatePrompt?: () => void;
     showActions?: boolean;
     maxHeight?: string;
+    sessionId?: string;
+    chatId?: string;
+    userId?: string;
+    onStatusUpdate?: (status: string, progress: number) => void;
 }
 
 const PromptsList: React.FC<PromptsListProps> = ({
