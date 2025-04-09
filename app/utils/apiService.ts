@@ -313,6 +313,8 @@ export const apiService = {
    */
   getUserFiles: async () => {
     try {
+      console.log('Fetching user files for user:', TEST_USER_ID);
+
       // Make the request directly with fetch
       const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
         method: 'POST',
@@ -326,33 +328,45 @@ export const apiService = {
       }
 
       const responseText = await response.text();
+      console.log('getUserFiles raw response:', responseText.substring(0, 100) + '...');
 
       try {
         if (!responseText.trim()) {
           console.warn('getUserFiles: Empty response received');
-          return {
-            data: [],
-            url: '',
-            error: 'Empty response received.'
-          };
+          return [];
         }
 
         const parsedResponse = JSON.parse(responseText);
-        const filesData = Array.isArray(parsedResponse.data)
-          ? parsedResponse.data
-          : (parsedResponse.data ? [parsedResponse.data] : []);
+        console.log('getUserFiles parsed response type:', typeof parsedResponse);
 
-        return {
-          ...parsedResponse,
-          data: filesData
-        };
+        // Handle different response formats
+        if (Array.isArray(parsedResponse)) {
+          console.log(`getUserFiles: Found ${parsedResponse.length} files in array format`);
+          return parsedResponse;
+        }
+        else if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
+          console.log(`getUserFiles: Found ${parsedResponse.data.length} files in data.array format`);
+          return parsedResponse.data;
+        }
+        else if (parsedResponse.files && Array.isArray(parsedResponse.files)) {
+          console.log(`getUserFiles: Found ${parsedResponse.files.length} files in files.array format`);
+          return parsedResponse.files;
+        }
+        else if (parsedResponse.data) {
+          console.log('getUserFiles: Found data object, converting to array');
+          return [parsedResponse.data];
+        }
+        else {
+          console.log('getUserFiles: No recognizable file data format, returning empty array');
+          return [];
+        }
       } catch (parseError) {
         console.error('Error parsing getUserFiles response:', parseError);
-        throw new Error('Failed to parse response from server');
+        return [];
       }
     } catch (error) {
       console.error('Error getting user files:', error);
-      throw error;
+      return [];
     }
   },
 
