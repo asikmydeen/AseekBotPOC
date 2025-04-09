@@ -130,12 +130,14 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
 
     // When showing file upload section
     if (showFileDropzone) {
-      // Check if we have a stored prompt
+      // Check if we have a stored prompt and if document analysis prompt is active
+      // Only show the enhanced prompt file dropzone when both conditions are true
       const hasStoredPrompt = localStorage.getItem('currentPrompt') !== null;
+      const isPromptActive = showDocumentAnalysisPrompt === true;
 
       return (
         <div className="w-full max-w-full overflow-x-hidden">
-          {hasStoredPrompt ? (
+          {hasStoredPrompt && isPromptActive ? (
             <EnhancedPromptFileDropzone
               getRootProps={getRootProps}
               getInputProps={getInputProps}
