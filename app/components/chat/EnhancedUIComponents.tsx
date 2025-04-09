@@ -246,9 +246,16 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-              {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
-            </h3>
+            <div>
+              {promptTitle && (
+                <h3 className={`text-sm sm:text-base font-medium mb-1 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                  Prompt: {promptTitle}
+                </h3>
+              )}
+              <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
+              </h3>
+            </div>
 
             {isUploading && (
               <div className="w-full max-w-xs mx-auto h-2 bg-gray-300 rounded-full overflow-hidden mt-2 mb-3">
