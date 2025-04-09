@@ -11,8 +11,8 @@ interface MessageAvatarProps {
   styles: any;
 }
 
-const MessageAvatar: React.FC<MessageAvatarProps> = ({ 
-  sender, 
+const MessageAvatar: React.FC<MessageAvatarProps> = ({
+  sender,
   isDarkMode,
   styles
 }) => {
@@ -28,7 +28,7 @@ const MessageAvatar: React.FC<MessageAvatarProps> = ({
         className={styles.avatar.inner}
       >
         {sender === 'user' ? (
-          <UserThumbnail className={styles.avatar.icon} />
+          <UserThumbnail className={styles.avatar.icon} userId={''} size={0} />
         ) : (
           <FaRobot className={styles.avatar.icon} />
         )}
