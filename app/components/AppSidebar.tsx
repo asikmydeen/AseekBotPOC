@@ -303,21 +303,13 @@ export default function AppSidebar({
         <>
             {sidebarOverlay}
             <motion.div
-                className={`h-screen ${isDarkMode ? 'dark-bg dark-text' : 'light-bg text-gray-800'} border-r ${isDarkMode ? 'dark-border' : 'border-gray-200'} overflow-hidden fixed left-0 top-0 z-50`}
+                className={styles.container}
                 initial={false}
                 animate={isOpen ? 'open' : 'closed'}
-                variants={sidebarVariants}
-                transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 40,
-                    backgroundColor: { duration: 0 }
-                }}
-                style={{
-                    '--sidebar-width-open': 'min(100vw, 300px)',
-                    '--sidebar-width-closed': '60px',
-                    '--light-bg': '#ffffff'
-                } as React.CSSProperties}
+                variants={sidebarAnimationVariants}
+                custom={isDarkMode}
+                transition={sidebarTransition}
+                style={sidebarCSSVariables}
             >
                 {/* Sidebar Header */}
                 <div className={`h-16 flex items-center justify-between px-4 border-b ${isDarkMode ? 'dark-border' : 'border-gray-200'}`}>
