@@ -178,6 +178,22 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
   progress,
   handleFileAction
 }) => {
+  const [promptTitle, setPromptTitle] = useState<string>('');
+
+  // Get the current prompt from localStorage if available
+  useEffect(() => {
+    try {
+      const storedPrompt = localStorage.getItem('currentPrompt');
+      if (storedPrompt) {
+        const prompt = JSON.parse(storedPrompt);
+        if (prompt && prompt.title) {
+          setPromptTitle(prompt.title);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing stored prompt:', error);
+    }
+  }, []);
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
