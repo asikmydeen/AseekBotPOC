@@ -202,7 +202,7 @@ const MessageList: React.FC<MessageListProps> = ({
               <Message
                 message={message}
                 isDarkMode={isDarkMode}
-                onMultimediaClick={openMultimedia}
+                onMultimediaClick={(multimedia) => openMultimedia({ type: 'video', data: multimedia })}
                 onReact={(messageId, reaction) => handleReaction(index, reaction)}
                 onPin={(messageId, isPinned) => handlePinMessage(index)}
                 showCitations={true}
