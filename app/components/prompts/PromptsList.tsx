@@ -6,7 +6,7 @@ import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
 import { usePrompts } from '../../hooks/usePrompts';
 import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
-import EnhancedFileDialog from './EnhancedFileDialog';
+// Dialog is now handled by the ModalContext
 import usePromptFileHandler from '../../hooks/usePromptFileHandler';
 
 interface PromptsListProps {
