@@ -217,6 +217,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                 prompt={prompt}
                                 isDarkMode={isDarkMode}
                                 onClick={() => {
+                                    console.log('Prompt clicked:', prompt.title);
                                     // Check if the prompt requires files
                                     if (prompt.content && (
                                         prompt.content.includes('${') || // Has variables
@@ -224,9 +225,11 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                         prompt.promptId.includes('analysis') || // Analysis prompt
                                         prompt.promptId.includes('comparison') // Comparison prompt
                                     )) {
+                                        console.log('Prompt requires files or variables, opening dialog');
                                         // Open file selection dialog
                                         openFileDialog(prompt);
                                     } else {
+                                        console.log('Regular prompt, calling click handler');
                                         // Regular prompt, just call the click handler
                                         onPromptClick && onPromptClick(prompt);
                                     }
