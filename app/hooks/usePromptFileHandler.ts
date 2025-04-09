@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiService } from '../utils/apiService';
 import { UploadedFile, Prompt } from '../types/shared';
+import { useModal } from '../contexts/ModalContext';
 
 interface UsePromptFileHandlerProps {
   onStatusUpdate?: (status: string, progress: number) => void;
