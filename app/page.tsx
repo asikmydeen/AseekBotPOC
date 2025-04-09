@@ -92,8 +92,28 @@ function ChatApp() {
   }, []);
 
   // When a prompt is clicked, set it as a trigger message
-  const handlePromptClick = useCallback((prompt: string) => {
-    handleTriggerMessage(prompt);
+  const handlePromptClick = useCallback((prompt: any) => {
+    console.log('Prompt clicked:', prompt.title);
+
+    // Check if the prompt requires files or variables
+    const requiresFiles = prompt.content && (
+      prompt.content.includes('${') || // Has variables
+      prompt.content.includes('files') || // Mentions files
+      prompt.promptId.includes('analysis') || // Analysis prompt
+      prompt.promptId.includes('comparison') // Comparison prompt
+    );
+
+    if (requiresFiles) {
+      console.log('Prompt requires files or variables, showing file dropzone');
+      // Store the prompt for later use
+      localStorage.setItem('currentPrompt', JSON.stringify(prompt));
+      // Show document analysis prompt to trigger file dropzone
+      setShowDocumentAnalysisPrompt(true);
+    } else {
+      console.log('Regular prompt, sending directly');
+      // Set the trigger message to send the prompt to the chat
+      handleTriggerMessage(prompt.content);
+    }
   }, []);
 
   // This function will be passed to the ChatInterface to sync messages
