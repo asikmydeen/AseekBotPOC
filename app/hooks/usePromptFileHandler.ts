@@ -192,12 +192,28 @@ const usePromptFileHandler = ({
       });
 
       if (response && response.requestId) {
+        console.log('Prompt API call successful, got requestId:', response.requestId);
         setRequestId(response.requestId);
         setIsPolling(true);
 
         if (currentStatusCallback) {
           // Update status to show processing in the chat interface
+          // This will trigger the typing indicator and progress bar
           currentStatusCallback('PROCESSING', 10);
+
+          // Store the request ID in localStorage to ensure it's tracked across page refreshes
+          try {
+            let pending: Record<string, { status: string }> = {};
+            const stored = localStorage.getItem('pendingRequests');
+            if (stored) {
+              pending = JSON.parse(stored);
+            }
+            pending[response.requestId] = { status: 'PROCESSING' };
+            localStorage.setItem('pendingRequests', JSON.stringify(pending));
+            console.log('Stored request ID in localStorage:', response.requestId);
+          } catch (e) {
+            console.error('Error storing request ID in localStorage:', e);
+          }
         }
       }
 
