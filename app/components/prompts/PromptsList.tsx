@@ -255,6 +255,17 @@ const PromptsList: React.FC<PromptsListProps> = ({
                     </button>
                 </div>
             )}
+
+            {/* File Selection Dialog */}
+            <FileSelectionDialog
+                isOpen={isDialogOpen}
+                onClose={closeFileDialog}
+                onSubmit={handleFileSelection}
+                promptId={selectedPrompt?.promptId || ''}
+                promptTitle={selectedPrompt?.title || ''}
+                requiredFileCount={requiredFileCount}
+                requiredVariables={requiredVariables}
+            />
         </div>
     );
 };
