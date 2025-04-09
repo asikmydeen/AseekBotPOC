@@ -40,7 +40,7 @@ export interface UploadedFile {
 export interface AppSidebarProps {
   uploadedFiles: UploadedFile[];
   onFileClick: (fileUrl: string) => void;
-  onPromptClick: (prompt: string) => void;
+  onPromptClick: (prompt: any) => void;
   onToggle?: (isOpen: boolean) => void;
   onFileAddToChat?: (file: UploadedFile) => void;
   onFileDelete?: (fileKey: string) => void;
