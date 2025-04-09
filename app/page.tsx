@@ -194,8 +194,14 @@ function ChatApp() {
   const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
     console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
-    // Only update the UI with the processing status
-    // We don't send any messages from here anymore
+    // If this is a prompt message and we're just starting, we don't need to do anything
+    // The message will be sent directly from the API call
+    if (isPromptMessage && status === 'STARTED') {
+      console.log('Prompt message is being handled directly by the API call');
+      return;
+    }
+
+    // Update the UI with the processing status
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
