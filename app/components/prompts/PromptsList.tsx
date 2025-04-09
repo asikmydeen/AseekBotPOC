@@ -260,7 +260,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
             )}
 
             {/* File Selection Dialog */}
-            <FileSelectionDialog
+            <SimpleFileDialog
                 isOpen={isDialogOpen}
                 onClose={closeFileDialog}
                 onSubmit={handleFileSelection}
