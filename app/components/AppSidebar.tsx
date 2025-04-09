@@ -1,11 +1,9 @@
 'use client';
 
-// This is a compatibility file that re-exports the new AppSidebar component
-// from its new location to maintain backward compatibility with existing imports.
+// This is a temporary compatibility file that will be removed once all imports are updated
+// It simply re-exports the AppSidebar component from its new location
 
 import AppSidebar from './sidebar/AppSidebar';
-
-// Re-export all the types and interfaces from the new component
 export type { UploadedFile, AppSidebarProps } from './sidebar/AppSidebar';
 
 export default AppSidebar;
