@@ -146,7 +146,7 @@ function Message({
           animate="animate"
           whileHover="hover"
           className={styles.container.relative}
-          style={{ backgroundColor: isDarkMode ? (message.sender === 'user' ? '#1F2937' : '#172554') : (message.sender === 'user' ? '#F3F4F6' : '#EFF6FF') }}
+          style={styles.container.backgroundColor}
         >
           {/* Message Text Content */}
           <MessageContent
