@@ -323,14 +323,38 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               <h3 className="text-lg font-medium">
                 Select Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
               </h3>
-              <button
-                onClick={fetchS3Files}
-                className={`p-2 rounded-full transition-colors ${
-                  isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
-                }`}
-              >
-                <FiUpload size={18} />
-              </button>
+              <div className="flex space-x-2">
+                {/* Upload new file button */}
+                <button
+                  onClick={triggerFileUpload}
+                  className={`p-2 rounded-full transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-green-400' : 'hover:bg-gray-200 text-green-600'
+                  }`}
+                  title="Upload new file"
+                >
+                  <FiPlus size={18} />
+                </button>
+
+                {/* Refresh files button */}
+                <button
+                  onClick={fetchS3Files}
+                  className={`p-2 rounded-full transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
+                  }`}
+                  title="Refresh file list"
+                >
+                  <FiUpload size={18} />
+                </button>
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
             </div>
 
             {/* Search bar */}
