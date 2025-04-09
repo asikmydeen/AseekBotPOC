@@ -3,15 +3,7 @@
 import React from 'react';
 import { MdLightbulb, MdAdd } from 'react-icons/md';
 import PromptsList from '../prompts/PromptsList';
-
-interface Prompt {
-  promptId: string;
-  title: string;
-  content: string;
-  category?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
+import { Prompt } from '../../types/shared';
 
 interface PromptSectionProps {
   styles: any;
