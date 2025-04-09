@@ -78,6 +78,9 @@ export default function AppSidebar({
     const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
     const [isMobile, setIsMobile] = useState(false);
 
+    // Get all styles for the sidebar
+    const styles = getSidebarStyles(isDarkMode);
+
     // Prompt management hooks
     const {
         prompts,
