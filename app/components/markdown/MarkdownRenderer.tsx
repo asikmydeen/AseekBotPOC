@@ -3,9 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import MarkdownImage from './MarkdownImage';
-import MarkdownLink from './MarkdownLink';
-import MarkdownCode from './MarkdownCode';
 
 interface MarkdownRendererProps {
   content: string;
@@ -13,22 +10,22 @@ interface MarkdownRendererProps {
   onImageClick: (imageUrl: string) => void;
 }
 
+// Use the correct types from marked
 interface MarkedImage {
   href: string;
-  title: string | null;
+  title: string | null | undefined;
   text: string;
 }
 
 interface MarkedLink {
   href: string;
-  title: string | null;
-  tokens: marked.Token[];
+  title: string | null | undefined;
   text: string;
 }
 
 interface MarkedCode {
   text: string;
-  lang: string | undefined;
+  lang?: string;
   escaped: boolean;
 }
 
@@ -49,21 +46,21 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const renderer = new marked.Renderer();
 
     // Override renderer methods
-    renderer.image = (params: MarkedImage) => {
-      return `<div class="markdown-image" data-src="${params.href}" data-alt="${params.text || ''}" data-title="${params.title || ''}"></div>`;
+    renderer.image = function(href: string, title: string | null | undefined, text: string) {
+      return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
     };
 
-    renderer.link = (params: MarkedLink) => {
-      return `<span class="markdown-link" data-href="${params.href}" data-title="${params.title || ''}">${params.text}</span>`;
+    renderer.link = function(href: string, title: string | null | undefined, text: string) {
+      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
     };
 
-    renderer.code = (params: MarkedCode) => {
-      return `<div class="markdown-code" data-code="${encodeURIComponent(params.text)}" data-language="${params.lang || ''}"></div>`;
+    renderer.code = function(text: string, lang?: string, escaped?: boolean) {
+      return `<div class="markdown-code" data-code="${encodeURIComponent(text)}" data-language="${lang || ''}"></div>`;
     };
 
     try {
       // Set marked options
-      const options: marked.MarkedOptions = {
+      const options = {
         renderer: renderer,
         gfm: true,           // GitHub Flavored Markdown
         breaks: true,        // Convert \n to <br>
