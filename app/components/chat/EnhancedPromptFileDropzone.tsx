@@ -62,6 +62,10 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
             console.log('Extracted variables:', uniqueVariables);
           }
         }
+      } else {
+        // If no prompt is found, clear the localStorage to prevent persistence
+        localStorage.removeItem('currentPrompt');
+        localStorage.removeItem('promptVariables');
       }
     } catch (error) {
       console.error('Error parsing stored prompt:', error);
@@ -144,6 +148,36 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         status: 'success',
         progress: 100
       };
+
+      // Try to populate variables based on the file name
+      if (requiredVariables.length > 0) {
+        const newVariables = { ...variables };
+        let variablesUpdated = false;
+
+        // Check for common variable names that might match the file
+        requiredVariables.forEach(variable => {
+          const lowerVar = variable.toLowerCase();
+          const lowerFileName = file.fileName.toLowerCase();
+
+          // If the variable is empty and the file name contains the variable name
+          if (!newVariables[variable] && (
+            lowerFileName.includes(lowerVar) ||
+            lowerFileName.includes(lowerVar.replace('_', '')) ||
+            lowerVar.includes('file') ||
+            lowerVar.includes('document') ||
+            lowerVar.includes('bid') && lowerFileName.includes('bid') ||
+            lowerVar.includes('sow') && lowerFileName.includes('sow')
+          )) {
+            newVariables[variable] = file.fileName;
+            variablesUpdated = true;
+          }
+        });
+
+        if (variablesUpdated) {
+          setVariables(newVariables);
+          localStorage.setItem('promptVariables', JSON.stringify(newVariables));
+        }
+      }
 
       // Store the file in a custom event to be picked up by the parent
       const event = new CustomEvent('addExternalFile', { detail: newFile });
