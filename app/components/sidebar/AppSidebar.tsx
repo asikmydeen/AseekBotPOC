@@ -326,6 +326,10 @@ export default function AppSidebar({
                   openDeleteModal(promptToDelete);
                 }
               }}
+              sessionId={sessionId}
+              chatId={chatId}
+              userId={userId}
+              onStatusUpdate={onStatusUpdate}
             />
           )}
 
