@@ -420,48 +420,42 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+      <div className="flex flex-wrap gap-2 justify-end">
+        <button
+          onClick={() => handleFileAction('cancel')}
+          className={`px-3 py-1.5 rounded text-xs font-medium ${
+            isDarkMode
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+          } transition-colors`}
+          disabled={isUploading}
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => handleFileAction('send')}
+          className={`px-3 py-1.5 rounded text-xs font-medium ${
+            isDarkMode
+              ? 'bg-blue-600 hover:bg-blue-500 text-white'
+              : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+          } transition-colors`}
+          disabled={isUploading}
+        >
+          Send as Message
+        </button>
+
+        <button
           onClick={() => handleSubmit()}
-          className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
+          className={`px-3 py-1.5 rounded text-xs font-medium ${
             isDarkMode
               ? promptTitle ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
               : promptTitle ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
           } transition-colors`}
           disabled={isUploading}
         >
-          {promptTitle ? `Analyze with ${promptTitle}` : 'Analyze Files'}
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => handleFileAction('send')}
-          className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
-            isDarkMode
-              ? 'bg-green-600 hover:bg-green-500 text-white'
-              : 'bg-green-500 hover:bg-green-600 text-white'
-          } transition-colors`}
-          disabled={isUploading}
-        >
-          Send with Message
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => handleFileAction('cancel')}
-          className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
-            isDarkMode
-              ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
-              : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-          } transition-colors`}
-          disabled={isUploading}
-        >
-          Cancel
-        </motion.button>
+          {promptTitle ? `Analyze with Prompt` : 'Analyze Files'}
+        </button>
       </div>
     </motion.div>
   );
