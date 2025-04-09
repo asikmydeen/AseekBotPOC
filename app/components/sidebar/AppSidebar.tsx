@@ -56,7 +56,11 @@ export default function AppSidebar({
   onPromptClick,
   onToggle,
   onFileAddToChat,
-  onFileDelete
+  onFileDelete,
+  sessionId,
+  chatId,
+  userId,
+  onStatusUpdate
 }: AppSidebarProps) {
   const { isDarkMode, toggleTheme } = useTheme();
   const { createChat } = useChatHistory();
