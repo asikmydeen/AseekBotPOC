@@ -382,38 +382,33 @@ export default function AppSidebar({
                     )}
 
                     {isOpen && activeTab === 'files' && (
-                        <div>
-                            <div className="flex items-center mb-3">
+                        <div className={styles.files.container}>
+                            <div className={styles.content.section.header}>
                                 <MdAttachment className="mr-2" size={20} />
-                                <h3 className="font-semibold text-lg">Uploaded Files</h3>
+                                <h3 className={styles.content.section.title}>Uploaded Files</h3>
                             </div>
                             {uploadedFiles && uploadedFiles.length > 0 ? (
-                                <div className="space-y-2">
+                                <div className={styles.files.list}>
                                     {uploadedFiles.filter(file => file && file.fileName).map((file, index) => (
                                         <div
                                             key={`file-${index}`}
-                                            className={`p-2 md:p-3 rounded-lg transition-all duration-200 ${isDarkMode
-                                                ? 'dark-card-bg hover:bg-gray-700'
-                                                : 'bg-gray-100 hover:bg-gray-200'
-                                                }`}
+                                            className={styles.files.item}
                                         >
-                                            <div className="flex flex-col">
+                                            <div className={styles.files.itemContent}>
                                                 <div className="flex items-center w-full">
-                                                    <span className="mr-2 font-semibold text-sm">{index + 1}.</span>
-                                                    <div className={`mr-3 text-xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    <span className={styles.files.itemIndex}>{index + 1}.</span>
+                                                    <div className={styles.files.iconContainer}>
                                                         {getFileIcon(file.fileType)}
                                                     </div>
-                                                    <div className="flex-1 truncate">
-                                                        <p className="text-xs font-medium truncate">{file.fileName}</p>
-                                                        <p className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</p>
+                                                    <div className={styles.files.fileInfo}>
+                                                        <p className={styles.files.fileName}>{file.fileName}</p>
+                                                        <p className={styles.files.fileSize}>{formatFileSize(file.fileSize)}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex space-x-2 mt-2 ml-8">
+                                                <div className={styles.files.actionsContainer}>
                                                     <button
                                                         onClick={(e) => onAddToChatClick(file, e)}
-                                                        className={`p-1.5 rounded-md ${isDarkMode
-                                                            ? 'hover:bg-gray-600 text-gray-300'
-                                                            : 'hover:bg-gray-300 text-gray-700'}`}
+                                                        className={styles.files.actionButton}
                                                         title="Add to chat"
                                                         aria-label="Add to chat"
                                                     >
@@ -421,9 +416,7 @@ export default function AppSidebar({
                                                     </button>
                                                     <button
                                                         onClick={(e) => onDownloadClick(file, e)}
-                                                        className={`p-1.5 rounded-md ${isDarkMode
-                                                            ? 'hover:bg-gray-600 text-gray-300'
-                                                            : 'hover:bg-gray-300 text-gray-700'}`}
+                                                        className={styles.files.actionButton}
                                                         title="Download file"
                                                         aria-label="Download file"
                                                     >
@@ -431,9 +424,7 @@ export default function AppSidebar({
                                                     </button>
                                                     <button
                                                         onClick={(e) => onAnalyzeClick(file, e)}
-                                                        className={`p-1.5 rounded-md ${isDarkMode
-                                                            ? 'hover:bg-gray-600 text-gray-300'
-                                                            : 'hover:bg-gray-300 text-gray-700'}`}
+                                                        className={styles.files.actionButton}
                                                         title="Perform analysis"
                                                         aria-label="Perform analysis"
                                                     >
@@ -441,9 +432,7 @@ export default function AppSidebar({
                                                     </button>
                                                     <button
                                                         onClick={(e) => onDeleteClick(file, e)}
-                                                        className={`p-1.5 rounded-md ${isDarkMode
-                                                            ? 'hover:bg-gray-600 text-gray-300'
-                                                            : 'hover:bg-gray-300 text-gray-700'}`}
+                                                        className={styles.files.actionButton}
                                                         title="Delete file"
                                                         aria-label="Delete file"
                                                     >
@@ -455,7 +444,7 @@ export default function AppSidebar({
                                     ))}
                                 </div>
                             ) : (
-                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <p className={styles.files.emptyText}>
                                     No uploaded files
                                 </p>
                             )}
