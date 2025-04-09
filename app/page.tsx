@@ -326,6 +326,10 @@ function ChatApp() {
         onToggle={toggleSidebar}
         onFileDelete={handleFileDelete}
         onFileAddToChat={handleFileAddToChat}
+        sessionId={activeChat?.id || ''}
+        chatId={activeChat?.id || ''}
+        userId="test-user"
+        onStatusUpdate={handleStatusUpdate}
       />
       <div className={`flex-1 h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-[300px] ml-0' : 'md:ml-[60px] ml-0'}`}>
         {isChatLoading ? (
