@@ -6,7 +6,7 @@ import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
 import { usePrompts } from '../../hooks/usePrompts';
 import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
-import FileSelectionDialog from './FileSelectionDialog';
+import SimpleFileDialog from './SimpleFileDialog';
 import usePromptFileHandler from '../../hooks/usePromptFileHandler';
 
 interface PromptsListProps {
