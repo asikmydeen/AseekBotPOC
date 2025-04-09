@@ -169,15 +169,14 @@ const usePromptFileHandler = ({
       const currentChatId = chatId;
       const currentStatusCallback = onStatusUpdate;
 
-      // We'll add the user message directly to the API call
-      // This way we avoid sending two separate messages
-
       // Create a user message with the prompt and files
       const fileNames = files.map(f => f.fileName).join(', ');
       const userMessage = `Please analyze these documents: ${fileNames}`;
 
       // Add the message to the chat UI by updating the status
+      // This will trigger the chat interface to show the message
       if (currentStatusCallback) {
+        // Pass the message to the chat interface
         currentStatusCallback('STARTED', 0, userMessage, true);
       }
 
