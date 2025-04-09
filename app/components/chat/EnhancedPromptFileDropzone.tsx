@@ -221,7 +221,9 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
           fileId: file.fileId || '',
           fileKey: file.fileKey || '',
           status: 'success',
-          progress: 100
+          progress: 100,
+          // Mark this as a prompt file to prevent the dropzone from being hidden
+          isPromptFile: true
         };
 
         // Use a direct approach instead of events
