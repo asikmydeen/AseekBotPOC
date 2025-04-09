@@ -8,6 +8,7 @@ import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
 import { EnhancedChatInput, EnhancedFileDropzone } from './EnhancedUIComponents';
+import EnhancedPromptFileDropzone from './EnhancedPromptFileDropzone';
 
 interface ChatFooterProps {
   isDarkMode: boolean;
@@ -129,19 +130,36 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
 
     // When showing file upload section
     if (showFileDropzone) {
+      // Check if we have a stored prompt
+      const hasStoredPrompt = localStorage.getItem('currentPrompt') !== null;
+
       return (
         <div className="w-full max-w-full overflow-x-hidden">
-          <EnhancedFileDropzone
-            getRootProps={getRootProps}
-            getInputProps={getInputProps}
-            isDragActive={isDragActive}
-            isDarkMode={isDarkMode}
-            uploadedFiles={uploadedFiles}
-            removeFile={removeFile}
-            isUploading={isUploading}
-            progress={progress}
-            handleFileAction={handleFileAction}
-          />
+          {hasStoredPrompt ? (
+            <EnhancedPromptFileDropzone
+              getRootProps={getRootProps}
+              getInputProps={getInputProps}
+              isDragActive={isDragActive}
+              isDarkMode={isDarkMode}
+              uploadedFiles={uploadedFiles}
+              removeFile={removeFile}
+              isUploading={isUploading}
+              progress={progress}
+              handleFileAction={handleFileAction}
+            />
+          ) : (
+            <EnhancedFileDropzone
+              getRootProps={getRootProps}
+              getInputProps={getInputProps}
+              isDragActive={isDragActive}
+              isDarkMode={isDarkMode}
+              uploadedFiles={uploadedFiles}
+              removeFile={removeFile}
+              isUploading={isUploading}
+              progress={progress}
+              handleFileAction={handleFileAction}
+            />
+          )}
         </div>
       );
     }
