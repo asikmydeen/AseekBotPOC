@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiXCircle } from 'react-icons/fi';
 import { FaRobot, FaUser } from 'react-icons/fa';
-import Message from '../Message';
+import Message from '../message/Message';
 import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 
