@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 // Import ThemeInitializer to handle theme initialization
-import ThemeInitializer from './components/ThemeInitializer';
+import ThemeInitializer from './utils/ThemeInitializer';
 
 // Initialize Zustand stores
 import './store/themeStore';
