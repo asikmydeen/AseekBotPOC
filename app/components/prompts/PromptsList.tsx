@@ -30,7 +30,11 @@ const PromptsList: React.FC<PromptsListProps> = ({
     onDeletePrompt,
     onCreatePrompt,
     showActions = true,
-    maxHeight = '70vh'
+    maxHeight = '70vh',
+    sessionId = '',
+    chatId = '',
+    userId = 'test-user',
+    onStatusUpdate
 }) => {
     const {
         prompts,
@@ -41,6 +45,22 @@ const PromptsList: React.FC<PromptsListProps> = ({
         filterPromptsByTag,
         clearFilters
     } = usePrompts();
+
+    // Use the prompt file handler hook
+    const {
+        isDialogOpen,
+        selectedPrompt,
+        requiredFileCount,
+        requiredVariables,
+        openFileDialog,
+        closeFileDialog,
+        handleFileSelection
+    } = usePromptFileHandler({
+        onStatusUpdate,
+        sessionId,
+        chatId,
+        userId
+    });
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
