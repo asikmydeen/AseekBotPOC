@@ -191,15 +191,11 @@ function ChatApp() {
   }, []);
 
   // Handle status updates from prompt processing
-  const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string) => {
-    // If we have a user message, send it to the chat
-    if (userMessage && status === 'STARTED') {
-      // Set the trigger message to send the user message to the chat
-      setTriggerMessage(userMessage);
-      return;
-    }
+  const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
+    console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
-    // Update processing status for the progress indicator
+    // Only update the UI with the processing status
+    // We don't send any messages from here anymore
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
