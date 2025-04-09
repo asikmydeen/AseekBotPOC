@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
 import { usePrompts } from '../../hooks/usePrompts';
-import { Prompt, PromptType } from '../../types/shared';
+import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
+import FileSelectionDialog from './FileSelectionDialog';
+import usePromptFileHandler from '../../hooks/usePromptFileHandler';
 
 interface PromptsListProps {
     isDarkMode: boolean;
