@@ -278,10 +278,12 @@ function ChatApp() {
     fileId: string;
     fileName: string;
     fileKey: string;
-    uploadDate: string;
+    uploadDate?: string;
     fileSize: number;
     fileType?: string;
     presignedUrl?: string;
+    s3Url?: string;
+    isPromptFile?: boolean; // New flag to indicate if this file is for a prompt
   }) => {
     // Check if file is valid
     if (!file || !file.fileName || file.fileSize === undefined) {
@@ -293,7 +295,7 @@ function ChatApp() {
     const fileKey = file.fileKey || '';
 
     // Don't add the same file multiple times to chat
-    if (fileKey && filesAddedToChatRef.current.has(fileKey)) {
+    if (fileKey && filesAddedToChatRef.current.has(fileKey) && !file.isPromptFile) {
       console.log('File already added to chat, skipping:', fileKey);
       return;
     }
@@ -310,10 +312,12 @@ function ChatApp() {
       name: file.fileName || 'Unnamed File',
       size: typeof file.fileSize === 'number' ? file.fileSize : 0,
       type: file.fileType || 'application/octet-stream',
-      url: file.presignedUrl || '',
+      url: file.presignedUrl || file.s3Url || '',
       fileId: file.fileId || fileKey || '',
       status: 'success',
       progress: 100,
+      // Add a flag to indicate this is a prompt file
+      isPromptFile: file.isPromptFile || false
     };
 
     console.log('Mapped file for chat:', mappedFile);
