@@ -123,13 +123,17 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
   const handleFileSelect = (file: any) => {
     // Check if file is already in uploadedFiles
     const isAlreadySelected = uploadedFiles.some(f =>
-      f.fileId === file.fileId || f.fileKey === file.fileKey
+      (f.fileId && f.fileId === file.fileId) ||
+      (f.fileKey && f.fileKey === file.fileKey) ||
+      (f.name === file.fileName && f.size === file.fileSize)
     );
 
     if (isAlreadySelected) {
       // Find the index and remove it
       const index = uploadedFiles.findIndex(f =>
-        f.fileId === file.fileId || f.fileKey === file.fileKey
+        (f.fileId && f.fileId === file.fileId) ||
+        (f.fileKey && f.fileKey === file.fileKey) ||
+        (f.name === file.fileName && f.size === file.fileSize)
       );
       if (index !== -1) {
         removeFile(index);
@@ -138,16 +142,15 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
       // Create a new file object to add
       const newFile: UploadedFile = {
         name: file.fileName,
-        fileName: file.fileName,
-        fileId: file.fileId,
-        fileKey: file.fileKey,
-        size: file.fileSize,
-        type: file.fileType,
-        url: file.s3Url,
-        s3Url: file.s3Url,
+        size: file.fileSize || 0,
+        type: file.fileType || 'application/octet-stream',
+        url: file.s3Url || file.presignedUrl || '',
+        fileId: file.fileId || '',
         status: 'success',
         progress: 100
       };
+
+      console.log('Adding S3 file to uploaded files:', newFile.name);
 
       // Try to populate variables based on the file name
       if (requiredVariables.length > 0) {
@@ -174,13 +177,24 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         });
 
         if (variablesUpdated) {
+          console.log('Updated variables based on file name:', newVariables);
           setVariables(newVariables);
           localStorage.setItem('promptVariables', JSON.stringify(newVariables));
         }
       }
 
-      // Store the file in a custom event to be picked up by the parent
-      const event = new CustomEvent('addExternalFile', { detail: newFile });
+      // Add the file directly to the uploaded files
+      // This is more reliable than using custom events
+      const fileToAdd = {
+        ...newFile,
+        // Add these properties for compatibility
+        fileName: file.fileName,
+        fileKey: file.fileKey,
+        s3Url: file.s3Url
+      };
+
+      // Call the parent's addExternalFile function directly
+      const event = new CustomEvent('addExternalFile', { detail: fileToAdd });
       window.dispatchEvent(event);
     }
   };
