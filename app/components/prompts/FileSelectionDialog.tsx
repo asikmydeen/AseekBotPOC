@@ -46,8 +46,13 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
 
   // Fetch S3 files when dialog opens
   useEffect(() => {
+    console.log('FileSelectionDialog isOpen changed:', isOpen);
     if (isOpen) {
-      fetchS3Files();
+      console.log('Fetching S3 files...');
+      // Use setTimeout to break potential render cycles
+      setTimeout(() => {
+        fetchS3Files();
+      }, 0);
     }
   }, [isOpen]);
 
