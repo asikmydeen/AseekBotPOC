@@ -213,6 +213,17 @@ export const getMessageContainerClass = (sender: 'user' | 'bot', isDarkMode: boo
 };
 
 /**
+ * Get message background colors based on sender and theme
+ */
+export const getMessageBackgroundColors = (sender: 'user' | 'bot', isDarkMode: boolean): { backgroundColor: string } => {
+  if (sender === 'user') {
+    return { backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6' };
+  } else {
+    return { backgroundColor: isDarkMode ? '#172554' : '#EFF6FF' };
+  }
+};
+
+/**
  * Get avatar container class based on sender and theme
  */
 export const getAvatarContainerClass = (sender: 'user' | 'bot', isDarkMode: boolean): string => {
