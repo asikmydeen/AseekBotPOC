@@ -132,13 +132,71 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         return dateB - dateA;
       });
 
-      setS3Files(files);
-      setFilteredFiles(files);
+      // Create object URLs for each file instead of using signed S3 URLs
+      const processedFiles = files.map(file => ({
+        ...file,
+        // Store the original S3 URL in a separate property
+        originalS3Url: file.s3Url || file.presignedUrl,
+        // Extract just the file path without the query parameters
+        s3Url: file.s3Url ? file.s3Url.split('?')[0] : (file.presignedUrl ? file.presignedUrl.split('?')[0] : '')
+      }));
+
+      setS3Files(processedFiles);
+      setFilteredFiles(processedFiles);
     } catch (error) {
       console.error('Error fetching S3 files:', error);
       setError('Failed to load your files. Please try again.');
     } finally {
       setIsLoadingS3Files(false);
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    try {
+      // Upload each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', 'test-user'); // Use the appropriate user ID
+
+        // Show progress for current file
+        const progress = Math.round(((i) / files.length) * 100);
+        setUploadProgress(progress);
+
+        // Upload the file
+        await apiService.uploadFile(formData);
+      }
+
+      // Set progress to 100% when done
+      setUploadProgress(100);
+
+      // Refresh the file list
+      await fetchS3Files();
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      setError('Failed to upload files. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Trigger file input click
+  const triggerFileUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
