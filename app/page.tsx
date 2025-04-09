@@ -45,6 +45,9 @@ function ChatApp() {
   };
 
   const clearDocumentAnalysisPrompt = () => {
+    // Clear localStorage when closing
+    localStorage.removeItem('currentPrompt');
+    localStorage.removeItem('promptVariables');
     setShowDocumentAnalysisPrompt(false);
   };
 
