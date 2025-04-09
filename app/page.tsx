@@ -332,6 +332,22 @@ function ChatApp() {
         onStatusUpdate={handleStatusUpdate}
       />
       <div className={`flex-1 h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-[300px] ml-0' : 'md:ml-[60px] ml-0'}`}>
+        {/* Status indicator for prompt processing */}
+        {processingStatus && processingStatus !== 'COMPLETED' && (
+          <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <div>
+              <div className="text-sm font-medium">Processing: {processingStatus}</div>
+              <div className="w-full bg-blue-800 rounded-full h-1.5 mt-1">
+                <div
+                  className="bg-white h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${processingProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isChatLoading ? (
           <div className="flex items-center justify-center h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
