@@ -19,7 +19,7 @@ const usePromptFileHandler = ({
   chatId,
   userId
 }: UsePromptFileHandlerProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  // Dialog state is now managed by the modal context
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [variables, setVariables] = useState<Record<string, string>>({});
