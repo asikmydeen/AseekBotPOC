@@ -445,7 +445,7 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
                           ? 'bg-gray-700 hover:bg-gray-650 border-transparent'
                           : 'bg-white hover:bg-gray-50 border-transparent'
                     }`}
-                    onClick={() => handleFileSelect(file)}
+                    onClick={(e) => handleFileSelect(file, e)}
                   >
                     <FiFile size={14} className="mr-2 flex-shrink-0" />
                     <div className="truncate text-sm">{file.fileName}</div>
