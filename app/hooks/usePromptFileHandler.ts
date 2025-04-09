@@ -103,8 +103,19 @@ const usePromptFileHandler = ({
 
   // Handle file selection
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
+    console.log('Submitting files and variables:', files.length, 'files');
+    console.log('Variables:', inputVariables);
+
     setSelectedFiles(files);
     setVariables(inputVariables);
+
+    // Validate that all required variables are filled
+    const missingVariables = requiredVariables.filter(variable => !inputVariables[variable]);
+    if (missingVariables.length > 0) {
+      console.error('Missing required variables:', missingVariables);
+      setError(new Error(`Please fill in all required variables: ${missingVariables.join(', ')}`));
+      return;
+    }
 
     // Store the current prompt in a local variable to avoid dependency issues
     const currentPrompt = selectedPrompt;
@@ -114,7 +125,7 @@ const usePromptFileHandler = ({
         handleSubmitPrompt(currentPrompt, files, inputVariables);
       }, 0);
     }
-  }, []);
+  }, [requiredVariables]);
 
   // Submit prompt with files and variables
   const handleSubmitPrompt = useCallback(async (
