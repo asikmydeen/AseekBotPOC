@@ -54,10 +54,19 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
   const fetchS3Files = async () => {
     try {
       setIsLoadingS3Files(true);
-      const files = await apiService.getUserFiles();
-      setS3Files(files);
+      const response = await apiService.getUserFiles();
+
+      // Check if response has the expected structure
+      if (response && response.data && Array.isArray(response.data)) {
+        setS3Files(response.data);
+      } else {
+        console.warn('Unexpected response format from getUserFiles:', response);
+        setS3Files([]);
+        setError('Failed to load your files. Unexpected response format.');
+      }
     } catch (error) {
       console.error('Error fetching S3 files:', error);
+      setS3Files([]);
       setError('Failed to load your files. Please try again.');
     } finally {
       setIsLoadingS3Files(false);
@@ -66,13 +75,13 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
 
   const handleFileSelect = (file: any) => {
     // Check if file is already selected
-    const isAlreadySelected = selectedFiles.some(f => 
+    const isAlreadySelected = selectedFiles.some(f =>
       f.fileId === file.fileId || f.fileKey === file.fileKey
     );
 
     if (isAlreadySelected) {
       // Remove file if already selected
-      setSelectedFiles(prev => prev.filter(f => 
+      setSelectedFiles(prev => prev.filter(f =>
         f.fileId !== file.fileId && f.fileKey !== file.fileKey
       ));
     } else {
@@ -87,7 +96,7 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
         url: file.presignedUrl || file.s3Url,
         s3Url: file.s3Url
       };
-      
+
       setSelectedFiles(prev => [...prev, newFile]);
     }
   };
@@ -185,7 +194,7 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                     <h3 className="text-lg font-medium mb-2">
                       Select Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
                     </h3>
-                    
+
                     <div className={`p-4 rounded-lg mb-4 ${
                       isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                     }`}>
@@ -196,20 +205,20 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {s3Files.map((file) => {
-                            const isSelected = selectedFiles.some(f => 
+                            const isSelected = selectedFiles.some(f =>
                               f.fileId === file.fileId || f.fileKey === file.fileKey
                             );
-                            
+
                             return (
-                              <div 
-                                key={file.fileId || file.fileKey} 
+                              <div
+                                key={file.fileId || file.fileKey}
                                 className={`p-3 rounded-md cursor-pointer transition-colors ${
-                                  isSelected 
-                                    ? isDarkMode 
-                                      ? 'bg-blue-900/50 border border-blue-500' 
+                                  isSelected
+                                    ? isDarkMode
+                                      ? 'bg-blue-900/50 border border-blue-500'
                                       : 'bg-blue-100 border border-blue-500'
-                                    : isDarkMode 
-                                      ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700' 
+                                    : isDarkMode
+                                      ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700'
                                       : 'bg-white hover:bg-gray-50 border border-gray-200'
                                 }`}
                                 onClick={() => handleFileSelect(file)}
@@ -236,7 +245,7 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                 {requiredVariables.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-medium mb-2">Required Information</h3>
-                    
+
                     <div className={`p-4 rounded-lg ${
                       isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                     }`}>
@@ -250,8 +259,8 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                             value={variables[variable] || ''}
                             onChange={(e) => handleVariableChange(variable, e.target.value)}
                             className={`w-full p-2 rounded-md ${
-                              isDarkMode 
-                                ? 'bg-gray-800 border-gray-600 text-white' 
+                              isDarkMode
+                                ? 'bg-gray-800 border-gray-600 text-white'
                                 : 'bg-white border-gray-300 text-gray-900'
                             } border`}
                             placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
@@ -267,8 +276,8 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                   <button
                     onClick={onClose}
                     className={`px-4 py-2 rounded-md ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                      isDarkMode
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                     disabled={isSubmitting}
@@ -278,8 +287,8 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
                   <button
                     onClick={handleSubmit}
                     className={`px-4 py-2 rounded-md ${
-                      isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                      isDarkMode
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white'
                         : 'bg-blue-600 hover:bg-blue-500 text-white'
                     } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                     disabled={isSubmitting}
