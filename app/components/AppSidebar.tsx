@@ -456,14 +456,11 @@ export default function AppSidebar({
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center">
                                     <MdLightbulb className="mr-2" size={20} />
-                                    <h3 className="font-semibold text-lg">Saved Prompts</h3>
+                                    <h3 className={styles.content.section.title}>Saved Prompts</h3>
                                 </div>
                                 <button
                                     onClick={openCreateModal}
-                                    className={`p-1.5 rounded-md ${isDarkMode
-                                            ? 'hover:bg-gray-700 text-gray-300'
-                                            : 'hover:bg-gray-200 text-gray-700'
-                                        }`}
+                                    className={styles.content.section.addButton}
                                     title="Create new prompt"
                                     aria-label="Create new prompt"
                                 >
