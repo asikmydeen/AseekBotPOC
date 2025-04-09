@@ -38,8 +38,13 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
    * - Clears the document analysis prompt if the function is provided
    * - Hides the file dropzone
    * - Clears any uploaded files
+   * - Clears localStorage to prevent persistence
    */
   const handleDismiss = () => {
+    // Clear localStorage when dismissing
+    localStorage.removeItem('currentPrompt');
+    localStorage.removeItem('promptVariables');
+
     if (onClose) {
       onClose();
     }
