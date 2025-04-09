@@ -73,6 +73,51 @@ const useFileActions = ({
               console.log('Using variables for analysis:', promptVariables);
             }
 
+            // If we have files but no variables set, try to auto-assign files to variables
+            if (uploadedFiles.length > 0 && Object.keys(promptVariables).length === 0) {
+              console.log('Auto-assigning files to variables...');
+
+              // Extract variables from prompt content
+              if (storedPrompt.content) {
+                const variableMatches = storedPrompt.content.match(/\$\{([^}]+)\}/g) || [];
+                const extractedVariables = variableMatches.map(match => match.substring(2, match.length - 1));
+                const uniqueVariables = [...new Set(extractedVariables)];
+
+                // Try to match files to variables
+                uniqueVariables.forEach((variable, index) => {
+                  if (index < uploadedFiles.length) {
+                    const file = uploadedFiles[index];
+                    const lowerVar = variable.toLowerCase();
+                    const lowerFileName = file.name.toLowerCase();
+
+                    // Check for specific variable types
+                    if (
+                      (lowerVar.includes('sow') && lowerFileName.includes('sow')) ||
+                      (lowerVar.includes('bid') && lowerFileName.includes('bid')) ||
+                      (lowerVar.includes('doc') && index === 0) // First doc for generic doc variables
+                    ) {
+                      promptVariables[variable] = file.name;
+                    } else if (index === 0 && lowerVar.includes('doc')) {
+                      // First file for first doc variable
+                      promptVariables[variable] = file.name;
+                    } else if (index === 1 && lowerVar.includes('doc')) {
+                      // Second file for second doc variable
+                      promptVariables[variable] = file.name;
+                    } else if (index === 2 && lowerVar.includes('doc')) {
+                      // Third file for third doc variable
+                      promptVariables[variable] = file.name;
+                    }
+                  }
+                });
+
+                // Save the auto-assigned variables
+                if (Object.keys(promptVariables).length > 0) {
+                  console.log('Auto-assigned variables:', promptVariables);
+                  localStorage.setItem('promptVariables', JSON.stringify(promptVariables));
+                }
+              }
+            }
+
             if (storedPrompt && storedPrompt.content) {
               // Process the prompt content with variables
               let processedContent = storedPrompt.content;
@@ -86,6 +131,19 @@ const useFileActions = ({
               // Use the processed content as the message
               analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt with the following instructions: ${processedContent}`;
               console.log('Using stored prompt for analysis:', storedPrompt.title);
+
+              // Also pass variables as metadata to the API
+              const metadata = {
+                promptId: storedPrompt.promptId,
+                variables: promptVariables,
+                files: uploadedFiles.map(file => ({
+                  name: file.name,
+                  url: file.url
+                }))
+              };
+
+              // Store metadata in localStorage for the API to pick up
+              localStorage.setItem('promptMetadata', JSON.stringify(metadata));
             }
           }
         } catch (error) {
@@ -106,6 +164,7 @@ const useFileActions = ({
         // Clear the stored prompt and variables
         localStorage.removeItem('currentPrompt');
         localStorage.removeItem('promptVariables');
+        // Keep promptMetadata for the API to pick up
 
         // Clear uploaded files and hide dropzone after a short delay
         setTimeout(() => {
