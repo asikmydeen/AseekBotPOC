@@ -77,22 +77,31 @@ const usePromptFileHandler = ({
     }
   }, []);
 
+  // Get the modal context
+  const { openFileSelectionDialog } = useModal();
+
   // Open dialog with the selected prompt
   const openFileDialog = useCallback((prompt: Prompt) => {
     console.log('Opening file dialog for prompt:', prompt.title);
 
-    // Set everything synchronously to ensure the dialog opens immediately
+    // Set the selected prompt locally
     setSelectedPrompt(prompt);
-    parsePromptRequirements(prompt);
     setError(null);
 
-    // Force dialog to open in the next tick to ensure state is updated
+    // Parse prompt requirements
+    parsePromptRequirements(prompt);
+
+    // Use the global modal context to open the dialog
     setTimeout(() => {
-      console.log('Setting dialog open state to true');
-      setIsDialogOpen(true);
-      console.log('Dialog state should now be updated');
+      openFileSelectionDialog(
+        prompt,
+        requiredFileCount,
+        requiredVariables,
+        handleFileSelection
+      );
+      console.log('Dialog opened via modal context');
     }, 10);
-  }, [parsePromptRequirements]);
+  }, [parsePromptRequirements, requiredFileCount, requiredVariables, openFileSelectionDialog]);
 
   // Close dialog and reset state
   const closeFileDialog = useCallback(() => {
