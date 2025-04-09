@@ -1,9 +1,9 @@
 // app/artifact-demo/page.tsx
 "use client";
 import React, { useState } from 'react';
-import { ArtifactProvider } from '../context/ArtifactContext';
-import { useArtifacts } from '../context/ArtifactContext';
-import { useTheme } from '../context/ThemeContext';
+import { useArtifacts } from '../hooks/useArtifacts';
+import { useTheme } from '../hooks/useTheme';
+import AppProviders from '../context/AppProviders';
 import ArtifactLayout from '../components/ArtifactLayout';
 
 // Demo component to show artifact creation
@@ -59,14 +59,14 @@ const Counter = () => {
     <div className="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4 text-center">React Counter</h2>
       <div className="flex justify-center items-center gap-4">
-        <button 
+        <button
           onClick={() => setCount(count - 1)}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
           -
         </button>
         <span className="text-2xl font-bold">{count}</span>
-        <button 
+        <button
           onClick={() => setCount(count + 1)}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
@@ -87,16 +87,16 @@ export default Counter;`,
       content: `// Function to generate Fibonacci sequence up to n terms
 function fibonacci(n) {
   const sequence = [0, 1];
-  
+
   if (n <= 2) {
     return sequence.slice(0, n);
   }
-  
+
   for (let i = 2; i < n; i++) {
     const nextValue = sequence[i - 1] + sequence[i - 2];
     sequence.push(nextValue);
   }
-  
+
   return sequence;
 }
 
@@ -126,19 +126,19 @@ console.log(fibSequence); // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]`,
           <button
             onClick={addExampleArtifacts}
             className={`px-4 py-2 rounded-md ${
-              isDarkMode 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+              isDarkMode
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-blue-500 hover:bg-blue-600 text-white'
             }`}
           >
             Add Example Artifacts
           </button>
-          
+
           <button
             onClick={toggleTheme}
             className={`px-4 py-2 rounded-md ${
-              isDarkMode 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+              isDarkMode
+                ? 'bg-gray-700 hover:bg-gray-600 text-white'
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
             }`}
           >
@@ -156,8 +156,8 @@ console.log(fibSequence); // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]`,
               value={message}
               onChange={e => setMessage(e.target.value)}
               className={`flex-1 p-3 rounded-md border ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
+                isDarkMode
+                  ? 'bg-gray-800 border-gray-700 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               placeholder="Paste message with code blocks here..."
@@ -171,8 +171,8 @@ console.log(fibSequence); // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]`,
               className={`px-4 py-2 rounded-md ${
                 !message.trim()
                   ? 'bg-gray-400 cursor-not-allowed text-gray-200'
-                  : isDarkMode 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : isDarkMode
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
                     : 'bg-green-500 hover:bg-green-600 text-white'
               }`}
             >
@@ -224,10 +224,10 @@ Try parsing this message to see artifacts appear!`}
 
 export default function Demo() {
   return (
-    <ArtifactProvider>
+    <AppProviders>
       <ArtifactLayout>
         <ArtifactDemo />
       </ArtifactLayout>
-    </ArtifactProvider>
+    </AppProviders>
   );
 }
