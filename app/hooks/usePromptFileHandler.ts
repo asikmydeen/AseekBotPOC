@@ -103,9 +103,8 @@ const usePromptFileHandler = ({
     }, 10);
   }, [parsePromptRequirements, requiredFileCount, requiredVariables, openFileSelectionDialog]);
 
-  // Close dialog and reset state
-  const closeFileDialog = useCallback(() => {
-    setIsDialogOpen(false);
+  // Reset state (dialog closing is handled by the modal context)
+  const resetState = useCallback(() => {
     setSelectedFiles([]);
     setVariables({});
     setError(null);
