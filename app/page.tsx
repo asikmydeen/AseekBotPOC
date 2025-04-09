@@ -2,7 +2,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import AppSidebar, { UploadedFile } from './components/sidebar/AppSidebar';
+import AppSidebar from './components/sidebar/AppSidebar';
+import { UploadedFile } from './types/shared';
 import { useChatHistory } from './hooks/useChatHistory';
 import { apiService } from './utils/apiService';
 
@@ -15,7 +16,7 @@ const ChatInterface = dynamic(() => import('./components/chat/ChatInterface').th
 function ChatApp() {
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [showDocumentAnalysisPrompt, setShowDocumentAnalysisPrompt] = useState<boolean>(false);
-  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [preselectedFile, setPreselectedFile] = useState<UploadedFile | null>(null);
 
@@ -125,7 +126,7 @@ function ChatApp() {
   }, [updateChatMessages]);
 
   // This function will be passed to the ChatInterface to sync uploaded files
-  const syncUploadedFiles = useCallback((newFiles: any[]) => {
+  const syncUploadedFiles = useCallback((newFiles: UploadedFile[]) => {
     if (!newFiles || !Array.isArray(newFiles)) return;
 
     console.log('Syncing files from chat interface:', newFiles);
@@ -155,7 +156,7 @@ function ChatApp() {
       });
 
       // Process the new files from chat interface
-      newFiles.forEach(file => {
+      newFiles.forEach((file: UploadedFile) => {
         // Skip files already processed
         const fileKey = file.fileId || file.url || `${file.name}-${file.size}`;
         if (processedKeys.has(fileKey)) {
@@ -252,7 +253,7 @@ function ChatApp() {
         // Check if response has data and no errors
         if (filesResponse && filesResponse.data && !filesResponse.error) {
           const filesArray = Array.isArray(filesResponse.data) ? filesResponse.data : [];
-          const mappedFiles = filesArray.map(file => {
+          const mappedFiles = filesArray.map((file: any) => {
             const fileObj = {
               fileId: file.fileId || '',
               fileName: file.name || file.fileName || 'Untitled File',

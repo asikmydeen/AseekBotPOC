@@ -10,6 +10,7 @@ import HistoryList from '../chat/HistoryList';
 import CreatePromptModal from '../prompts/CreatePromptModal';
 import EditPromptModal from '../prompts/EditPromptModal';
 import DeletePromptConfirmation from '../prompts/DeletePromptConfirmation';
+import { UploadedFile } from '../../types/shared';
 import {
   sidebarAnimationVariants,
   sidebarTransition,
@@ -26,16 +27,6 @@ import {
   SettingsSection,
   SidebarOverlay
 } from './index';
-
-export interface UploadedFile {
-  fileId: string;
-  fileName: string;
-  fileKey: string;
-  uploadDate: string;
-  fileSize: number;
-  fileType?: string;
-  presignedUrl?: string;
-}
 
 export interface AppSidebarProps {
   uploadedFiles: UploadedFile[];
@@ -147,7 +138,7 @@ export default function AppSidebar({
     }
 
     // Validate required properties
-    if (!file.fileName || file.fileSize === undefined) {
+    if (!file.name || file.size === undefined) {
       console.error('Missing required file properties:', file);
       return;
     }
@@ -157,27 +148,27 @@ export default function AppSidebar({
       // Ensure we're passing a complete file object
       const completeFile = {
         fileId: file.fileId || `file-${Date.now()}`, // Generate a temporary ID if missing
-        fileName: file.fileName,
-        fileKey: file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() || file.fileName : file.fileName),
+        name: file.name,
+        fileKey: file.fileKey || (file.url ? file.url.split('/').pop() || file.name : file.name),
         uploadDate: file.uploadDate || new Date().toISOString(),
-        fileSize: typeof file.fileSize === 'number' ? file.fileSize : 0,
-        fileType: file.fileType || 'application/octet-stream',
-        presignedUrl: file.presignedUrl || ''
+        size: typeof file.size === 'number' ? file.size : 0,
+        type: file.type || 'application/octet-stream',
+        url: file.url || ''
       };
 
       console.log('Adding file to chat:', completeFile);
       onFileAddToChat(completeFile);
-    } else if (file.presignedUrl) {
+    } else if (file.url) {
       // Otherwise, fall back to onFileClick
-      onFileClick(file.presignedUrl);
+      onFileClick(file.url);
     }
   };
 
   const handleDownloadClick = async (file: UploadedFile, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     try {
-      // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      // Extract fileKey from url or use fileKey directly
+      const fileKey = file.fileKey || (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -201,8 +192,8 @@ export default function AppSidebar({
   const handleDeleteClick = async (file: UploadedFile, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     try {
-      // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      // Extract fileKey from url or use fileKey directly
+      const fileKey = file.fileKey || (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -230,8 +221,8 @@ export default function AppSidebar({
   const handleAnalyzeClick = (file: UploadedFile, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     try {
-      // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      // Extract fileKey from url or use fileKey directly
+      const fileKey = file.fileKey || (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -239,7 +230,7 @@ export default function AppSidebar({
       }
 
       // Here you would call your analysis API
-      console.log('Performing analysis on file:', file.fileName);
+      console.log('Performing analysis on file:', file.name);
       // Example: startAsyncDocumentAnalysis(fileKey);
 
       // For now, just add the file to chat as a fallback action
