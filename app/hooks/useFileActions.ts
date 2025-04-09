@@ -55,8 +55,25 @@ const useFileActions = ({
         break;
 
       case 'analyze':
+        // Check if we have a stored prompt
+        let analysisText = pendingInput || 'Please analyze these documents';
+        let storedPrompt = null;
+
+        try {
+          const promptJson = localStorage.getItem('currentPrompt');
+          if (promptJson) {
+            storedPrompt = JSON.parse(promptJson);
+            if (storedPrompt && storedPrompt.content) {
+              // Use the prompt content as the message
+              analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt`;
+              console.log('Using stored prompt for analysis:', storedPrompt.title);
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing stored prompt:', error);
+        }
+
         // Send message with files for analysis
-        const analysisText = pendingInput || 'Please analyze these documents';
         sendMessage(analysisText, uploadedFiles);
 
         // Clear pending input after sending
@@ -66,6 +83,9 @@ const useFileActions = ({
         if (showDocumentAnalysisPrompt && clearDocumentAnalysisPrompt) {
           clearDocumentAnalysisPrompt();
         }
+
+        // Clear the stored prompt
+        localStorage.removeItem('currentPrompt');
 
         // Clear uploaded files and hide dropzone after a short delay
         setTimeout(() => {
