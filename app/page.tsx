@@ -225,6 +225,21 @@ function ChatApp() {
         return;
       }
 
+      // Check if we have a stored prompt
+      try {
+        const promptJson = localStorage.getItem('currentPrompt');
+        if (promptJson) {
+          const storedPrompt = JSON.parse(promptJson);
+          if (storedPrompt && storedPrompt.title) {
+            // Enhance the message with the prompt title
+            userMessage = `Please analyze these documents using the "${storedPrompt.title}" prompt: ${userMessage}`;
+            console.log('Enhanced message with prompt title:', userMessage);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored prompt:', error);
+      }
+
       console.log('Sending prompt message to chat:', userMessage);
       // Add to sent messages set to prevent duplicates
       sentMessagesRef.current.add(userMessage);
