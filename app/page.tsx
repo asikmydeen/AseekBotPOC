@@ -194,10 +194,11 @@ function ChatApp() {
   const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
     console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
-    // If this is a prompt message and we're just starting, we don't need to do anything
-    // The message will be sent directly from the API call
-    if (isPromptMessage && status === 'STARTED') {
-      console.log('Prompt message is being handled directly by the API call');
+    // If this is a prompt message and we're just starting, we need to send the message to the chat
+    if (isPromptMessage && status === 'STARTED' && userMessage) {
+      console.log('Sending prompt message to chat:', userMessage);
+      // Set the trigger message to send the user message to the chat
+      setTriggerMessage(userMessage);
       return;
     }
 
