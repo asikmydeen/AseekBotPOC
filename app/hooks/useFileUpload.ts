@@ -49,7 +49,25 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
     });
   }, []);
 
-  // Check for S3 files in localStorage on mount
+  // Listen for custom events to add external files
+  useEffect(() => {
+    const handleAddExternalFile = (event: any) => {
+      if (event.detail && event.detail.name) {
+        console.log('Adding external file from event:', event.detail.name);
+        addExternalFile(event.detail);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('addExternalFile', handleAddExternalFile);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('addExternalFile', handleAddExternalFile);
+    };
+  }, [addExternalFile]);
+
+  // Check for S3 files in localStorage on mount (legacy support)
   useEffect(() => {
     try {
       const s3FilesJson = localStorage.getItem('selectedS3Files');
