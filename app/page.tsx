@@ -190,6 +190,19 @@ function ChatApp() {
     setSidebarOpen(isOpen);
   }, []);
 
+  // Handle status updates from prompt processing
+  const handleStatusUpdate = useCallback((status: string, progress: number) => {
+    setProcessingStatus(status);
+    setProcessingProgress(progress);
+
+    // If we have a completed status, show a notification or update the UI
+    if (status === 'COMPLETED') {
+      console.log('Processing completed successfully!');
+    } else if (status === 'FAILED' || status === 'ERROR') {
+      console.error('Processing failed:', status);
+    }
+  }, []);
+
   // Handle adding a file to chat from the sidebar
   const handleFileAddToChat = useCallback((file: {
     fileId: string;
