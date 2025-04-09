@@ -33,18 +33,43 @@ const usePromptFileHandler = ({
   const parsePromptRequirements = useCallback((prompt: Prompt) => {
     if (!prompt || !prompt.content) return;
 
-    // Simple regex to find file requirements - this could be more sophisticated
-    const fileMatch = prompt.content.match(/(\d+)\s+files?/i);
-    if (fileMatch && fileMatch[1]) {
-      setRequiredFileCount(parseInt(fileMatch[1], 10));
+    console.log('Parsing prompt requirements for:', prompt.title);
+
+    // Check for file requirements
+    let fileCount = 0;
+
+    // Check if prompt ID suggests file requirements
+    if (
+      prompt.promptId.includes('analysis') ||
+      prompt.promptId.includes('comparison') ||
+      prompt.promptId.includes('vendor') ||
+      prompt.promptId.includes('document')
+    ) {
+      fileCount = 2; // Default to at least 2 files for analysis prompts
     }
 
+    // Look for explicit file mentions
+    const fileMatch = prompt.content.match(/(\d+)\s+files?/i);
+    if (fileMatch && fileMatch[1]) {
+      fileCount = Math.max(fileCount, parseInt(fileMatch[1], 10));
+    }
+
+    // Count document references like ${doc_1}, ${sow_doc}, etc.
+    const docMatches = prompt.content.match(/\${([a-zA-Z0-9_]+_doc[a-zA-Z0-9_]*|[a-zA-Z0-9_]*doc_[a-zA-Z0-9_]+)}/g);
+    if (docMatches) {
+      fileCount = Math.max(fileCount, docMatches.length);
+    }
+
+    console.log('Detected required file count:', fileCount);
+    setRequiredFileCount(fileCount);
+
     // Find variables in the format ${VARIABLE_NAME}
-    const variableMatches = prompt.content.match(/\${([A-Z_]+)}/g);
+    const variableMatches = prompt.content.match(/\${([A-Za-z0-9_]+)}/g);
     if (variableMatches) {
       const uniqueVariables = [...new Set(
         variableMatches.map(match => match.replace(/\${(.*)}/, '$1'))
       )];
+      console.log('Detected variables:', uniqueVariables);
       setRequiredVariables(uniqueVariables);
     } else {
       setRequiredVariables([]);
