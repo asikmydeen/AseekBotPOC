@@ -190,13 +190,24 @@ function ChatApp() {
     setSidebarOpen(isOpen);
   }, []);
 
+  // Track messages to prevent duplicates
+  const sentMessagesRef = useRef(new Set<string>());
+
   // Handle status updates from prompt processing
   const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
     console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
     // If this is a prompt message and we're just starting, we need to send the message to the chat
     if (isPromptMessage && status === 'STARTED' && userMessage) {
+      // Check if we've already sent this message to prevent duplicates
+      if (sentMessagesRef.current.has(userMessage)) {
+        console.log('Skipping duplicate message:', userMessage);
+        return;
+      }
+
       console.log('Sending prompt message to chat:', userMessage);
+      // Add to sent messages set to prevent duplicates
+      sentMessagesRef.current.add(userMessage);
       // Set the trigger message to send the user message to the chat
       setTriggerMessage(userMessage);
       return;
