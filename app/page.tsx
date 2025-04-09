@@ -331,6 +331,16 @@ function ChatApp() {
     }
   }, [activeChat?.id]);
 
+  // Check for any leftover prompt data on component mount
+  useEffect(() => {
+    // Clear any leftover prompt data from localStorage
+    // This ensures prompt components don't persist after page refresh
+    if (!showDocumentAnalysisPrompt) {
+      localStorage.removeItem('currentPrompt');
+      localStorage.removeItem('promptVariables');
+    }
+  }, []);
+
   // Fetch user files on component mount
   useEffect(() => {
     async function fetchFiles() {
