@@ -216,21 +216,10 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                 isDarkMode={isDarkMode}
                                 onClick={() => {
                                     console.log('Prompt clicked:', prompt.title);
-                                    // Check if the prompt requires files
-                                    if (prompt.content && (
-                                        prompt.content.includes('${') || // Has variables
-                                        prompt.content.includes('files') || // Mentions files
-                                        prompt.promptId.includes('analysis') || // Analysis prompt
-                                        prompt.promptId.includes('comparison') // Comparison prompt
-                                    )) {
-                                        console.log('Prompt requires files or variables, opening dialog');
-                                        // Open file selection dialog
-                                        openFileDialog(prompt);
-                                    } else {
-                                        console.log('Regular prompt, calling click handler');
-                                        // Regular prompt, just call the click handler
-                                        onPromptClick && onPromptClick(prompt);
-                                    }
+                                    // Always use the direct approach without modal
+                                    console.log('Using direct file dropzone approach for prompt');
+                                    // Call the click handler with the prompt
+                                    onPromptClick && onPromptClick(prompt);
                                 }}
                                 onEdit={() => onEditPrompt && onEditPrompt(prompt)}
                                 onDelete={() => onDeletePrompt && onDeletePrompt(prompt.promptId)}
