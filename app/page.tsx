@@ -191,15 +191,33 @@ function ChatApp() {
   }, []);
 
   // Handle status updates from prompt processing
-  const handleStatusUpdate = useCallback((status: string, progress: number) => {
+  const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string) => {
+    // If we have a user message, send it to the chat
+    if (userMessage && status === 'STARTED') {
+      // Set the trigger message to send the user message to the chat
+      setTriggerMessage(userMessage);
+      return;
+    }
+
+    // Update processing status for the progress indicator
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
     // If we have a completed status, show a notification or update the UI
     if (status === 'COMPLETED') {
       console.log('Processing completed successfully!');
+      // Clear the processing status after a delay
+      setTimeout(() => {
+        setProcessingStatus('');
+        setProcessingProgress(0);
+      }, 2000);
     } else if (status === 'FAILED' || status === 'ERROR') {
       console.error('Processing failed:', status);
+      // Clear the processing status after a delay
+      setTimeout(() => {
+        setProcessingStatus('');
+        setProcessingProgress(0);
+      }, 5000);
     }
   }, []);
 
