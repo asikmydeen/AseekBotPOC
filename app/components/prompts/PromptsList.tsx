@@ -216,7 +216,21 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                 key={prompt.promptId}
                                 prompt={prompt}
                                 isDarkMode={isDarkMode}
-                                onClick={() => onPromptClick && onPromptClick(prompt)}
+                                onClick={() => {
+                                    // Check if the prompt requires files
+                                    if (prompt.content && (
+                                        prompt.content.includes('${') || // Has variables
+                                        prompt.content.includes('files') || // Mentions files
+                                        prompt.promptId.includes('analysis') || // Analysis prompt
+                                        prompt.promptId.includes('comparison') // Comparison prompt
+                                    )) {
+                                        // Open file selection dialog
+                                        openFileDialog(prompt);
+                                    } else {
+                                        // Regular prompt, just call the click handler
+                                        onPromptClick && onPromptClick(prompt);
+                                    }
+                                }}
                                 onEdit={() => onEditPrompt && onEditPrompt(prompt)}
                                 onDelete={() => onDeletePrompt && onDeletePrompt(prompt.promptId)}
                                 onTagClick={handleTagFilter}
