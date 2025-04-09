@@ -10,7 +10,6 @@ import {
     getSidebarStyles
 } from '../styles/sidebarStyles';
 import {
-    MdPushPin,
     MdHistory,
     MdSettings,
     MdAccountCircle,
@@ -18,8 +17,6 @@ import {
     MdChevronRight,
     MdAttachment,
     MdPalette,
-    MdInfoOutline,
-    MdSupportAgent,
     MdLightbulb,
     MdAdd,
     MdLibraryAdd,
@@ -39,7 +36,7 @@ import {
 import { apiService } from '../utils/apiService';
 import { useTheme } from '../hooks/useTheme';
 import { useChatHistory } from '../hooks/useChatHistory';
-import { usePrompts } from '../hooks/usePrompts';
+// import { usePrompts } from '../hooks/usePrompts';
 import usePromptsManager from '../hooks/usePromptsManager';
 import HistoryList from './chat/HistoryList';
 import PromptsList from './prompts/PromptsList';
@@ -75,7 +72,7 @@ export default function AppSidebar({
     onFileDelete
 }: AppSidebarProps) {
     const { isDarkMode, toggleTheme } = useTheme();
-    const { createChat, activeChat, pinnedChats, recentChats, loadChat } = useChatHistory();
+    const { createChat } = useChatHistory();
     const [isMobile, setIsMobile] = useState(false);
 
     // Get all styles for the sidebar
@@ -84,9 +81,6 @@ export default function AppSidebar({
     // Prompt management hooks
     const {
         prompts,
-        isLoading,
-        error,
-        selectedPrompt,
         isSubmitting,
         isDeleting,
         isCreateModalOpen,
