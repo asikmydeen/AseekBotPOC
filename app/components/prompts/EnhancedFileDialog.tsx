@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch } from 'react-icons/fi';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
+import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
 import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
@@ -59,7 +59,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       if (searchTerm.trim() === '') {
         setFilteredFiles(s3Files);
       } else {
-        const filtered = s3Files.filter(file => 
+        const filtered = s3Files.filter(file =>
           file.fileName.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredFiles(filtered);
@@ -76,14 +76,14 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       // Try to match files to variables based on patterns
       selectedFiles.forEach(file => {
         const fileName = file.fileName.toLowerCase();
-        
+
         // Match SOW documents
-        if ((fileName.includes('sow') || fileName.includes('scope') || fileName.includes('work')) && 
+        if ((fileName.includes('sow') || fileName.includes('scope') || fileName.includes('work')) &&
             requiredVariables.includes('sow_doc') && !newVariables['sow_doc']) {
           newVariables['sow_doc'] = file.name;
           variablesUpdated = true;
         }
-        
+
         // Match bid documents
         else if (fileName.includes('bid') || fileName.includes('proposal') || fileName.includes('quote')) {
           // Find an empty bid_doc variable
@@ -108,7 +108,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     try {
       setIsLoadingS3Files(true);
       const response = await apiService.getUserFiles();
-      
+
       let files = [];
       // Handle different response formats
       if (Array.isArray(response)) {
@@ -119,14 +119,14 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         console.warn('Unexpected response format from getUserFiles:', response);
         files = [];
       }
-      
+
       // Sort files by date (newest first)
       files.sort((a, b) => {
         const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
         const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
         return dateB - dateA;
       });
-      
+
       setS3Files(files);
       setFilteredFiles(files);
     } catch (error) {
@@ -139,13 +139,13 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
   const handleFileSelect = (file: any) => {
     // Check if file is already selected
-    const isAlreadySelected = selectedFiles.some(f => 
+    const isAlreadySelected = selectedFiles.some(f =>
       f.fileId === file.fileId || f.fileKey === file.fileKey
     );
 
     if (isAlreadySelected) {
       // Remove file if already selected
-      setSelectedFiles(prev => prev.filter(f => 
+      setSelectedFiles(prev => prev.filter(f =>
         f.fileId !== file.fileId && f.fileKey !== file.fileKey
       ));
     } else {
@@ -160,7 +160,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         url: file.presignedUrl || file.s3Url,
         s3Url: file.s3Url
       };
-      
+
       setSelectedFiles(prev => [...prev, newFile]);
     }
   };
@@ -216,7 +216,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -226,7 +226,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10000] p-4 overflow-hidden">
-      <motion.div 
+      <motion.div
         ref={dialogRef}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -239,8 +239,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">{promptTitle}</h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className={`p-2 rounded-full transition-colors ${
               isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'
             }`}
@@ -257,7 +257,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               <h3 className="text-lg font-medium">
                 Select Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
               </h3>
-              <button 
+              <button
                 onClick={fetchS3Files}
                 className={`p-2 rounded-full transition-colors ${
                   isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
@@ -284,7 +284,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
             </div>
 
             {/* File list */}
-            <div 
+            <div
               ref={fileListRef}
               className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
             >
@@ -301,33 +301,33 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               ) : (
                 <div className="grid grid-cols-1 gap-2">
                   {filteredFiles.map((file, index) => {
-                    const isSelected = selectedFiles.some(f => 
+                    const isSelected = selectedFiles.some(f =>
                       f.fileId === file.fileId || f.fileKey === file.fileKey
                     );
-                    
+
                     return (
-                      <motion.div 
+                      <motion.div
                         key={file.fileId || file.fileKey || index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: index * 0.03 }}
                         className={`p-3 rounded-lg cursor-pointer transition-all ${
-                          isSelected 
-                            ? isDarkMode 
-                              ? 'bg-blue-900/40 border border-blue-500' 
+                          isSelected
+                            ? isDarkMode
+                              ? 'bg-blue-900/40 border border-blue-500'
                               : 'bg-blue-50 border border-blue-500'
-                            : isDarkMode 
-                              ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700' 
+                            : isDarkMode
+                              ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700'
                               : 'bg-white hover:bg-gray-50 border border-gray-200'
                         }`}
                         onClick={() => handleFileSelect(file)}
                       >
                         <div className="flex items-center">
                           <div className={`mr-3 p-2 rounded-lg ${
-                            isSelected 
-                              ? 'bg-blue-500 text-white' 
-                              : isDarkMode 
-                                ? 'bg-gray-700 text-gray-300' 
+                            isSelected
+                              ? 'bg-blue-500 text-white'
+                              : isDarkMode
+                                ? 'bg-gray-700 text-gray-300'
                                 : 'bg-gray-100 text-gray-500'
                           }`}>
                             {isSelected ? <FiCheck size={18} /> : <FiFile size={18} />}
@@ -352,7 +352,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
           {/* Right side - Variables */}
           <div className="md:w-1/2 p-5 flex flex-col h-full overflow-hidden">
             <h3 className="text-lg font-medium mb-4">Required Information</h3>
-            
+
             {error && (
               <div className={`p-3 mb-4 rounded-md ${
                 isDarkMode ? 'bg-red-900/30 text-red-200' : 'bg-red-100 text-red-800'
@@ -379,13 +379,13 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                           value={variables[variable] || ''}
                           onChange={(e) => handleVariableChange(variable, e.target.value)}
                           className={`w-full p-2 rounded-md mb-2 ${
-                            isDarkMode 
-                              ? 'bg-gray-800 border-gray-600 text-white' 
+                            isDarkMode
+                              ? 'bg-gray-800 border-gray-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
                           } border`}
                           placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
                         />
-                        
+
                         {/* File selector for variables */}
                         {selectedFiles.length > 0 && (
                           <div className="mt-2">
@@ -397,11 +397,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                   onClick={() => handleVariableFileSelect(variable, idx)}
                                   className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
                                     variables[variable] === file.name
-                                      ? isDarkMode 
-                                        ? 'bg-blue-600 text-white' 
+                                      ? isDarkMode
+                                        ? 'bg-blue-600 text-white'
                                         : 'bg-blue-500 text-white'
-                                      : isDarkMode 
-                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                      : isDarkMode
+                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                   }`}
                                 >
@@ -429,8 +429,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
           <button
             onClick={onClose}
             className={`px-4 py-2 rounded-md mr-3 ${
-              isDarkMode 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+              isDarkMode
+                ? 'bg-gray-700 hover:bg-gray-600 text-white'
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
             }`}
             disabled={isSubmitting}
@@ -440,8 +440,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
           <button
             onClick={handleSubmit}
             className={`px-4 py-2 rounded-md ${
-              isDarkMode 
-                ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+              isDarkMode
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
                 : 'bg-blue-600 hover:bg-blue-500 text-white'
             } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
             disabled={isSubmitting}
@@ -474,11 +474,11 @@ const formatVariableName = (variable: string): string => {
 // Helper function to format date
 const formatDate = (dateString?: string): string => {
   if (!dateString) return 'Unknown date';
-  
+
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, { 
-      month: 'short', 
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
