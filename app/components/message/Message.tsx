@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   messageAnimationVariants,
   darkMessageAnimationVariants,
@@ -146,6 +146,7 @@ function Message({
           animate="animate"
           whileHover="hover"
           className={styles.container.relative}
+          style={{ backgroundColor: isDarkMode ? (message.sender === 'user' ? '#1F2937' : '#172554') : (message.sender === 'user' ? '#F3F4F6' : '#EFF6FF') }}
         >
           {/* Message Text Content */}
           <MessageContent
