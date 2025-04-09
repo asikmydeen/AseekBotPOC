@@ -339,7 +339,21 @@ function ChatApp() {
       localStorage.removeItem('currentPrompt');
       localStorage.removeItem('promptVariables');
     }
-  }, []);
+
+    // Add a global function to handle file uploads directly
+    // This allows components to add files without using events
+    window.addExternalFileToUpload = (file: any) => {
+      console.log('Global addExternalFileToUpload called with file:', file.name);
+      if (file && file.name) {
+        handleFileAddToChat(file);
+      }
+    };
+
+    // Clean up the global function when component unmounts
+    return () => {
+      delete window.addExternalFileToUpload;
+    };
+  }, [handleFileAddToChat]);
 
   // Fetch user files on component mount
   useEffect(() => {
