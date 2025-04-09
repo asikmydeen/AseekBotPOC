@@ -323,12 +323,12 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               onClick={() => handleFileAction('analyze')}
               className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
                 isDarkMode
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  ? promptTitle ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : promptTitle ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
               } transition-colors`}
               disabled={isUploading}
             >
-              Analyze Files
+              {promptTitle ? `Analyze with ${promptTitle}` : 'Analyze Files'}
             </motion.button>
 
             <motion.button
