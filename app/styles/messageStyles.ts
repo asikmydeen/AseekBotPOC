@@ -446,6 +446,7 @@ export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): M
     container: {
       base: `p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(sender, isDarkMode)}`,
       relative: `relative p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(sender, isDarkMode)}`,
+      backgroundColor: getMessageBackgroundColors(sender, isDarkMode),
     },
     wrapper: getMessageWrapperClass(sender),
     flexContainer: getMessageFlexContainerClass(sender),
