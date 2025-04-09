@@ -48,12 +48,10 @@ const PromptsList: React.FC<PromptsListProps> = ({
 
     // Use the prompt file handler hook
     const {
-        isDialogOpen,
         selectedPrompt,
         requiredFileCount,
         requiredVariables,
         openFileDialog,
-        closeFileDialog,
         handleFileSelection
     } = usePromptFileHandler({
         onStatusUpdate,
