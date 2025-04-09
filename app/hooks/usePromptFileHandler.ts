@@ -53,11 +53,19 @@ const usePromptFileHandler = ({
 
   // Open dialog with the selected prompt
   const openFileDialog = useCallback((prompt: Prompt) => {
-    setSelectedPrompt(prompt);
-    parsePromptRequirements(prompt);
-    setIsDialogOpen(true);
-    setError(null);
-  }, [parsePromptRequirements]);
+    console.log('Opening file dialog for prompt:', prompt.title);
+    // Use a local variable to avoid dependency issues
+    const parseRequirements = parsePromptRequirements;
+
+    // Use setTimeout to break potential render cycles
+    setTimeout(() => {
+      setSelectedPrompt(prompt);
+      parseRequirements(prompt);
+      setIsDialogOpen(true);
+      setError(null);
+      console.log('Dialog state updated');
+    }, 0);
+  }, []);
 
   // Close dialog and reset state
   const closeFileDialog = useCallback(() => {
