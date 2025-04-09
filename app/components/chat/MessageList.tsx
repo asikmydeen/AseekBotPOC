@@ -203,9 +203,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 message={message}
                 isDarkMode={isDarkMode}
                 onMultimediaClick={openMultimedia}
-                onReact={(reaction) => handleReaction(index, reaction)}
-                onPin={() => handlePinMessage(index)}
-                onDownload={() => {/* No-op download handler */ }}
+                onReact={(messageId, reaction) => handleReaction(index, reaction)}
+                onPin={(messageId, isPinned) => handlePinMessage(index)}
                 showCitations={true}
               />
             </motion.div>
