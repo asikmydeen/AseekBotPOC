@@ -26,33 +26,36 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       return;
     }
 
-    // Configure custom renderer
-    const renderer = {
-      image(href: string, title: string | null, text: string) {
-        return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
-      },
+    // Create a new renderer
+    const renderer = new marked.Renderer();
 
-      link(href: string, title: string | null, text: string) {
-        return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
-      },
+    // Override renderer methods
+    renderer.image = (href: string, title: string | null, text: string) => {
+      return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
+    };
 
-      code(code: string, language: string | undefined) {
-        return `<div class="markdown-code" data-code="${encodeURIComponent(code)}" data-language="${language || ''}"></div>`;
-      }
+    renderer.link = (href: string, title: string | null, text: string) => {
+      return `<span class="markdown-link" data-href="${href}" data-title="${title || ''}">${text}</span>`;
+    };
+
+    renderer.code = (code: string, language?: string) => {
+      return `<div class="markdown-code" data-code="${encodeURIComponent(code)}" data-language="${language || ''}"></div>`;
     };
 
     try {
-      // Parse markdown content with custom renderer
-      const parsed = marked(content, {
-        renderer: renderer as marked.Renderer,
+      // Set marked options
+      marked.setOptions({
+        renderer: renderer,
         gfm: true,           // GitHub Flavored Markdown
         breaks: true,        // Convert \n to <br>
-        headerIds: true,     // Add IDs to headers
         mangle: false,       // Don't mangle header IDs
         pedantic: false,     // Don't be pedantic
         smartLists: true,    // Use smarter list behavior
-        smartypants: true,   // Use smart typography
+        smartypants: true    // Use smart typography
       });
+
+      // Parse markdown content
+      const parsed = marked.parse(content);
 
       // Sanitize the HTML to prevent XSS attacks
       setParsedContent(DOMPurify.sanitize(parsed));
@@ -62,8 +65,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     }
   }, [content]);
 
-  // For now, we'll use dangerouslySetInnerHTML since that's what the current implementation uses
-  // In a future improvement, we could parse the HTML and convert it to React components
   return (
     <div className={`prose max-w-none ${isDarkMode ? 'prose-invert' : ''}`}>
       <div dangerouslySetInnerHTML={{ __html: parsedContent }} />
