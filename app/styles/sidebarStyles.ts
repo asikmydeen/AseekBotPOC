@@ -388,3 +388,4 @@ export const getSidebarStyles = (isDarkMode: boolean): SidebarStyles => {
     overlay: getSidebarOverlayClass(),
   };
 };
+
