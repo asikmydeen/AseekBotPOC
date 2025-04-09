@@ -252,7 +252,7 @@ function ChatApp() {
         // Check if response has data and no errors
         if (filesResponse && filesResponse.data && !filesResponse.error) {
           const filesArray = Array.isArray(filesResponse.data) ? filesResponse.data : [];
-          const mappedFiles = filesArray.map(file => {
+          const mappedFiles = filesArray.map((file: { fileId: any; name: any; fileName: any; fileKey: any; presignedUrl: string; uploadDate: any; size: any; fileSize: any; type: any; fileType: any; url: any; }) => {
             const fileObj = {
               fileId: file.fileId || '',
               fileName: file.name || file.fileName || 'Untitled File',
