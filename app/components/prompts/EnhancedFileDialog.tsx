@@ -46,6 +46,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     setVariables(initialVariables);
   }, [requiredVariables]);
 
+  // File input ref for upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   // Fetch S3 files when dialog opens
   useEffect(() => {
     if (isOpen) {
