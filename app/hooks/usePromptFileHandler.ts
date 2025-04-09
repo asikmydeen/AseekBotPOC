@@ -158,6 +158,7 @@ const usePromptFileHandler = ({
       const s3Files = files.map(file => ({
         name: file.name,
         fileName: file.fileName || file.name,
+        // Use clean URL without query parameters
         s3Url: file.s3Url || file.url,
         mimeType: file.type
       }));
@@ -167,6 +168,16 @@ const usePromptFileHandler = ({
       const currentSessionId = sessionId;
       const currentChatId = chatId;
       const currentStatusCallback = onStatusUpdate;
+
+      // Create a user message with the prompt and files
+      const fileNames = files.map(f => f.fileName).join(', ');
+      const userMessage = `Please analyze these documents: ${fileNames}`;
+
+      // Send the user message to the chat first
+      // This will be handled by the chat interface to show the message immediately
+      if (currentStatusCallback) {
+        currentStatusCallback('STARTED', 0, userMessage);
+      }
 
       // Call API to send message with prompt and files
       const response = await apiService.sendMessage({
@@ -182,21 +193,20 @@ const usePromptFileHandler = ({
         setIsPolling(true);
 
         if (currentStatusCallback) {
+          // Update status to show processing in the chat interface
           currentStatusCallback('PROCESSING', 10);
         }
       }
 
-      // Close the dialog after successful submission
-      setIsDialogOpen(false);
-      setSelectedFiles([]);
-      setVariables({});
+      // Reset state after successful submission
+      resetState();
     } catch (err) {
       console.error('Error submitting prompt:', err);
       setError(err instanceof Error ? err : new Error('Failed to submit prompt'));
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [resetState]);
 
   // Poll for status updates
   useEffect(() => {
