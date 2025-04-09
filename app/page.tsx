@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import AppSidebar from './components/AppSidebar';
+import AppSidebar from './components/sidebar/AppSidebar';
 import { useChatHistory } from './hooks/useChatHistory';
 import { apiService } from './utils/apiService';
 import { UploadedFile } from './types/shared';
