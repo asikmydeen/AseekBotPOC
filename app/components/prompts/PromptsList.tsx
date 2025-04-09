@@ -259,16 +259,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
                 </div>
             )}
 
-            {/* File Selection Dialog */}
-            <EnhancedFileDialog
-                isOpen={isDialogOpen}
-                onClose={closeFileDialog}
-                onSubmit={handleFileSelection}
-                promptId={selectedPrompt?.promptId || ''}
-                promptTitle={selectedPrompt?.title || ''}
-                requiredFileCount={requiredFileCount}
-                requiredVariables={requiredVariables}
-            />
+            {/* File Selection Dialog is now handled by the ModalContext */}
         </div>
     );
 };
