@@ -71,30 +71,35 @@ const usePromptFileHandler = ({
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
     setSelectedFiles(files);
     setVariables(inputVariables);
-    
-    if (selectedPrompt) {
-      handleSubmitPrompt(selectedPrompt, files, inputVariables);
+
+    // Store the current prompt in a local variable to avoid dependency issues
+    const currentPrompt = selectedPrompt;
+    if (currentPrompt) {
+      // Use setTimeout to break the potential render cycle
+      setTimeout(() => {
+        handleSubmitPrompt(currentPrompt, files, inputVariables);
+      }, 0);
     }
-  }, [selectedPrompt]);
+  }, []);
 
   // Submit prompt with files and variables
   const handleSubmitPrompt = useCallback(async (
-    prompt: Prompt, 
-    files: UploadedFile[], 
+    prompt: Prompt,
+    files: UploadedFile[],
     promptVariables: Record<string, string>
   ) => {
     if (!prompt) return;
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Replace variables in prompt content
       let processedContent = prompt.content;
       Object.entries(promptVariables).forEach(([key, value]) => {
         processedContent = processedContent.replace(new RegExp(`\\$\\{${key}\\}`, 'g'), value);
       });
-      
+
       // Format files for API
       const s3Files = files.map(file => ({
         name: file.name,
@@ -102,7 +107,7 @@ const usePromptFileHandler = ({
         s3Url: file.s3Url || file.url,
         mimeType: file.type
       }));
-      
+
       // Call API to send message with prompt and files
       const response = await apiService.sendMessage({
         promptId: prompt.promptId,
@@ -111,16 +116,16 @@ const usePromptFileHandler = ({
         chatId,
         s3Files
       });
-      
+
       if (response && response.requestId) {
         setRequestId(response.requestId);
         setIsPolling(true);
-        
+
         if (onStatusUpdate) {
           onStatusUpdate('PROCESSING', 10);
         }
       }
-      
+
       closeFileDialog();
     } catch (err) {
       console.error('Error submitting prompt:', err);
@@ -133,20 +138,20 @@ const usePromptFileHandler = ({
   // Poll for status updates
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    
+
     if (isPolling && requestId) {
       intervalId = setInterval(async () => {
         try {
           const statusResponse = await apiService.checkStatus(requestId);
-          
+
           if (statusResponse) {
             if (onStatusUpdate) {
               onStatusUpdate(statusResponse.status, statusResponse.progress || 0);
             }
-            
+
             // Stop polling when complete or error
             if (
-              statusResponse.status === 'COMPLETED' || 
+              statusResponse.status === 'COMPLETED' ||
               statusResponse.status === 'FAILED' ||
               statusResponse.status === 'ERROR'
             ) {
@@ -160,7 +165,7 @@ const usePromptFileHandler = ({
         }
       }, 2000); // Poll every 2 seconds
     }
-    
+
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
