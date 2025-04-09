@@ -316,7 +316,7 @@ export default function AppSidebar({
               styles={styles}
               isDarkMode={isDarkMode}
               prompts={prompts}
-              onPromptClick={(prompt) => onPromptClick(prompt.content)}
+              onPromptClick={(prompt) => onPromptClick(prompt)}
               onPromptSelect={handleSelectPrompt}
               onCreatePrompt={openCreateModal}
               onEditPrompt={openEditModal}
