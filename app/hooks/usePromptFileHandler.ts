@@ -236,12 +236,18 @@ const usePromptFileHandler = ({
       const currentRequestId = requestId;
       const currentStatusCallback = onStatusUpdate;
 
+      console.log('Starting polling for request ID:', currentRequestId);
+
       intervalId = setInterval(async () => {
         try {
+          console.log('Polling status for request ID:', currentRequestId);
           const statusResponse = await apiService.checkStatus(currentRequestId);
 
           if (statusResponse) {
+            console.log('Status response:', statusResponse.status, 'Progress:', statusResponse.progress || 0);
+
             if (currentStatusCallback) {
+              // Update the status in the UI
               currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
             }
 
@@ -251,9 +257,27 @@ const usePromptFileHandler = ({
               statusResponse.status === 'FAILED' ||
               statusResponse.status === 'ERROR'
             ) {
+              console.log('Request completed or failed, stopping polling');
+
               // Use function form of setState to avoid stale closures
               setIsPolling(false);
               setRequestId(null);
+
+              // Remove from localStorage when complete
+              try {
+                let pending: Record<string, unknown> = {};
+                const stored = localStorage.getItem('pendingRequests');
+                if (stored) {
+                  pending = JSON.parse(stored);
+                  if (pending[currentRequestId]) {
+                    delete pending[currentRequestId];
+                    localStorage.setItem('pendingRequests', JSON.stringify(pending));
+                    console.log('Removed completed request from localStorage:', currentRequestId);
+                  }
+                }
+              } catch (e) {
+                console.error('Error removing request from localStorage:', e);
+              }
             }
           }
         } catch (err) {
