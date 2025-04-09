@@ -20,6 +20,8 @@ function ChatApp() {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [preselectedFile, setPreselectedFile] = useState<UploadedFile | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [processingProgress, setProcessingProgress] = useState<number>(0);
 
   // Track which files came from the sidebar to prevent them from being removed
   const sidebarFilesRef = useRef<Set<string>>(new Set());
