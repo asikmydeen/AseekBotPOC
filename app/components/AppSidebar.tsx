@@ -339,10 +339,10 @@ export default function AppSidebar({
 
                 {/* Sidebar Tabs */}
                 {isOpen && (
-                    <div className={`grid grid-cols-4 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-100'} p-1`}>
+                    <div className={styles.tabs.container}>
                         <button
                             onClick={() => setActiveTab('history')}
-                            className={`p-2 rounded-md flex justify-center ${activeTab === 'history' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
+                            className={styles.tabs.tab(activeTab === 'history', isDarkMode)}
                             aria-label="Chat History"
                             title="Chat History"
                         >
@@ -350,7 +350,7 @@ export default function AppSidebar({
                         </button>
                         <button
                             onClick={() => setActiveTab('files')}
-                            className={`p-2 rounded-md flex justify-center ${activeTab === 'files' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
+                            className={styles.tabs.tab(activeTab === 'files', isDarkMode)}
                             aria-label="Uploaded Files"
                             title="Uploaded Files"
                         >
@@ -358,7 +358,7 @@ export default function AppSidebar({
                         </button>
                         <button
                             onClick={() => setActiveTab('prompts')}
-                            className={`p-2 rounded-md flex justify-center ${activeTab === 'prompts' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
+                            className={styles.tabs.tab(activeTab === 'prompts', isDarkMode)}
                             aria-label="Saved Prompts"
                             title="Saved Prompts"
                         >
@@ -366,7 +366,7 @@ export default function AppSidebar({
                         </button>
                         <button
                             onClick={() => setActiveTab('settings')}
-                            className={`p-2 rounded-md flex justify-center ${activeTab === 'settings' ? (isDarkMode ? 'dark-active' : 'bg-white') : ''}`}
+                            className={styles.tabs.tab(activeTab === 'settings', isDarkMode)}
                             aria-label="Settings"
                             title="Settings"
                         >
