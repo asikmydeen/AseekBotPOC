@@ -357,6 +357,22 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               />
             </div>
 
+            {/* Upload progress indicator */}
+            {isUploading && (
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Uploading files...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
             {/* Search bar */}
             <div className={`flex items-center mb-4 p-2 rounded-lg ${
               isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
