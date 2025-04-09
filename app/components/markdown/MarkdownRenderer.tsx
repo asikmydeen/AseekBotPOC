@@ -13,8 +13,8 @@ interface MarkdownRendererProps {
   onImageClick: (imageUrl: string) => void;
 }
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ 
-  content, 
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+  content,
   isDarkMode,
   onImageClick
 }) => {
@@ -30,7 +30,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const renderer = new marked.Renderer();
 
     // Custom image renderer
-    renderer.image = (href, title, text) => {
+    renderer.image = ({ href, title, text }: { href: string; title: string | null; text: string }) => {
       // We'll replace this with a placeholder that we can identify later
       return `<div class="markdown-image" data-src="${href}" data-alt="${text || ''}" data-title="${title || ''}"></div>`;
     };
@@ -60,10 +60,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     try {
       // Parse markdown content
       let parsed = marked.parse(content, options) as string;
-      
+
       // Sanitize the HTML to prevent XSS attacks
       parsed = DOMPurify.sanitize(parsed);
-      
+
       setParsedContent(parsed);
     } catch (error) {
       console.error('Error parsing markdown:', error);
@@ -84,17 +84,17 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       const src = element.getAttribute('data-src') || '';
       const alt = element.getAttribute('data-alt') || '';
       const title = element.getAttribute('data-title') || '';
-      
+
       const imageComponent = (
-        <MarkdownImage 
-          src={src} 
-          alt={alt} 
-          title={title} 
+        <MarkdownImage
+          src={src}
+          alt={alt}
+          title={title}
           onImageClick={onImageClick}
           isDarkMode={isDarkMode}
         />
       );
-      
+
       // Replace the placeholder with the React component
       // This is a simplified approach - in a real implementation, you'd need to handle this differently
       // as you can't directly insert React components into HTML strings
