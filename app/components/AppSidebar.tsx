@@ -376,7 +376,7 @@ export default function AppSidebar({
                 )}
 
                 {/* Sidebar Content */}
-                <div className="h-[calc(100vh-112px)] overflow-y-auto p-2 sm:p-3 md:p-4">
+                <div className={styles.content.container}>
                     {isOpen && activeTab === 'history' && (
                         <HistoryList isDarkMode={isDarkMode} />
                     )}
