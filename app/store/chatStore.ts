@@ -99,6 +99,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         size: file.size,
         type: file.type,
         url: file.url || URL.createObjectURL(file),
+        contentType: file.type, // Added to conform with FileAttachment interface
       }));
     }
 
