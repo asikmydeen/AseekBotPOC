@@ -89,8 +89,25 @@ export async function makeRequest<T = any>(
 
     console.log(`Making ${method} request to ${url}`, { body, requestOptions });
 
+    // Intercept the request if needed
+    const intercepted = interceptRequest(url, method, body);
+
+    // Update the request parameters if they were modified
+    if (intercepted.body !== body) {
+      if (intercepted.body instanceof FormData) {
+        // Don't set Content-Type for FormData, browser will set it with boundary
+        delete (requestOptions.headers as any)['Content-Type'];
+        requestOptions.body = intercepted.body;
+      } else {
+        // Make sure body is properly stringified JSON
+        requestOptions.body = typeof intercepted.body === 'string' ? intercepted.body : JSON.stringify(intercepted.body);
+      }
+
+      console.log(`Request intercepted and modified`, { originalBody: body, newBody: intercepted.body });
+    }
+
     // Make the request
-    const response = await fetch(url, requestOptions);
+    const response = await fetch(intercepted.url, requestOptions);
 
     // Parse the response
     let data;
