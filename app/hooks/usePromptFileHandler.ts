@@ -80,6 +80,13 @@ const usePromptFileHandler = ({
   // Get the modal context
   const { openFileSelectionDialog } = useModal();
 
+  // Reset state (dialog closing is handled by the modal context)
+  const resetState = useCallback(() => {
+    setSelectedFiles([]);
+    setVariables({});
+    setError(null);
+  }, []);
+
   // Handle file selection - defined first to avoid circular dependency
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
     console.log('Submitting files and variables:', files.length, 'files');
