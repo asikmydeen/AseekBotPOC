@@ -155,19 +155,41 @@ export const apiService = {
     }>;
   }, chatSessionId?: string, files?: any[]) => {
     try {
+      console.log('apiService: sendMessage called with:', {
+        type: typeof messageOrOptions,
+        isObject: typeof messageOrOptions === 'object',
+        hasPromptId: typeof messageOrOptions === 'object' && 'promptId' in messageOrOptions,
+        hasS3Files: typeof messageOrOptions === 'object' && 's3Files' in messageOrOptions,
+        chatSessionId,
+        hasFiles: files && files.length > 0
+      });
+
       let payload: any;
 
       // Handle the case where messageOrOptions is an object (new format)
       if (typeof messageOrOptions === 'object') {
         payload = { ...messageOrOptions };
+        console.log('apiService: Using object format with properties:', Object.keys(payload));
 
         // Ensure userId is set
         if (!payload.userId) {
           payload.userId = TEST_USER_ID;
+          console.log('apiService: Setting default userId:', TEST_USER_ID);
+        }
+
+        // Log s3Files if present
+        if (payload.s3Files) {
+          console.log('apiService: s3Files present in payload:', {
+            count: payload.s3Files.length,
+            files: payload.s3Files.map((f: any) => ({ name: f.name, fileName: f.fileName }))
+          });
+        } else {
+          console.log('apiService: No s3Files in payload');
         }
       }
       // Handle the case where messageOrOptions is a string (old format)
       else {
+        console.log('apiService: Using string format with message:', messageOrOptions.substring(0, 50) + '...');
         payload = {
           message: messageOrOptions,
           userId: TEST_USER_ID
@@ -177,10 +199,12 @@ export const apiService = {
         if (chatSessionId) {
           payload.chatId = chatSessionId;
           payload.sessionId = chatSessionId;
+          console.log('apiService: Setting chatId and sessionId:', chatSessionId);
         }
 
         // Add files if they exist
         if (files && files.length > 0) {
+          console.log('apiService: Adding files to payload:', files.length, 'files');
           payload.files = files.map(file => ({
             name: file.name,
             type: file.type,
@@ -190,10 +214,12 @@ export const apiService = {
         }
       }
 
-      console.log('Sending message with payload:', payload);
-      return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
+      console.log('apiService: Sending message with payload:', payload);
+      const response = await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
+      console.log('apiService: Message sent successfully, response:', response);
+      return response;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('apiService: Error sending message:', error);
       throw error;
     }
   },
