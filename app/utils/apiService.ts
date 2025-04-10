@@ -238,10 +238,19 @@ export const apiService = {
                 // If we don't have s3Files yet, use the ones from promptMetadata
                 payload.s3Files = promptMetadata.s3Files;
               }
+            } else if (payload.s3Files && payload.s3Files.length > 0) {
+              // If promptMetadata doesn't have s3Files but we have them in the payload,
+              // add them to the promptMetadata
+              promptMetadata.s3Files = payload.s3Files;
+            }
 
+            // Always log the s3Files that will be included
+            if (payload.s3Files && payload.s3Files.length > 0) {
               console.log('Including s3Files in request:', payload.s3Files);
+            }
 
-              // Remove the regular files array if we're using s3Files
+            // Remove the regular files array if we're using s3Files
+            if (payload.s3Files && payload.s3Files.length > 0) {
               delete payload.files;
             }
           }
