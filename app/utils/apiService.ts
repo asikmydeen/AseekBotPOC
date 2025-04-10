@@ -220,41 +220,10 @@ export const apiService = {
           });
         }
 
-        // Check if we have s3Files directly stored in localStorage
-        try {
-          // First try to get directS3Files which has the properly named files
-          const directS3FilesJson = localStorage.getItem('directS3Files');
-          if (directS3FilesJson) {
-            try {
-              const directS3Files = JSON.parse(directS3FilesJson);
-              if (Array.isArray(directS3Files) && directS3Files.length > 0) {
-                console.log('Found directS3Files in localStorage:', directS3Files.length);
-                // Use these files directly in the payload
-                payload.s3Files = directS3Files;
-                // Remove the regular files array if we're using s3Files
-                delete payload.files;
-              }
-            } catch (e) {
-              console.error('Error parsing directS3Files from localStorage:', e);
-            }
-          } else {
-            // Fall back to s3FilesForAPI
-            const s3FilesJson = localStorage.getItem('s3FilesForAPI');
-            if (s3FilesJson) {
-              try {
-                const s3FilesFromStorage = JSON.parse(s3FilesJson);
-                if (Array.isArray(s3FilesFromStorage) && s3FilesFromStorage.length > 0) {
-                  console.log('Found s3Files in localStorage:', s3FilesFromStorage.length);
-                  // Use these files directly in the payload
-                  payload.s3Files = s3FilesFromStorage;
-                  // Remove the regular files array if we're using s3Files
-                  delete payload.files;
-                }
-              } catch (e) {
-                console.error('Error parsing s3FilesForAPI from localStorage:', e);
-              }
-            }
-          }
+        // If we have s3Files, remove the regular files array
+        if (payload.s3Files && payload.s3Files.length > 0) {
+          delete payload.files;
+        }
 
           // Check if we have prompt metadata
           const metadataJson = localStorage.getItem('promptMetadata');
