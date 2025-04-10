@@ -478,148 +478,91 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          {/* Left side - File selection */}
-          <div className="md:w-1/2 p-5 flex flex-col h-full overflow-hidden border-r border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">
-                Select Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
-              </h3>
-              <div className="flex space-x-2">
-                {/* Upload new file button */}
-                <button
-                  onClick={triggerFileUpload}
-                  className={`p-2 rounded-full transition-colors ${
-                    isDarkMode ? 'hover:bg-gray-700 text-green-400' : 'hover:bg-gray-200 text-green-600'
-                  }`}
-                  title="Upload new file"
-                >
-                  <FiPlus size={18} />
-                </button>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-5 flex flex-col h-full overflow-hidden">
+            {/* Upload controls and selected files */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">
+                  Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
+                </h3>
+                <div className="flex space-x-2">
+                  {/* Upload new file button */}
+                  <button
+                    onClick={triggerFileUpload}
+                    className={`flex items-center px-3 py-2 rounded-md transition-colors ${
+                      isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                    }`}
+                    title="Upload new file"
+                  >
+                    <FiPlus size={16} className="mr-2" />
+                    Upload File
+                  </button>
 
-                {/* Refresh files button */}
-                <button
-                  onClick={fetchS3Files}
-                  className={`p-2 rounded-full transition-colors ${
-                    isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
-                  }`}
-                  title="Refresh file list"
-                >
-                  <FiUpload size={18} />
-                </button>
+                  {/* Refresh files button */}
+                  <button
+                    onClick={fetchS3Files}
+                    className={`p-2 rounded-md transition-colors ${
+                      isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
+                    }`}
+                    title="Refresh file list"
+                  >
+                    <FiUpload size={18} />
+                  </button>
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  multiple
+                />
               </div>
 
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                className="hidden"
-                multiple
-              />
-            </div>
-
-            {/* Upload progress indicator */}
-            {isUploading && (
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Uploading files...</span>
-                  <span>{uploadProgress}%</span>
+              {/* Upload progress indicator */}
+              {isUploading && (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Uploading files...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div
+                      className="h-full rounded-full bg-green-500 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                  <div
-                    className="h-full rounded-full bg-green-500 transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Search bar */}
-            <div className={`flex items-center mb-4 p-2 rounded-lg ${
-              isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-            }`}>
-              <FiSearch className="mr-2 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search files..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full bg-transparent border-none focus:outline-none ${
-                  isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
-                }`}
-              />
-            </div>
-
-            {/* File list */}
-            <div
-              ref={fileListRef}
-              className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px] hover:overflow-y-scroll"
-              style={{ height: 'calc(60vh - 200px)', scrollbarWidth: 'thin' }}
-            >
-              {isLoadingS3Files ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
-                </div>
-              ) : filteredFiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <FiFolder size={48} className="mb-4 opacity-50" />
-                  <p className="text-gray-500">No files found</p>
-                  <p className="text-sm text-gray-400 mt-1">Upload files or try a different search</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-2">
-                  {filteredFiles.map((file, index) => {
-                    const isSelected = selectedFiles.some(f =>
-                      f.fileId === file.fileId || f.fileKey === file.fileKey
-                    );
-
-                    return (
-                      <motion.div
+              {/* Selected files summary */}
+              {selectedFiles.length > 0 && (
+                <div className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} mb-4`}>
+                  <h4 className="text-sm font-medium mb-2">Selected Files:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFiles.map((file, index) => (
+                      <div
                         key={file.fileId || file.fileKey || index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: index * 0.03 }}
-                        className={`p-3 rounded-lg cursor-pointer transition-all ${
-                          isSelected
-                            ? isDarkMode
-                              ? 'bg-blue-900/40 border border-blue-500'
-                              : 'bg-blue-50 border border-blue-500'
-                            : isDarkMode
-                              ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700'
-                              : 'bg-white hover:bg-gray-50 border border-gray-200'
-                        }`}
-                        onClick={() => handleFileSelect(file)}
+                        className={`flex items-center px-3 py-1.5 rounded-md text-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}
                       >
-                        <div className="flex items-center">
-                          <div className={`mr-3 p-2 rounded-lg ${
-                            isSelected
-                              ? 'bg-blue-500 text-white'
-                              : isDarkMode
-                                ? 'bg-gray-700 text-gray-300'
-                                : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {isSelected ? <FiCheck size={18} /> : <FiFile size={18} />}
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <div className="truncate font-medium">{file.fileName}</div>
-                            <div className="text-xs opacity-70 flex items-center mt-1">
-                              <span className="mr-2">{formatFileSize(file.fileSize || 0)}</span>
-                              <span className="text-gray-400">•</span>
-                              <span className="ml-2">{formatDate(file.uploadDate || '')}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                        <FiFile size={14} className="mr-2 flex-shrink-0" />
+                        <span className="truncate max-w-[150px]">{file.fileName}</span>
+                        <button
+                          onClick={() => handleFileSelect(file)}
+                          className={`ml-2 p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-red-400' : 'hover:bg-gray-200 text-gray-500 hover:text-red-500'}`}
+                          title="Remove file"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Right side - Variables */}
-          <div className="md:w-1/2 p-5 flex flex-col h-full overflow-hidden">
             <h3 className="text-lg font-medium mb-4">Required Information</h3>
 
             {error && (
@@ -630,7 +573,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px] hover:overflow-y-scroll" style={{ height: 'calc(60vh - 200px)', scrollbarWidth: 'thin' }}>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: 'calc(60vh - 250px)', scrollbarWidth: 'thin' }}>
               {requiredVariables.length > 0 ? (
                 <div className="space-y-4">
                   {requiredVariables.map((variable) => (
@@ -813,6 +756,88 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                 </div>
               )}
             </div>
+
+            {/* File browser (collapsed by default) */}
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium mb-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                Browse All Files
+              </summary>
+              <div className="mt-2">
+                {/* Search bar */}
+                <div className={`flex items-center mb-3 p-2 rounded-lg ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                }`}>
+                  <FiSearch className="mr-2 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search files..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full bg-transparent border-none focus:outline-none ${
+                      isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+
+                {/* File list */}
+                <div
+                  className="overflow-y-auto pr-2 custom-scrollbar"
+                  style={{ maxHeight: '200px', scrollbarWidth: 'thin' }}
+                >
+                  {isLoadingS3Files ? (
+                    <div className="flex items-center justify-center h-20">
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+                    </div>
+                  ) : filteredFiles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-20 text-center">
+                      <p className="text-gray-500 text-sm">No files found</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-1">
+                      {filteredFiles.map((file, index) => {
+                        const isSelected = selectedFiles.some(f =>
+                          f.fileId === file.fileId || f.fileKey === file.fileKey
+                        );
+
+                        return (
+                          <div
+                            key={file.fileId || file.fileKey || index}
+                            className={`p-2 rounded-md cursor-pointer transition-all ${
+                              isSelected
+                                ? isDarkMode
+                                  ? 'bg-blue-900/40 border border-blue-500'
+                                  : 'bg-blue-50 border border-blue-500'
+                                : isDarkMode
+                                  ? 'bg-gray-750 hover:bg-gray-700 border border-gray-700'
+                                  : 'bg-white hover:bg-gray-50 border border-gray-200'
+                            }`}
+                            onClick={() => handleFileSelect(file)}
+                          >
+                            <div className="flex items-center">
+                              <div className={`mr-2 p-1.5 rounded-md ${
+                                isSelected
+                                  ? 'bg-blue-500 text-white'
+                                  : isDarkMode
+                                    ? 'bg-gray-700 text-gray-300'
+                                    : 'bg-gray-100 text-gray-500'
+                              }`}>
+                                {isSelected ? <FiCheck size={14} /> : <FiFile size={14} />}
+                              </div>
+                              <div className="flex-1 overflow-hidden">
+                                <div className="truncate text-sm">{file.fileName}</div>
+                                <div className="text-xs opacity-70 flex items-center">
+                                  <span className="mr-2">{formatFileSize(file.fileSize || 0)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </details>
           </div>
         </div>
 
