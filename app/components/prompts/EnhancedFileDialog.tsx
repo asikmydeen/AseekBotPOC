@@ -353,8 +353,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    console.log('EnhancedFileDialog: handleSubmit called');
+
     // Validate required files
     if (requiredFileCount > 0 && selectedFiles.length < requiredFileCount) {
+      console.error(`EnhancedFileDialog: Not enough files selected. Required: ${requiredFileCount}, Selected: ${selectedFiles.length}`);
       setError(`Please select at least ${requiredFileCount} file(s).`);
       return;
     }
@@ -362,10 +365,12 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     // Validate required variables
     const missingVariables = requiredVariables.filter(variable => !variables[variable]);
     if (missingVariables.length > 0) {
+      console.error(`EnhancedFileDialog: Missing variables: ${missingVariables.join(', ')}`);
       setError(`Please fill in all required variables: ${missingVariables.join(', ')}`);
       return;
     }
 
+    console.log('EnhancedFileDialog: All validation passed, proceeding with submission');
     setIsSubmitting(true);
     setError(null);
 
@@ -379,21 +384,26 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       }));
 
       // Log the data being sent to the API
-      console.log('Submitting files and variables to API:', {
-        files: selectedFiles,
+      console.log('EnhancedFileDialog: Submitting files and variables to API:', {
+        files: selectedFiles.length,
+        fileDetails: selectedFiles.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })),
         s3Files,
         variables,
         promptId
       });
 
       // The parent component (usePromptFileHandler) will handle the API call
+      console.log('EnhancedFileDialog: Calling onSubmit function with files and variables');
 
       // Call the onSubmit function with the selected files and variables
       onSubmit(selectedFiles, variables);
+
+      console.log('EnhancedFileDialog: onSubmit function called successfully');
     } catch (error) {
-      console.error('Error submitting files:', error);
+      console.error('EnhancedFileDialog: Error submitting files:', error);
       setError('Failed to submit files. Please try again.');
     } finally {
+      console.log('EnhancedFileDialog: Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
