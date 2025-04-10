@@ -84,7 +84,7 @@ function Message({
     // Set displayed text immediately for both user and bot
     setDisplayedText(messageContent);
     setIsTyping(false);
-  }, [message.text, message.message, message.formattedMessage, message.sender, getMessageContent]);
+  }, [message.text, message.message, message.formattedMessage, message.completion, message.sender, getMessageContent]);
 
   // Handle image click
   const handleImageClick = (imageUrl: string) => {
