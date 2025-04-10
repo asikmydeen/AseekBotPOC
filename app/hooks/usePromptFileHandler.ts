@@ -258,19 +258,37 @@ const usePromptFileHandler = ({
 
       // Call API to send message with prompt and files
       // We include the userMessage in the API call to avoid sending a separate message
-      const response = await apiService.sendMessage({
+      console.log('usePromptFileHandler: Calling apiService.sendMessage with payload:', {
         promptId: prompt.promptId,
         userId: currentUserId,
         sessionId: currentSessionId,
         chatId: currentChatId,
-        s3Files,
-        message: userMessage  // Include the user message in the API call
+        s3FilesCount: s3Files.length,
+        message: userMessage
       });
 
-      if (response && response.requestId) {
-        console.log('Prompt API call successful, got requestId:', response.requestId);
-        setRequestId(response.requestId);
-        setIsPolling(true);
+      try {
+        const response = await apiService.sendMessage({
+          promptId: prompt.promptId,
+          userId: currentUserId,
+          sessionId: currentSessionId,
+          chatId: currentChatId,
+          s3Files,
+          message: userMessage  // Include the user message in the API call
+        });
+
+        console.log('usePromptFileHandler: API response:', response);
+
+        if (response && response.requestId) {
+          console.log('usePromptFileHandler: Prompt API call successful, got requestId:', response.requestId);
+          setRequestId(response.requestId);
+          setIsPolling(true);
+      } else {
+          console.error('usePromptFileHandler: API response missing requestId:', response);
+      }
+      } catch (apiError) {
+        console.error('usePromptFileHandler: API call failed:', apiError);
+        throw apiError; // Re-throw to be caught by the outer try/catch
 
         if (currentStatusCallback) {
           // Update status to show processing in the chat interface
