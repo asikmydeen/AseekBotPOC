@@ -225,9 +225,14 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
     if (isAlreadySelected) {
       // Remove file if already selected
-      setSelectedFiles(prev => prev.filter(f =>
-        f.fileId !== file.fileId && f.fileKey !== file.fileKey
-      ));
+      setSelectedFiles(prev => {
+        const newFiles = prev.filter(f =>
+          f.fileId !== file.fileId && f.fileKey !== file.fileKey
+        );
+        // Validate form after removing file
+        setTimeout(() => validateForm(), 0);
+        return newFiles;
+      });
     } else {
       // Add file to selected files
       const newFile: UploadedFile = {
@@ -244,7 +249,12 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         originalS3Url: file.originalS3Url
       };
 
-      setSelectedFiles(prev => [...prev, newFile]);
+      setSelectedFiles(prev => {
+        const newFiles = [...prev, newFile];
+        // Validate form after adding file
+        setTimeout(() => validateForm(), 0);
+        return newFiles;
+      });
     }
   };
 
