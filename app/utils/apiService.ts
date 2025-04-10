@@ -204,6 +204,12 @@ export const apiService = {
           if (metadataJson) {
             const promptMetadata = JSON.parse(metadataJson);
             console.log('Including prompt metadata in request:', promptMetadata);
+
+            // If we have s3Files in the payload but not in the promptMetadata, add them
+            if (payload.s3Files && payload.s3Files.length > 0 && (!promptMetadata.s3Files || promptMetadata.s3Files.length === 0)) {
+              promptMetadata.s3Files = payload.s3Files;
+            }
+
             payload.promptMetadata = promptMetadata;
 
             // If we have variables, add them directly to the payload
