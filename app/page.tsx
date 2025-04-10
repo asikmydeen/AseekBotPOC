@@ -261,6 +261,10 @@ function ChatApp() {
         updateChatMessages(updatedMessages);
       }
 
+      // Reset the async processing state
+      setIsAsyncProcessing(false);
+      setAsyncStatus('');
+
       // Clear the processing status after a delay
       setTimeout(() => {
         setProcessingStatus('');
