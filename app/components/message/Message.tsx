@@ -161,11 +161,11 @@ function Message({
           {message.attachments && message.attachments.length > 0 && (
             <MessageAttachments
               attachments={message.attachments?.map(file => ({
-                id: file.url,  // Using url as id since it's unique
+                id: file.url || `file-${file.name}-${file.size}`,  // Using url as id or generate a unique id
                 name: file.name,
                 size: file.size,
                 type: file.type,
-                url: file.url
+                url: file.url || file.s3Url || ''
               }))}
               isDarkMode={isDarkMode}
               styles={styles}
