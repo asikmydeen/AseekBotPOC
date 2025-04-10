@@ -10,6 +10,12 @@ export default function TestModalDropdownPage() {
     variables: Record<string, string>;
   } | null>(null);
 
+  // Add state for API response and status polling
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [statusResponse, setStatusResponse] = useState<any>(null);
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
+
   // Test with different variable types
   const variableTypes = {
     'document_file': { type: 'file' },
@@ -62,8 +68,50 @@ export default function TestModalDropdownPage() {
       const data = await response.json();
       console.log('API response:', data);
 
-      // You would typically start polling for status here
-      // and update the UI accordingly
+      // Start polling for status
+      setApiResponse(data);
+      if (data.requestId) {
+        setIsPolling(true);
+
+        // Set up polling interval
+        const interval = setInterval(async () => {
+          try {
+            const statusResponse = await fetch(`/api/status/${data.requestId}?userId=test-user`);
+            if (!statusResponse.ok) {
+              throw new Error('Failed to check status');
+            }
+
+            const statusData = await statusResponse.json();
+            console.log('Status response:', statusData);
+            setStatusResponse(statusData);
+
+            // If status is completed, stop polling
+            if (statusData.status === 'COMPLETED') {
+              setIsPolling(false);
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                setPollInterval(null);
+              }
+            }
+          } catch (error) {
+            console.error('Error polling status:', error);
+            setIsPolling(false);
+            if (pollInterval) {
+              clearInterval(pollInterval);
+              setPollInterval(null);
+            }
+          }
+        }, 1000);
+
+        setPollInterval(interval);
+
+        // Clean up interval on component unmount
+        return () => {
+          if (interval) {
+            clearInterval(interval);
+          }
+        };
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Failed to send message. See console for details.');
@@ -99,7 +147,7 @@ export default function TestModalDropdownPage() {
 
         {result && (
           <div className="mt-8 p-4 border rounded-md">
-            <h2 className="text-xl font-semibold mb-2">Result:</h2>
+            <h2 className="text-xl font-semibold mb-2">Dialog Result:</h2>
 
             <h3 className="text-lg font-medium mt-4">Files:</h3>
             {result.files.length === 0 ? (
@@ -126,6 +174,47 @@ export default function TestModalDropdownPage() {
                 ))}
               </ul>
             )}
+          </div>
+        )}
+
+        {apiResponse && (
+          <div className="mt-8 p-4 border rounded-md bg-blue-50 dark:bg-blue-900/30">
+            <h2 className="text-xl font-semibold mb-2">API Response:</h2>
+            <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md overflow-auto text-sm">
+              {JSON.stringify(apiResponse, null, 2)}
+            </pre>
+
+            <div className="mt-4">
+              <h3 className="text-lg font-medium">Status:</h3>
+              {isPolling ? (
+                <div className="flex items-center mt-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent mr-2"></div>
+                  <span>Polling for status...</span>
+                </div>
+              ) : statusResponse ? (
+                <div>
+                  <div className="flex items-center mt-2">
+                    <span className={`inline-block w-3 h-3 rounded-full mr-2 ${statusResponse.status === 'COMPLETED' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                    <span>{statusResponse.status}</span>
+                    {statusResponse.progress !== undefined && (
+                      <span className="ml-2">({statusResponse.progress}%)</span>
+                    )}
+                  </div>
+
+                  {statusResponse.completion && (
+                    <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <h4 className="font-medium mb-2">Completion:</h4>
+                      <p>{statusResponse.completion.text}</p>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Timestamp: {new Date(statusResponse.completion.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p>No status information available</p>
+              )}
+            </div>
           </div>
         )}
 
