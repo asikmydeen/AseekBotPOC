@@ -190,7 +190,27 @@ export default function useChatMessages({
             botMessage.text.includes('### Recommendations'),
             botMessage.text.includes('### Next Steps')
           );
+        } else if (statusResponse.workflowType === 'MULTI_ANALYSIS_PROMPT') {
+          console.log('Multi-analysis prompt workflow detected, using completion data...');
+          console.log('Status response completion:', statusResponse.completion);
+          console.log('Status response aggregatedResults:', statusResponse.aggregatedResults);
+
+          // For MULTI_ANALYSIS_PROMPT, always use the completion field as the message text
+          const messageText = statusResponse.completion || statusResponse.message || 'Processing complete.';
+
+          botMessage = {
+            sender: 'bot',
+            formattedMessage: statusResponse.formattedMessage,
+            text: messageText,
+            timestamp: new Date().toISOString(),
+            chatId: statusResponse.chatId || '',
+            chatSessionId: chatSessionId,
+            completion: statusResponse.completion,
+            aggregatedResults: statusResponse.aggregatedResults,
+            agentType: 'bid-analysis' // Mark this as a bid analysis message
+          };
         } else {
+          console.log('Standard workflow detected, processing response...');
           console.log('Status response formattedMessage:', statusResponse.formattedMessage);
           console.log('Status response completion:', statusResponse.completion);
           console.log('Status response aggregatedResults:', statusResponse.aggregatedResults);
