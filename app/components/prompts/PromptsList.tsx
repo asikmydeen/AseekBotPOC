@@ -215,7 +215,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                 prompt={prompt}
                                 isDarkMode={isDarkMode}
                                 onClick={() => {
-                                    console.log('Prompt clicked:', prompt.title);
+                                    console.log('PromptsList: Prompt clicked:', prompt.title);
                                     // Check if the prompt requires files
                                     if (prompt.content && (
                                         prompt.content.includes('${') || // Has variables
@@ -223,13 +223,27 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                         prompt.promptId.includes('analysis') || // Analysis prompt
                                         prompt.promptId.includes('comparison') // Comparison prompt
                                     )) {
-                                        console.log('Prompt requires files or variables, opening dialog');
+                                        console.log('PromptsList: Prompt requires files or variables, opening dialog');
+                                        console.log('PromptsList: Prompt content:', prompt.content.substring(0, 100) + '...');
+                                        console.log('PromptsList: Prompt ID:', prompt.promptId);
+
                                         // Open file selection dialog
-                                        openFileDialog(prompt);
+                                        try {
+                                            console.log('PromptsList: Calling openFileDialog');
+                                            openFileDialog(prompt);
+                                            console.log('PromptsList: openFileDialog called successfully');
+                                        } catch (error) {
+                                            console.error('PromptsList: Error opening file dialog:', error);
+                                        }
                                     } else {
-                                        console.log('Regular prompt, calling click handler');
+                                        console.log('PromptsList: Regular prompt, calling click handler');
                                         // Regular prompt, just call the click handler
-                                        onPromptClick && onPromptClick(prompt);
+                                        if (onPromptClick) {
+                                            console.log('PromptsList: onPromptClick is defined, calling it');
+                                            onPromptClick(prompt);
+                                        } else {
+                                            console.error('PromptsList: onPromptClick is not defined!');
+                                        }
                                     }
                                 }}
                                 onEdit={() => onEditPrompt && onEditPrompt(prompt)}
