@@ -218,11 +218,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         fileName: file.fileName,
         fileId: file.fileId,
         fileKey: file.fileKey,
-        size: file.fileSize,
-        type: file.fileType,
+        size: file.fileSize || 0,
+        type: file.fileType || 'application/octet-stream',
         // Use the clean URL without query parameters
         url: file.s3Url || '',
-        s3Url: file.s3Url,
+        s3Url: file.s3Url || '',
         // Store the original URL for reference if needed
         originalS3Url: file.originalS3Url
       };
@@ -443,7 +443,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                             <div className="text-xs opacity-70 flex items-center mt-1">
                               <span className="mr-2">{formatFileSize(file.fileSize || 0)}</span>
                               <span className="text-gray-400">•</span>
-                              <span className="ml-2">{formatDate(file.uploadDate)}</span>
+                              <span className="ml-2">{formatDate(file.uploadDate || '')}</span>
                             </div>
                           </div>
                         </div>
