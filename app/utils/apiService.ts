@@ -245,6 +245,30 @@ export const apiService = {
     }>;
   }, chatSessionId?: string, files?: any[]) => {
     try {
+      // Check if this is a vendor-sow-comparison-analysis-v1 prompt
+      const metadataJson = localStorage.getItem('promptMetadata');
+      if (metadataJson) {
+        try {
+          const metadata = JSON.parse(metadataJson);
+          if (metadata.promptId === 'vendor-sow-comparison-analysis-v1' && typeof messageOrOptions === 'string' && files && files.length > 0) {
+            console.log('Detected vendor-sow-comparison-analysis-v1 prompt, using special function');
+            return await sendVendorAnalysisMessage(messageOrOptions, chatSessionId || '', files);
+          }
+        } catch (e) {
+          console.error('Error parsing promptMetadata:', e);
+        }
+      }
+
+      // Also check if promptId is directly specified
+      if (typeof messageOrOptions === 'object' && messageOrOptions.promptId === 'vendor-sow-comparison-analysis-v1') {
+        console.log('Detected vendor-sow-comparison-analysis-v1 prompt in object, using special function');
+        return await sendVendorAnalysisMessage(
+          messageOrOptions.message || '',
+          messageOrOptions.sessionId || messageOrOptions.chatId || '',
+          files || []
+        );
+      }
+
       let payload: any;
 
       // Handle the case where messageOrOptions is an object (new format)
