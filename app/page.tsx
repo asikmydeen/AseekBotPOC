@@ -246,15 +246,47 @@ function ChatApp() {
       if (userMessage && activeChat) {
         console.log('Adding bot response message to chat:', userMessage);
 
+        // Check if we have a status response object with completion data
+        // This would be passed from usePromptFileHandler or other status polling mechanisms
+        let completionData = null;
+        let aggregatedResults = null;
+
+        // Try to parse the userMessage as JSON to see if it contains a status response object
+        try {
+          // If userMessage is a stringified JSON object, parse it
+          if (userMessage.startsWith('{') && userMessage.endsWith('}')) {
+            const statusObj = JSON.parse(userMessage);
+            if (statusObj.completion) {
+              completionData = statusObj.completion;
+              aggregatedResults = statusObj.aggregatedResults;
+              console.log('Found completion data in status response:', {
+                completionLength: completionData.length,
+                hasAggregatedResults: !!aggregatedResults
+              });
+            }
+          }
+        } catch (e) {
+          // If parsing fails, just use the userMessage as is
+          console.log('Could not parse userMessage as JSON, using as plain text');
+        }
+
         // Create a bot message with the response
         const botMessage = {
           sender: 'bot',
-          text: userMessage,
+          text: completionData || userMessage, // Use completion data if available, otherwise use userMessage
           timestamp: new Date().toISOString(),
           id: `bot-${Date.now()}`,
           chatId: activeChat.id,
-          chatSessionId: activeChat.id
+          chatSessionId: activeChat.id,
+          completion: completionData, // Include the completion data
+          aggregatedResults: aggregatedResults // Include the aggregated results
         };
+
+        console.log('Created bot message with properties:', {
+          hasCompletion: !!botMessage.completion,
+          completionLength: botMessage.completion?.length || 0,
+          textLength: botMessage.text?.length || 0
+        });
 
         // Update the active chat with the new bot message
         const updatedMessages = [...(activeChat.messages || []), botMessage];
