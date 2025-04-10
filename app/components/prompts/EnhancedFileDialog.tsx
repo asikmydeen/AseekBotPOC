@@ -1,10 +1,15 @@
 "use client";
-import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
-import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
+import React, { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
+import { FiX, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
 import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+
+interface VariableType {
+  type: 'text' | 'file' | 'number' | 'date' | 'select';
+  options?: string[];
+}
 
 interface EnhancedFileDialogProps {
   isOpen: boolean;
@@ -14,7 +19,7 @@ interface EnhancedFileDialogProps {
   promptTitle: string;
   requiredFileCount?: number;
   requiredVariables?: string[];
-  variableTypes?: Record<string, any>;
+  variableTypes?: Record<string, VariableType>;
 }
 
 const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
@@ -365,23 +370,6 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     setError(null);
 
     try {
-      // Format files for API
-      const s3Files = selectedFiles.map(file => ({
-        name: file.name || file.fileName,
-        fileName: file.fileName || file.name,
-        s3Url: file.s3Url || file.url,
-        mimeType: file.type
-      }));
-
-      // Log the data being sent to the API
-      console.log('Submitting files and variables to API:', {
-        files: selectedFiles,
-        s3Files,
-        variables,
-        promptId: _promptId
-      });
-
-      // Call the onSubmit function with the selected files and variables
       onSubmit(selectedFiles, variables);
     } catch (error) {
       console.error('Error submitting files:', error);
