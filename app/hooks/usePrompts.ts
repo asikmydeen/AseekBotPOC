@@ -35,12 +35,19 @@ export function usePrompts() {
     }
   }, [isLoading, fetchPrompts]);
 
+  // Wrap fetchPrompts to reset the ref when manually called
+  const wrappedFetchPrompts = useCallback(async (filters?: any) => {
+    // Reset the ref so we can fetch again
+    hasFetchedRef.current = true;
+    return await fetchPrompts(filters);
+  }, [fetchPrompts]);
+
   return {
     prompts,
     isLoading,
     error,
     selectedPrompt,
-    fetchPrompts,
+    fetchPrompts: wrappedFetchPrompts,
     getPromptById,
     createPrompt,
     updatePrompt,
