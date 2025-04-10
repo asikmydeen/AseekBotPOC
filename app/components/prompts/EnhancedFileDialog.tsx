@@ -78,18 +78,21 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   // Auto-map files to variables based on file types and names
   useEffect(() => {
     if (selectedFiles.length > 0 && requiredVariables.length > 0) {
+      console.log('Attempting to auto-map files to variables:', selectedFiles.length, 'files,', requiredVariables.length, 'variables');
       const newVariables = { ...variables };
       let variablesUpdated = false;
 
       // Try to match files to variables based on patterns
       selectedFiles.forEach(file => {
         const fileName = file.fileName?.toLowerCase() || '';
+        console.log('Checking file for variable mapping:', fileName);
 
         // Match SOW documents
         if ((fileName.includes('sow') || fileName.includes('scope') || fileName.includes('work')) &&
             requiredVariables.includes('sow_doc') && !newVariables['sow_doc']) {
           newVariables['sow_doc'] = file.name;
           variablesUpdated = true;
+          console.log('Mapped file to sow_doc variable:', file.name);
         }
 
         // Match bid documents
@@ -100,6 +103,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
             if (requiredVariables.includes(varName) && !newVariables[varName]) {
               newVariables[varName] = file.name;
               variablesUpdated = true;
+              console.log(`Mapped file to ${varName} variable:`, file.name);
               break;
             }
           }
@@ -107,10 +111,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       });
 
       if (variablesUpdated) {
+        console.log('Updated variables with mapped files:', newVariables);
         setVariables(newVariables);
       }
     }
-  }, [selectedFiles, requiredVariables]);
+  }, [selectedFiles, requiredVariables, variables]);
 
   const fetchS3Files = async () => {
     try {
