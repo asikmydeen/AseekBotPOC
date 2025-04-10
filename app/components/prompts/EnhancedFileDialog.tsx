@@ -394,7 +394,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
             {/* File list */}
             <div
               ref={fileListRef}
-              className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
+              className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]"
+              style={{ height: 'calc(60vh - 200px)' }}
             >
               {isLoadingS3Files ? (
                 <div className="flex items-center justify-center h-full">
