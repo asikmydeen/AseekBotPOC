@@ -225,34 +225,34 @@ export const apiService = {
           delete payload.files;
         }
 
-          // Check if we have prompt metadata
-          const metadataJson = localStorage.getItem('promptMetadata');
-          if (metadataJson) {
-            try {
-              const promptMetadata = JSON.parse(metadataJson);
-              console.log('Including prompt metadata in request:', promptMetadata);
+        // Check if we have prompt metadata
+        const metadataJson = localStorage.getItem('promptMetadata');
+        if (metadataJson) {
+          try {
+            const promptMetadata = JSON.parse(metadataJson);
+            console.log('Including prompt metadata in request:', promptMetadata);
 
-              // Add promptMetadata to the payload
-              payload.promptMetadata = promptMetadata;
+            // Add promptMetadata to the payload
+            payload.promptMetadata = promptMetadata;
 
-              // If we have variables, add them directly to the payload
-              if (promptMetadata.variables) {
-                payload.variables = promptMetadata.variables;
-              }
-
-              // If we have a promptId, add it directly to the payload
-              if (promptMetadata.promptId) {
-                payload.promptId = promptMetadata.promptId;
-              }
-
-              // If we have s3Files in the payload, add them to the promptMetadata
-              if (payload.s3Files && payload.s3Files.length > 0) {
-                promptMetadata.s3Files = payload.s3Files;
-              }
-            } catch (error) {
-              console.error('Error parsing promptMetadata:', error);
+            // If we have variables, add them directly to the payload
+            if (promptMetadata.variables) {
+              payload.variables = promptMetadata.variables;
             }
+
+            // If we have a promptId, add it directly to the payload
+            if (promptMetadata.promptId) {
+              payload.promptId = promptMetadata.promptId;
+            }
+
+            // If we have s3Files in the payload, add them to the promptMetadata
+            if (payload.s3Files && payload.s3Files.length > 0) {
+              promptMetadata.s3Files = payload.s3Files;
+            }
+          } catch (error) {
+            console.error('Error parsing promptMetadata:', error);
           }
+        }
 
             // Always log the s3Files that will be included
             if (payload.s3Files && payload.s3Files.length > 0) {
