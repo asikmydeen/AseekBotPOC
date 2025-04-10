@@ -32,6 +32,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   const [isLoadingS3Files, setIsLoadingS3Files] = useState(false);
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -242,10 +243,32 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   };
 
   const handleVariableChange = (variable: string, value: string) => {
-    setVariables(prev => ({
-      ...prev,
-      [variable]: value
-    }));
+    setVariables(prev => {
+      const newVariables = {
+        ...prev,
+        [variable]: value
+      };
+
+      // Validate form after variable change
+      validateForm(newVariables);
+
+      return newVariables;
+    });
+  };
+
+  // Validate the form and update isFormValid state
+  const validateForm = (currentVariables: Record<string, string> = variables) => {
+    // Check if all required variables are filled
+    const missingVariables = requiredVariables.filter(variable => !currentVariables[variable]);
+
+    // Check if we have enough files
+    const hasEnoughFiles = requiredFileCount === 0 || selectedFiles.length >= requiredFileCount;
+
+    // Form is valid if we have all required variables and enough files
+    const valid = missingVariables.length === 0 && hasEnoughFiles;
+
+    setIsFormValid(valid);
+    return valid;
   };
 
   const handleVariableFileSelect = (variable: string, fileIndex: number) => {
