@@ -171,8 +171,8 @@ const usePromptFileHandler = ({
 
   // Handle file selection - defined first to avoid circular dependency
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
-    console.log('Submitting files and variables:', files.length, 'files');
-    console.log('Variables:', inputVariables);
+    console.log('usePromptFileHandler: handleFileSelection called with', files.length, 'files');
+    console.log('usePromptFileHandler: Variables:', inputVariables);
 
     setSelectedFiles(files);
     setVariables(inputVariables);
@@ -180,7 +180,7 @@ const usePromptFileHandler = ({
     // Validate that all required variables are filled
     const missingVariables = requiredVariables.filter(variable => !inputVariables[variable]);
     if (missingVariables.length > 0) {
-      console.error('Missing required variables:', missingVariables);
+      console.error('usePromptFileHandler: Missing required variables:', missingVariables);
       setError(new Error(`Please fill in all required variables: ${missingVariables.join(', ')}`));
       return;
     }
@@ -188,10 +188,15 @@ const usePromptFileHandler = ({
     // Store the current prompt in a local variable to avoid dependency issues
     const currentPrompt = selectedPrompt;
     if (currentPrompt) {
+      console.log('usePromptFileHandler: Current prompt found:', currentPrompt.title);
       // Use setTimeout to break the potential render cycle
+      console.log('usePromptFileHandler: Setting timeout to call handleSubmitPrompt');
       setTimeout(() => {
+        console.log('usePromptFileHandler: Timeout fired, calling handleSubmitPrompt');
         handleSubmitPrompt(currentPrompt, files, inputVariables);
       }, 0);
+    } else {
+      console.error('usePromptFileHandler: No current prompt found!');
     }
   }, [requiredVariables]);
 
@@ -201,7 +206,14 @@ const usePromptFileHandler = ({
     files: UploadedFile[],
     promptVariables: Record<string, string>
   ) => {
-    if (!prompt) return;
+    console.log('usePromptFileHandler: handleSubmitPrompt called with prompt:', prompt.title);
+    console.log('usePromptFileHandler: Files:', files.length, 'files');
+    console.log('usePromptFileHandler: Variables:', promptVariables);
+
+    if (!prompt) {
+      console.error('usePromptFileHandler: No prompt provided!');
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -212,6 +224,7 @@ const usePromptFileHandler = ({
       Object.entries(promptVariables).forEach(([key, value]) => {
         processedContent = processedContent.replace(new RegExp(`\\$\\{${key}\\}`, 'g'), value);
       });
+      console.log('usePromptFileHandler: Processed content with variables:', processedContent.substring(0, 100) + '...');
 
       // Format files for API
       const s3Files = files.map(file => ({
@@ -221,12 +234,14 @@ const usePromptFileHandler = ({
         s3Url: file.s3Url || file.url,
         mimeType: file.type
       }));
+      console.log('usePromptFileHandler: Formatted s3Files for API:', s3Files);
 
       // Capture current values to avoid closure issues
       const currentUserId = userId;
       const currentSessionId = sessionId;
       const currentChatId = chatId;
       const currentStatusCallback = onStatusUpdate;
+      console.log('usePromptFileHandler: Using session/chat IDs:', { currentUserId, currentSessionId, currentChatId });
 
       // Create a user message with the prompt and files
       const fileNames = files.map(f => f.fileName).join(', ');
