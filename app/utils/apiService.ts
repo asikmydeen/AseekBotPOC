@@ -364,10 +364,8 @@ export const apiService = {
       }
       const response = await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
 
-      // Clear prompt metadata and s3Files after sending
+      // Clear prompt metadata after sending
       localStorage.removeItem('promptMetadata');
-      localStorage.removeItem('s3FilesForAPI');
-      localStorage.removeItem('directS3Files');
 
       return response;
     } catch (error) {
