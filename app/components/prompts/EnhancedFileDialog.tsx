@@ -599,17 +599,18 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               <span>* Please fill in all required fields</span>
             </div>
           )}
-          <button
-            onClick={onClose}
-            className={`px-4 py-2 rounded-md mr-3 ${
-              isDarkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            }`}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className={`px-4 py-2 rounded-md ${
+                isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              }`}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
           <button
             onClick={handleSubmit}
             className={`px-4 py-2 rounded-md ${
