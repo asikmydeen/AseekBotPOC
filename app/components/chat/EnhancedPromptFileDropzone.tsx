@@ -166,10 +166,12 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
 
         // Check for SOW document
         if (lowerFileName.includes('sow')) {
+          // Find SOW variables
           const sowVar = requiredVariables.find(v => v.toLowerCase().includes('sow'));
           if (sowVar) {
             newVariables[sowVar] = file.fileName;
             variablesUpdated = true;
+            console.log(`Assigned ${file.fileName} to ${sowVar} variable`);
           }
         }
         // Check for BID documents
@@ -183,6 +185,7 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
               if (!newVariables[bidVar] || newVariables[bidVar] === '') {
                 newVariables[bidVar] = file.fileName;
                 variablesUpdated = true;
+                console.log(`Assigned ${file.fileName} to ${bidVar} variable`);
                 break;
               }
             }
@@ -190,11 +193,32 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         }
         // For other documents, assign to any empty variable
         else {
+          // Try to find a matching variable name in the filename
+          let matchFound = false;
           for (const variable of requiredVariables) {
-            if (!newVariables[variable] || newVariables[variable] === '') {
-              newVariables[variable] = file.fileName;
-              variablesUpdated = true;
-              break;
+            const varNameParts = variable.toLowerCase().split('_');
+            // Check if any part of the variable name is in the filename
+            for (const part of varNameParts) {
+              if (part.length > 2 && lowerFileName.includes(part)) { // Only match parts with more than 2 chars
+                newVariables[variable] = file.fileName;
+                variablesUpdated = true;
+                matchFound = true;
+                console.log(`Matched ${file.fileName} to ${variable} variable based on part: ${part}`);
+                break;
+              }
+            }
+            if (matchFound) break;
+          }
+
+          // If no match found, assign to any empty variable
+          if (!matchFound) {
+            for (const variable of requiredVariables) {
+              if (!newVariables[variable] || newVariables[variable] === '') {
+                newVariables[variable] = file.fileName;
+                variablesUpdated = true;
+                console.log(`Assigned ${file.fileName} to ${variable} variable (default assignment)`);
+                break;
+              }
             }
           }
         }
