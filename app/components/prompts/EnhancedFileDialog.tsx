@@ -666,6 +666,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                 <div
                                   className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
                                   style={{ maxHeight: '300px' }}
+                                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
                                 >
                                   {/* Search and upload section */}
                                   <div className="p-2 border-b border-gray-200 dark:border-gray-700">
