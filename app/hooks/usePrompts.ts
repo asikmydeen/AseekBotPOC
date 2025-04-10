@@ -36,10 +36,9 @@ export function usePrompts() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array ensures this only runs once on mount
 
-  // Wrap fetchPrompts to reset the ref when manually called
+  // Wrap fetchPrompts to allow manual refetching
   const wrappedFetchPrompts = useCallback(async (filters?: any) => {
-    // Reset the ref so we can fetch again
-    hasFetchedRef.current = true;
+    // We're explicitly calling fetch, so allow it to happen
     return await fetchPrompts(filters);
   }, [fetchPrompts]);
 
