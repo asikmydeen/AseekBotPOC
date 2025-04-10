@@ -150,14 +150,19 @@ const useFileActions = ({
               const metadata = {
                 promptId: storedPrompt.promptId,
                 variables: promptVariables,
-                files: uploadedFiles.map(file => ({
-                  name: file.name,
-                  url: file.url
+                s3Files: uploadedFiles.map(file => ({
+                  name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
+                  fileName: file.name,
+                  s3Url: file.url || file.s3Url || '',
+                  mimeType: file.type || 'application/octet-stream'
                 }))
               };
 
               // Store metadata in localStorage for the API to pick up
               localStorage.setItem('promptMetadata', JSON.stringify(metadata));
+
+              // Log the metadata for debugging
+              console.log('Prompt metadata prepared for API:', metadata);
             }
           }
         } catch (error) {
