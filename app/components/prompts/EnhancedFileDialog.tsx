@@ -26,7 +26,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  promptId: _promptId, // Not currently used but kept for future use
+  promptId,
   promptTitle,
   requiredFileCount = 0,
   requiredVariables = [],
@@ -370,7 +370,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     setError(null);
 
     try {
-      // Format files for API
+      // Format files for API - this is just for logging, the actual formatting happens in usePromptFileHandler
       const s3Files = selectedFiles.map(file => ({
         name: file.name || file.fileName,
         fileName: file.fileName || file.name,
@@ -385,6 +385,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         variables,
         promptId
       });
+
+      // The parent component (usePromptFileHandler) will handle the API call
 
       // Call the onSubmit function with the selected files and variables
       onSubmit(selectedFiles, variables);
