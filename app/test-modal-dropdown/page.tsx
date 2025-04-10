@@ -20,18 +20,61 @@ export default function TestModalDropdownPage() {
     'priority': { type: 'select', options: ['Low', 'Medium', 'High'] }
   };
 
-  const handleSubmit = (files: UploadedFile[], variables: Record<string, string>) => {
+  const handleSubmit = async (files: UploadedFile[], variables: Record<string, string>) => {
     console.log('Files submitted:', files);
     console.log('Variables submitted:', variables);
     setResult({ files, variables });
     setIsDialogOpen(false);
+
+    try {
+      // Format files for API
+      const s3Files = files.map(file => ({
+        name: file.name,
+        fileName: file.fileName || file.name,
+        s3Url: file.s3Url || file.url,
+        mimeType: file.type
+      }));
+
+      // Create a user message with the files
+      const fileNames = files.map(f => f.fileName || f.name).join(', ');
+      const userMessage = `Please analyze these documents: ${fileNames}`;
+
+      // Call API to send message with prompt and files
+      const response = await fetch('/api/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          promptId: 'test-modal-dropdown-prompt',
+          userId: 'test-user',
+          sessionId: 'test-session',
+          chatId: 'test-chat',
+          s3Files,
+          message: userMessage
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      console.log('API response:', data);
+
+      // You would typically start polling for status here
+      // and update the UI accordingly
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. See console for details.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Modal File Dropdown Test</h1>
-        
+
         <div className="mb-8">
           <p className="mb-4">
             This test page demonstrates the enhanced file dialog with modal dropdown selectors for file variables.
@@ -46,7 +89,7 @@ export default function TestModalDropdownPage() {
             <li>Appropriate input types for different variable types</li>
           </ul>
         </div>
-        
+
         <button
           onClick={() => setIsDialogOpen(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -57,7 +100,7 @@ export default function TestModalDropdownPage() {
         {result && (
           <div className="mt-8 p-4 border rounded-md">
             <h2 className="text-xl font-semibold mb-2">Result:</h2>
-            
+
             <h3 className="text-lg font-medium mt-4">Files:</h3>
             {result.files.length === 0 ? (
               <p className="text-gray-500">No files selected</p>
