@@ -20,7 +20,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  promptId,
+  promptId: _promptId, // Not currently used but kept for future use
   promptTitle,
   requiredFileCount = 0,
   requiredVariables = []
@@ -173,7 +173,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         setUploadProgress(progress);
 
         // Upload the file
-        await apiService.uploadFile(formData as unknown as File);
+        await apiService.uploadFile(file);
       }
 
       // Set progress to 100% when done
