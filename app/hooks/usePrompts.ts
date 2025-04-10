@@ -33,7 +33,7 @@ export function usePrompts() {
       hasFetchedRef.current = true;
       fetchPrompts();
     }
-  }, [isLoading, fetchPrompts]);
+  }, [prompts, isLoading, fetchPrompts]);
 
   // Wrap fetchPrompts to reset the ref when manually called
   const wrappedFetchPrompts = useCallback(async (filters?: any) => {
