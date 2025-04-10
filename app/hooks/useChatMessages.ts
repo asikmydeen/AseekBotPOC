@@ -192,13 +192,21 @@ export default function useChatMessages({
           );
         } else {
           console.log('Status response formattedMessage:', statusResponse.formattedMessage);
+          console.log('Status response completion:', statusResponse.completion);
+          console.log('Status response aggregatedResults:', statusResponse.aggregatedResults);
+
+          // Use the completion data if available, otherwise fall back to message
+          const messageText = statusResponse.completion || statusResponse.message || 'Processing complete.';
+
           botMessage = {
             sender: 'bot',
             formattedMessage: statusResponse.formattedMessage,
-            text: statusResponse.message || 'Processing complete.',
+            text: messageText,
             timestamp: new Date().toISOString(),
             chatId: statusResponse.chatId || '',
-            chatSessionId: chatSessionId
+            chatSessionId: chatSessionId,
+            completion: statusResponse.completion,
+            aggregatedResults: statusResponse.aggregatedResults
           };
         }
         console.log('Adding document analysis message to chat history');
