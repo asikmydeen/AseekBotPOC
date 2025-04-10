@@ -258,10 +258,6 @@ export const apiService = {
         if (payload.s3Files && payload.s3Files.length > 0) {
           console.log('Including s3Files in request:', payload.s3Files);
         }
-          }
-        } catch (error) {
-          console.error('Error parsing prompt metadata:', error);
-        }
       }
 
       // Special handling for vendor-sow-comparison-analysis-v1 prompt
