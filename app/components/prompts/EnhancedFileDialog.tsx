@@ -661,18 +661,31 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                 </div>
                               </div>
 
-                              {/* Dropdown content - inline version */}
+                              {/* Dropdown content - modal version */}
                               {uiState[`${variable}_dropdown_open`] && (
-                                <div
-                                  className={`fixed z-50 w-[calc(100%-4rem)] md:w-[400px] rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
-                                  style={{
-                                    maxHeight: '300px',
-                                    left: '50%',
-                                    top: '50%',
-                                    transform: 'translate(-50%, -50%)'
-                                  }}
-                                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-                                >
+                                <>
+                                  {/* Backdrop */}
+                                  <div
+                                    className={`fixed inset-0 z-40 ${isDarkMode ? 'bg-black bg-opacity-50' : 'bg-gray-600 bg-opacity-25'}`}
+                                    onClick={() => {
+                                      setUiState(prev => ({
+                                        ...prev,
+                                        [`${variable}_dropdown_open`]: false
+                                      }));
+                                    }}
+                                  />
+
+                                  {/* Modal content */}
+                                  <div
+                                    className={`fixed z-50 w-[calc(100%-4rem)] md:w-[400px] rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
+                                    style={{
+                                      maxHeight: '80vh',
+                                      left: '50%',
+                                      top: '50%',
+                                      transform: 'translate(-50%, -50%)'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+                                  >
                                   {/* Header */}
                                   <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
                                     <h3 className="font-medium">Select a file</h3>
@@ -775,6 +788,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                     )}
                                   </div>
                                 </div>
+                                </>
+
                               )}
                             </div>
 
