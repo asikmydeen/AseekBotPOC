@@ -136,8 +136,14 @@ const useFileActions = ({
                 console.log('Warning: Some variables were not replaced:', remainingVariables);
               }
 
+              // Create a more structured message that includes the variables
+              const fileVariables = Object.entries(promptVariables)
+                .filter(([key, value]) => value) // Only include variables with values
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+
               // Use the processed content as the message
-              analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt with the following instructions: ${processedContent}`;
+              analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt with the following instructions:\n\n${processedContent}\n\nVariables:\n${fileVariables}`;
               console.log('Using stored prompt for analysis:', storedPrompt.title);
 
               // Also pass variables as metadata to the API
