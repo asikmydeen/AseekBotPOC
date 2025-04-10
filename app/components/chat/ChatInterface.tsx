@@ -40,6 +40,12 @@ interface ChatInterfaceProps {
     onFilesUpdate?: (files: any[]) => void;
     initialMessages?: MessageType[];
     externalFileToAdd?: UploadedFile | null;
+    // External async processing state
+    externalAsyncProcessing?: boolean;
+    externalAsyncStatus?: string;
+    externalAsyncProgress?: number;
+    onRefreshStatus?: () => void;
+    onCancelRequest?: () => void;
 }
 
 function ChatInterfaceComponent({
