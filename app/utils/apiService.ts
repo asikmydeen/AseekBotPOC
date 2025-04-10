@@ -250,7 +250,19 @@ export const apiService = {
         }
       }
 
-      console.log('Sending message with payload:', payload);
+      console.log('Sending message with payload:', JSON.stringify(payload, null, 2));
+
+      // Log specific details about files and s3Files
+      if (payload.files) {
+        console.log('Files in payload:', payload.files.length);
+      }
+      if (payload.s3Files) {
+        console.log('s3Files in payload:', payload.s3Files.length);
+        console.log('s3Files details:', JSON.stringify(payload.s3Files, null, 2));
+      }
+      if (payload.promptMetadata && payload.promptMetadata.s3Files) {
+        console.log('s3Files in promptMetadata:', payload.promptMetadata.s3Files.length);
+      }
       const response = await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
 
       // Clear prompt metadata after sending
