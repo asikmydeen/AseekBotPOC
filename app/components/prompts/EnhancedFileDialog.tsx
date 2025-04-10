@@ -451,11 +451,39 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   }, [isOpen]);
 
-  // Handle click outside to close
+  // Handle click outside to close dialog or dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Close dialog if clicking outside the dialog
       if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
         onClose();
+        return;
+      }
+
+      // Close dropdowns if clicking outside their containers
+      const openDropdowns = Object.keys(uiState).filter(key =>
+        key.endsWith('_dropdown_open') && uiState[key] === true
+      );
+
+      if (openDropdowns.length > 0) {
+        // Check if click was inside any dropdown container
+        const dropdownContainers = document.querySelectorAll('.file-dropdown-container');
+        let clickedInsideDropdown = false;
+
+        dropdownContainers.forEach(container => {
+          if (container.contains(event.target as Node)) {
+            clickedInsideDropdown = true;
+          }
+        });
+
+        // If click was outside all dropdowns, close them
+        if (!clickedInsideDropdown) {
+          const newState = { ...uiState };
+          openDropdowns.forEach(key => {
+            newState[key] = false;
+          });
+          setUiState(newState);
+        }
       }
     };
 
@@ -466,7 +494,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, uiState]);
 
   if (!isOpen) return null;
 
@@ -592,7 +620,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                         {detectedVariableTypes[variable]?.type === 'file' ? (
                           <div className="relative mb-4"> {/* Reduced margin */}
                             {/* Custom file selector dropdown */}
-                            <div className="relative">
+                            <div className="relative file-dropdown-container">
                               <div
                                 className={`flex items-center justify-between p-2 border rounded-md cursor-pointer ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}
                                 onClick={() => {
