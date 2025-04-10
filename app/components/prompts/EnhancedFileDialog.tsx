@@ -394,8 +394,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
             {/* File list */}
             <div
               ref={fileListRef}
-              className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]"
-              style={{ height: 'calc(60vh - 200px)' }}
+              className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px] hover:overflow-y-scroll"
+              style={{ height: 'calc(60vh - 200px)', scrollbarWidth: 'thin' }}
             >
               {isLoadingS3Files ? (
                 <div className="flex items-center justify-center h-full">
@@ -470,7 +470,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]" style={{ height: 'calc(60vh - 200px)' }}>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px] hover:overflow-y-scroll" style={{ height: 'calc(60vh - 200px)', scrollbarWidth: 'thin' }}>
               {requiredVariables.length > 0 ? (
                 <div className="space-y-4">
                   {requiredVariables.map((variable) => (
