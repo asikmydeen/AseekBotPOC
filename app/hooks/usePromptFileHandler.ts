@@ -250,15 +250,20 @@ const usePromptFileHandler = ({
 
             if (currentStatusCallback) {
               // Update the status in the UI
-              // For COMPLETED status, pass the response message to be displayed in the chat
+              // For COMPLETED status, pass the entire status response as a JSON string
               if (statusResponse.status === 'COMPLETED') {
-                // Pass the response message to be displayed in the chat
-                // The isPromptMessage flag is false here because we want this message to be displayed
-                // as a bot message in the chat
+                console.log('Status response completed with completion data:', {
+                  hasCompletion: !!statusResponse.completion,
+                  completionLength: statusResponse.completion?.length || 0,
+                  hasAggregatedResults: !!statusResponse.aggregatedResults
+                });
+
+                // Pass the entire status response as a JSON string
+                // This will allow the page component to extract the completion data
                 currentStatusCallback(
                   statusResponse.status,
                   100,
-                  statusResponse.message || 'Processing complete.',
+                  JSON.stringify(statusResponse),
                   false
                 );
               } else {
