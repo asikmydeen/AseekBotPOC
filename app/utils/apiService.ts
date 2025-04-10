@@ -216,10 +216,24 @@ export const apiService = {
               payload.promptId = promptMetadata.promptId;
             }
 
-            // If we have s3Files, add them directly to the payload
-            if (promptMetadata.s3Files && promptMetadata.s3Files.length > 0) {
-              payload.s3Files = promptMetadata.s3Files;
-              console.log('Including s3Files in request:', promptMetadata.s3Files);
+            // If we have s3Files in the prompt metadata, merge them with any existing s3Files
+            if (promptMetadata.s3Files) {
+              // If we already have s3Files from the files parameter, merge them
+              if (payload.s3Files && payload.s3Files.length > 0) {
+                // Keep track of file names we've already added
+                const existingFileNames = new Set(payload.s3Files.map(file => file.fileName));
+
+                // Only add files from promptMetadata that aren't already in the payload
+                const newFiles = promptMetadata.s3Files.filter(file => !existingFileNames.has(file.fileName));
+
+                // Merge the arrays
+                payload.s3Files = [...payload.s3Files, ...newFiles];
+              } else if (promptMetadata.s3Files.length > 0) {
+                // If we don't have s3Files yet, use the ones from promptMetadata
+                payload.s3Files = promptMetadata.s3Files;
+              }
+
+              console.log('Including s3Files in request:', payload.s3Files);
 
               // Remove the regular files array if we're using s3Files
               delete payload.files;
