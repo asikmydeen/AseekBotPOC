@@ -242,7 +242,7 @@ function ChatApp() {
         setProcessingProgress(0);
       }, 5000);
     }
-  }, []);
+  }, [activeChat, updateChatMessages]);
 
   // Handle adding a file to chat from the sidebar
   const handleFileAddToChat = useCallback((file: {
