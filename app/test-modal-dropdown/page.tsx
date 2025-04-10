@@ -16,6 +16,15 @@ export default function TestModalDropdownPage() {
   const [statusResponse, setStatusResponse] = useState<any>(null);
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
 
+  // Clean up interval on component unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [pollInterval]);
+
   // Test with different variable types
   const variableTypes = {
     'document_file': { type: 'file' },
