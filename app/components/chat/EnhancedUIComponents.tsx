@@ -178,22 +178,6 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
   progress,
   handleFileAction
 }) => {
-  const [promptTitle, setPromptTitle] = useState<string>('');
-
-  // Get the current prompt from localStorage if available
-  useEffect(() => {
-    try {
-      const storedPrompt = localStorage.getItem('currentPrompt');
-      if (storedPrompt) {
-        const prompt = JSON.parse(storedPrompt);
-        if (prompt && prompt.title) {
-          setPromptTitle(prompt.title);
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing stored prompt:', error);
-    }
-  }, []);
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -246,16 +230,9 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-between items-center mb-4">
-            <div>
-              {promptTitle && (
-                <h3 className={`text-sm sm:text-base font-medium mb-1 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                  Prompt: {promptTitle}
-                </h3>
-              )}
-              <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
-              </h3>
-            </div>
+            <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+              {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
+            </h3>
 
             {isUploading && (
               <div className="w-full max-w-xs mx-auto h-2 bg-gray-300 rounded-full overflow-hidden mt-2 mb-3">
@@ -323,12 +300,12 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               onClick={() => handleFileAction('analyze')}
               className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
                 isDarkMode
-                  ? promptTitle ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : promptTitle ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               } transition-colors`}
               disabled={isUploading}
             >
-              {promptTitle ? `Analyze with ${promptTitle}` : 'Analyze Files'}
+              Analyze Files
             </motion.button>
 
             <motion.button

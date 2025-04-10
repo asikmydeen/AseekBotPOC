@@ -50,15 +50,12 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
 
   // Get file icon based on file type
   const getFileIcon = (fileType: string) => {
-    if (!fileType) return <FaFile className={styles.attachments.icon.default} size={16} />;
-
-    const type = fileType.toLowerCase();
-    if (type.includes('pdf')) return <FaFilePdf className={styles.attachments.icon.pdf} size={16} />;
-    if (type.includes('word') || type.includes('docx') || type.includes('doc')) return <FaFileWord className={styles.attachments.icon.word} size={16} />;
-    if (type.includes('text') || type.includes('txt')) return <FaFile className={styles.attachments.icon.text} size={16} />;
-    if (type.includes('csv')) return <FaFileCsv className={styles.attachments.icon.csv} size={16} />;
-    if (type.includes('excel') || type.includes('xlsx') || type.includes('xls') || type.includes('sheet')) return <FaFileExcel className={styles.attachments.icon.excel} size={16} />;
-    if (type.includes('image') || type.includes('png') || type.includes('jpg') || type.includes('jpeg') || type.includes('gif')) return <FaFileImage className={styles.attachments.icon.image} size={16} />;
+    if (fileType.includes('pdf')) return <FaFilePdf className={styles.attachments.icon.pdf} size={16} />;
+    if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className={styles.attachments.icon.word} size={16} />;
+    if (fileType.includes('text') || fileType.includes('txt')) return <FaFile className={styles.attachments.icon.text} size={16} />;
+    if (fileType.includes('csv')) return <FaFileCsv className={styles.attachments.icon.csv} size={16} />;
+    if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className={styles.attachments.icon.excel} size={16} />;
+    if (fileType.includes('image')) return <FaFileImage className={styles.attachments.icon.image} size={16} />;
     return <FaFile className={styles.attachments.icon.default} size={16} />;
   };
 
@@ -113,9 +110,8 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
                 whileHover={styles.attachments.actionButtonHover}
                 whileTap={{ scale: 0.9 }}
                 className={styles.attachments.actionButton}
-                onClick={() => file.url && onView(file.url)}
+                onClick={() => onView(file.url)}
                 aria-label={`View ${file.name}`}
-                disabled={!file.url}
               >
                 <FaExternalLinkAlt size={14} className={styles.attachments.icon.default} />
               </motion.button>
@@ -123,9 +119,8 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
                 whileHover={styles.attachments.actionButtonHover}
                 whileTap={{ scale: 0.9 }}
                 className={styles.attachments.actionButton}
-                onClick={() => file.url && onDownload(file.url, file.name)}
+                onClick={() => onDownload(file.url, file.name)}
                 aria-label={`Download ${file.name}`}
-                disabled={!file.url}
               >
                 <FaDownload size={14} className={styles.attachments.icon.default} />
               </motion.button>

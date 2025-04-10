@@ -1,6 +1,6 @@
 // app/components/chat/DocumentAnalysisPrompt.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { FaTimes, FaFileUpload } from 'react-icons/fa';
 
@@ -17,34 +17,13 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
   setShowFileDropzone,
   clearUploadedFiles
 }) => {
-  const [promptTitle, setPromptTitle] = useState<string>('Document Analysis');
-
-  // Get the current prompt from localStorage if available
-  useEffect(() => {
-    try {
-      const storedPrompt = localStorage.getItem('currentPrompt');
-      if (storedPrompt) {
-        const prompt = JSON.parse(storedPrompt);
-        if (prompt && prompt.title) {
-          setPromptTitle(prompt.title);
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing stored prompt:', error);
-    }
-  }, []);
   /**
    * Handles the dismissal of the document analysis prompt
    * - Clears the document analysis prompt if the function is provided
    * - Hides the file dropzone
    * - Clears any uploaded files
-   * - Clears localStorage to prevent persistence
    */
   const handleDismiss = () => {
-    // Clear localStorage when dismissing
-    localStorage.removeItem('currentPrompt');
-    localStorage.removeItem('promptVariables');
-
     if (onClose) {
       onClose();
     }
@@ -72,10 +51,10 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-blue-800'}`}>
-            {promptTitle}
+            Document Analysis
           </h3>
           <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Please select files to use with this prompt. I'll analyze them according to the prompt instructions.
+            Upload documents for analysis. I can extract information, summarize content, and answer questions about your documents.
           </p>
 
           <div className="mt-3 flex space-x-2">

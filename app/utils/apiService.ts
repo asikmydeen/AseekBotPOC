@@ -1,7 +1,6 @@
 // app/utils/apiService.ts
 import { useApiStore } from '../store/apiStore';
 import { LAMBDA_ENDPOINTS } from './lambdaApi';
-import { interceptRequest } from './requestInterceptor';
 
 /**
  * Extracts the S3 key from a file URL
@@ -89,25 +88,8 @@ export async function makeRequest<T = any>(
 
     console.log(`Making ${method} request to ${url}`, { body, requestOptions });
 
-    // Intercept the request if needed
-    const intercepted = interceptRequest(url, method, body);
-
-    // Update the request parameters if they were modified
-    if (intercepted.body !== body) {
-      if (intercepted.body instanceof FormData) {
-        // Don't set Content-Type for FormData, browser will set it with boundary
-        delete (requestOptions.headers as any)['Content-Type'];
-        requestOptions.body = intercepted.body;
-      } else {
-        // Make sure body is properly stringified JSON
-        requestOptions.body = typeof intercepted.body === 'string' ? intercepted.body : JSON.stringify(intercepted.body);
-      }
-
-      console.log(`Request intercepted and modified`, { originalBody: body, newBody: intercepted.body });
-    }
-
     // Make the request
-    const response = await fetch(intercepted.url, requestOptions);
+    const response = await fetch(url, requestOptions);
 
     // Parse the response
     let data;
@@ -152,96 +134,6 @@ export async function makeRequest<T = any>(
 /**
  * API service with methods for common endpoints
  */
-// Special function for vendor-sow-comparison-analysis-v1 prompt
-async function sendVendorAnalysisMessage(message: string, chatSessionId: string, files: any[]) {
-  console.log('Using special vendor analysis message function');
-
-  // Create the exact payload format needed
-  const payload = {
-    promptId: 'vendor-sow-comparison-analysis-v1',
-    userId: TEST_USER_ID,
-    sessionId: chatSessionId,
-    chatId: chatSessionId,
-    message: message,
-    s3Files: []
-  };
-
-  // Format files with the exact naming convention needed
-  if (files && files.length > 0) {
-    // Find SOW file
-    const sowFile = files.find(file =>
-      file.name.toLowerCase().includes('sow') ||
-      (file.type && file.type.toLowerCase().includes('word')));
-
-    // Find LSK file
-    const lskFile = files.find(file =>
-      file.name.toLowerCase().includes('lsk') ||
-      file.name.toLowerCase().includes('sin v2'));
-
-    // Find Acme file
-    const acmeFile = files.find(file =>
-      file.name.toLowerCase().includes('acme') ||
-      file.name.toLowerCase().includes('associates'));
-
-    // Add files in the correct order with the correct names
-    if (lskFile) {
-      payload.s3Files.push({
-        name: 'LSK_Bid',
-        fileName: lskFile.name,
-        s3Url: lskFile.url || lskFile.fileUrl || lskFile.s3Url || '',
-        mimeType: lskFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-    } else if (files.length > 0) {
-      // If no LSK file found, use the first file
-      payload.s3Files.push({
-        name: 'LSK_Bid',
-        fileName: files[0].name,
-        s3Url: files[0].url || files[0].fileUrl || files[0].s3Url || '',
-        mimeType: files[0].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-    }
-
-    if (acmeFile) {
-      payload.s3Files.push({
-        name: 'Acme_Bid',
-        fileName: acmeFile.name,
-        s3Url: acmeFile.url || acmeFile.fileUrl || acmeFile.s3Url || '',
-        mimeType: acmeFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-    } else if (files.length > 1) {
-      // If no Acme file found, use the second file
-      payload.s3Files.push({
-        name: 'Acme_Bid',
-        fileName: files[1].name,
-        s3Url: files[1].url || files[1].fileUrl || files[1].s3Url || '',
-        mimeType: files[1].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-    }
-
-    if (sowFile) {
-      payload.s3Files.push({
-        name: 'SOW',
-        fileName: sowFile.name,
-        s3Url: sowFile.url || sowFile.fileUrl || sowFile.s3Url || '',
-        mimeType: sowFile.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      });
-    } else if (files.length > 2) {
-      // If no SOW file found, use the third file
-      payload.s3Files.push({
-        name: 'SOW',
-        fileName: files[2].name,
-        s3Url: files[2].url || files[2].fileUrl || files[2].s3Url || '',
-        mimeType: files[2].type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      });
-    }
-  }
-
-  console.log('Sending vendor analysis message with payload:', JSON.stringify(payload, null, 2));
-
-  // Make the API request directly
-  return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
-}
-
 export const apiService = {
   /**
    * Sends a message to the chat API
@@ -263,40 +155,6 @@ export const apiService = {
     }>;
   }, chatSessionId?: string, files?: any[]) => {
     try {
-      // Check if this is a vendor-sow-comparison-analysis-v1 prompt
-      const metadataJson = localStorage.getItem('promptMetadata');
-      if (metadataJson) {
-        try {
-          const metadata = JSON.parse(metadataJson);
-          if (metadata.promptId === 'vendor-sow-comparison-analysis-v1' && typeof messageOrOptions === 'string' && files && files.length > 0) {
-            console.log('Detected vendor-sow-comparison-analysis-v1 prompt, using special function');
-            return await sendVendorAnalysisMessage(messageOrOptions, chatSessionId || '', files);
-          }
-        } catch (e) {
-          console.error('Error parsing promptMetadata:', e);
-        }
-      }
-
-      // Also check if promptId is directly specified
-      if (typeof messageOrOptions === 'object' && messageOrOptions.promptId === 'vendor-sow-comparison-analysis-v1') {
-        console.log('Detected vendor-sow-comparison-analysis-v1 prompt in object, using special function');
-        return await sendVendorAnalysisMessage(
-          messageOrOptions.message || '',
-          messageOrOptions.sessionId || messageOrOptions.chatId || '',
-          files || []
-        );
-      }
-
-      // Check if the message text contains the prompt name
-      if (typeof messageOrOptions === 'string' &&
-          (messageOrOptions.includes('vendor-sow-comparison-analysis') ||
-           messageOrOptions.includes('Bid Analysis') ||
-           messageOrOptions.includes('Vendor Bid Comparison Analysis')) &&
-          files && files.length > 0) {
-        console.log('Detected vendor analysis in message text, using special function');
-        return await sendVendorAnalysisMessage(messageOrOptions, chatSessionId || '', files);
-      }
-
       let payload: any;
 
       // Handle the case where messageOrOptions is an object (new format)
@@ -323,193 +181,17 @@ export const apiService = {
 
         // Add files if they exist
         if (files && files.length > 0) {
-          // Add files to payload
           payload.files = files.map(file => ({
             name: file.name,
             type: file.type,
             size: file.size,
-            url: file.url || file.fileUrl || file.s3Url || ''
+            url: file.url || ''
           }));
-
-          // Create s3Files with specific naming for vendor bid analysis
-          payload.s3Files = files.map((file, index) => {
-            // Determine name based on file type and index
-            let name;
-            const lowerFileName = file.name.toLowerCase();
-
-            if (lowerFileName.includes('sow')) {
-              name = 'SOW';
-            } else if (lowerFileName.includes('lsk') || lowerFileName.includes('sin v2')) {
-              name = 'LSK_Bid';
-            } else if (lowerFileName.includes('acme') || lowerFileName.includes('associates')) {
-              name = 'Acme_Bid';
-            } else if (index === 0) {
-              name = 'LSK_Bid';
-            } else if (index === 1) {
-              name = 'Acme_Bid';
-            } else if (index === 2) {
-              name = 'SOW';
-            } else {
-              name = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
-            }
-
-            return {
-              name: name,
-              fileName: file.name,
-              s3Url: file.url || file.fileUrl || file.s3Url || '',
-              mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            };
-          });
-        }
-
-        // If we have s3Files, remove the regular files array
-        if (payload.s3Files && payload.s3Files.length > 0) {
-          delete payload.files;
-        }
-
-        // Check if we have prompt metadata
-        const metadataJson = localStorage.getItem('promptMetadata');
-        if (metadataJson) {
-          try {
-            const promptMetadata = JSON.parse(metadataJson);
-            console.log('Including prompt metadata in request:', promptMetadata);
-
-            // Add promptMetadata to the payload
-            payload.promptMetadata = promptMetadata;
-
-            // If we have variables, add them directly to the payload
-            if (promptMetadata.variables) {
-              payload.variables = promptMetadata.variables;
-            }
-
-            // If we have a promptId, add it directly to the payload
-            if (promptMetadata.promptId) {
-              payload.promptId = promptMetadata.promptId;
-            }
-
-            // If we have s3Files in the payload, add them to the promptMetadata
-            if (payload.s3Files && payload.s3Files.length > 0) {
-              promptMetadata.s3Files = payload.s3Files;
-            }
-          } catch (error) {
-            console.error('Error parsing promptMetadata:', error);
-          }
-        }
-
-        // Log the s3Files that will be included
-        if (payload.s3Files && payload.s3Files.length > 0) {
-          console.log('Including s3Files in request:', payload.s3Files);
         }
       }
 
-      // Special handling for vendor-sow-comparison-analysis-v1 prompt
-      if ((payload.promptId === 'vendor-sow-comparison-analysis-v1' ||
-           (payload.promptMetadata && payload.promptMetadata.promptId === 'vendor-sow-comparison-analysis-v1')) &&
-          payload.s3Files && payload.s3Files.length > 0) {
-        console.log('Detected vendor-sow-comparison-analysis-v1 prompt, applying special formatting');
-
-        // Hard-code the exact format needed for the vendor-sow-comparison-analysis-v1 prompt
-        const formattedS3Files = [];
-
-        // Find SOW file
-        const sowFile = payload.s3Files.find(file =>
-          file.fileName.toLowerCase().includes('sow') ||
-          file.name.toLowerCase().includes('sow'));
-
-        // Find LSK file
-        const lskFile = payload.s3Files.find(file =>
-          file.fileName.toLowerCase().includes('lsk') ||
-          file.fileName.toLowerCase().includes('sin v2') ||
-          file.name.toLowerCase().includes('lsk'));
-
-        // Find Acme file
-        const acmeFile = payload.s3Files.find(file =>
-          file.fileName.toLowerCase().includes('acme') ||
-          file.fileName.toLowerCase().includes('associates') ||
-          file.name.toLowerCase().includes('acme'));
-
-        // Add files in the correct order with the correct names
-        if (lskFile) {
-          formattedS3Files.push({
-            name: 'LSK_Bid',
-            fileName: lskFile.fileName,
-            s3Url: lskFile.s3Url,
-            mimeType: lskFile.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          });
-        } else if (payload.s3Files.length > 0) {
-          // If no LSK file found, use the first file
-          formattedS3Files.push({
-            name: 'LSK_Bid',
-            fileName: payload.s3Files[0].fileName,
-            s3Url: payload.s3Files[0].s3Url,
-            mimeType: payload.s3Files[0].mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          });
-        }
-
-        if (acmeFile) {
-          formattedS3Files.push({
-            name: 'Acme_Bid',
-            fileName: acmeFile.fileName,
-            s3Url: acmeFile.s3Url,
-            mimeType: acmeFile.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          });
-        } else if (payload.s3Files.length > 1) {
-          // If no Acme file found, use the second file
-          formattedS3Files.push({
-            name: 'Acme_Bid',
-            fileName: payload.s3Files[1].fileName,
-            s3Url: payload.s3Files[1].s3Url,
-            mimeType: payload.s3Files[1].mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          });
-        }
-
-        if (sowFile) {
-          formattedS3Files.push({
-            name: 'SOW',
-            fileName: sowFile.fileName,
-            s3Url: sowFile.s3Url,
-            mimeType: sowFile.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          });
-        } else if (payload.s3Files.length > 2) {
-          // If no SOW file found, use the third file
-          formattedS3Files.push({
-            name: 'SOW',
-            fileName: payload.s3Files[2].fileName,
-            s3Url: payload.s3Files[2].s3Url,
-            mimeType: payload.s3Files[2].mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          });
-        }
-
-        console.log('Formatted s3Files for vendor-sow-comparison-analysis-v1:', formattedS3Files);
-
-        // Replace the s3Files array with the formatted one
-        payload.s3Files = formattedS3Files;
-
-        // Also update the s3Files in promptMetadata if it exists
-        if (payload.promptMetadata) {
-          payload.promptMetadata.s3Files = formattedS3Files;
-        }
-      }
-
-      console.log('Sending message with payload:', JSON.stringify(payload, null, 2));
-
-      // Log specific details about files and s3Files
-      if (payload.files) {
-        console.log('Files in payload:', payload.files.length);
-      }
-      if (payload.s3Files) {
-        console.log('s3Files in payload:', payload.s3Files.length);
-        console.log('s3Files details:', JSON.stringify(payload.s3Files, null, 2));
-      }
-      if (payload.promptMetadata && payload.promptMetadata.s3Files) {
-        console.log('s3Files in promptMetadata:', payload.promptMetadata.s3Files.length);
-      }
-      const response = await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
-
-      // Clear prompt metadata after sending
-      localStorage.removeItem('promptMetadata');
-
-      return response;
+      console.log('Sending message with payload:', payload);
+      return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
@@ -631,8 +313,6 @@ export const apiService = {
    */
   getUserFiles: async () => {
     try {
-      console.log('Fetching user files for user:', TEST_USER_ID);
-
       // Make the request directly with fetch
       const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
         method: 'POST',
@@ -646,45 +326,33 @@ export const apiService = {
       }
 
       const responseText = await response.text();
-      console.log('getUserFiles raw response:', responseText.substring(0, 100) + '...');
 
       try {
         if (!responseText.trim()) {
           console.warn('getUserFiles: Empty response received');
-          return [];
+          return {
+            data: [],
+            url: '',
+            error: 'Empty response received.'
+          };
         }
 
         const parsedResponse = JSON.parse(responseText);
-        console.log('getUserFiles parsed response type:', typeof parsedResponse);
+        const filesData = Array.isArray(parsedResponse.data)
+          ? parsedResponse.data
+          : (parsedResponse.data ? [parsedResponse.data] : []);
 
-        // Handle different response formats
-        if (Array.isArray(parsedResponse)) {
-          console.log(`getUserFiles: Found ${parsedResponse.length} files in array format`);
-          return parsedResponse;
-        }
-        else if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
-          console.log(`getUserFiles: Found ${parsedResponse.data.length} files in data.array format`);
-          return parsedResponse.data;
-        }
-        else if (parsedResponse.files && Array.isArray(parsedResponse.files)) {
-          console.log(`getUserFiles: Found ${parsedResponse.files.length} files in files.array format`);
-          return parsedResponse.files;
-        }
-        else if (parsedResponse.data) {
-          console.log('getUserFiles: Found data object, converting to array');
-          return [parsedResponse.data];
-        }
-        else {
-          console.log('getUserFiles: No recognizable file data format, returning empty array');
-          return [];
-        }
+        return {
+          ...parsedResponse,
+          data: filesData
+        };
       } catch (parseError) {
         console.error('Error parsing getUserFiles response:', parseError);
-        return [];
+        throw new Error('Failed to parse response from server');
       }
     } catch (error) {
       console.error('Error getting user files:', error);
-      return [];
+      throw error;
     }
   },
 

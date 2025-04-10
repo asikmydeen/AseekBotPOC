@@ -242,9 +242,6 @@ function ChatInterfaceComponent({
 
         // Clear any pending input
         setPendingInput('');
-
-        // Clear the prompt file mode flag
-        localStorage.removeItem('inPromptFileMode');
     }, [uploadedFiles.length, clearUploadedFiles, showDocumentAnalysisPrompt, clearDocumentAnalysisPrompt]);
 
     /**
@@ -301,13 +298,6 @@ function ChatInterfaceComponent({
 
             // Make sure the file dropzone is visible
             setShowFileDropzone(true);
-
-            // If this is a prompt file, make sure we don't hide the dropzone
-            if (externalFileToAdd.isPromptFile) {
-                console.log('Prompt file detected, keeping dropzone visible');
-                // Store a flag in localStorage to indicate we're in prompt file mode
-                localStorage.setItem('inPromptFileMode', 'true');
-            }
         }
     }, [externalFileToAdd, addExternalFile, setShowFileDropzone]);
 
@@ -328,13 +318,8 @@ function ChatInterfaceComponent({
             }
             setShowFileDropzone(true);
         } else if (uploadedFiles.length === 0) {
-            // Check if we're in prompt file mode
-            const inPromptFileMode = localStorage.getItem('inPromptFileMode') === 'true';
-
-            if (!inPromptFileMode) {
-                // When document analysis prompt is cleared and we don't have any files, hide the dropzone
-                setShowFileDropzone(false);
-            }
+            // When document analysis prompt is cleared and we don't have any files, hide the dropzone
+            setShowFileDropzone(false);
         }
     }, [showDocumentAnalysisPrompt, uploadedFiles.length, clearUploadedFiles]);
 
@@ -350,11 +335,8 @@ function ChatInterfaceComponent({
      * Automatically hides file dropzone after message processing completes
      */
     useEffect(() => {
-        // Check if we're in prompt file mode
-        const inPromptFileMode = localStorage.getItem('inPromptFileMode') === 'true';
-
         // If we're not thinking (processing a message) and there are no files, hide the dropzone
-        if (!isThinking && uploadedFiles.length === 0 && !inPromptFileMode) {
+        if (!isThinking && uploadedFiles.length === 0) {
             // Add a small delay to ensure smooth transition
             const timer = setTimeout(() => {
                 setShowFileDropzone(false);

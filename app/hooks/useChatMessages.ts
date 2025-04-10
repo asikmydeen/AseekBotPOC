@@ -264,18 +264,22 @@ export default function useChatMessages({
       clearInterval(intervalId);
     });
     pollIntervalRefs.current.clear();
-    // Keep the original text for the message
     let userMessageText = text;
-
-    // Don't modify the text with file names - we'll show the attachments separately
-    // This ensures the UI shows the files as attachments rather than just text
+    if (isFileUpload) {
+      const fileNames = attachments.map(file => file.name).join(', ');
+      if (text.trim()) {
+        userMessageText = `${text} [Files: ${fileNames}]`;
+      } else {
+        userMessageText = `Uploaded files: ${fileNames}`;
+      }
+    }
     const userAttachments = isFileUpload
       ? attachments.map(file => ({
         name: file.name,
         size: file.size,
         type: file.type,
         contentType: file.type,
-        url: file.url || file.fileUrl || file.s3Url || ''
+        url: file.url || file.fileUrl || ''
       }))
       : undefined;
     const userMessage: MessageType = {
@@ -303,52 +307,6 @@ export default function useChatMessages({
           return prev < 90 ? prev + increment : 90;
         });
       }, 500);
-
-      // Log the attachments for debugging
-      if (attachments && attachments.length > 0) {
-        console.log(`Sending message with ${attachments.length} attachments:`,
-          attachments.map(file => ({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: file.url || file.fileUrl || file.s3Url || ''
-          })));
-
-        // Create s3Files array for the API if not already created
-        const directS3FilesJson = localStorage.getItem('directS3Files');
-        const s3FilesJson = localStorage.getItem('s3FilesForAPI');
-
-        if (!directS3FilesJson && !s3FilesJson) {
-          // Create s3Files with specific naming conventions for vendor-sow-comparison-analysis
-          // This is to match the expected format in your curl command
-          const s3FilesArray = attachments.map((file, index) => {
-            // Determine name based on file type and index
-            let name;
-            if (file.name.toLowerCase().includes('sow')) {
-              name = 'SOW';
-            } else if (index === 0 || file.name.toLowerCase().includes('lsk')) {
-              name = 'LSK_Bid';
-            } else if (index === 1 || file.name.toLowerCase().includes('acme')) {
-              name = 'Acme_Bid';
-            } else {
-              name = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
-            }
-
-            return {
-              name: name,
-              fileName: file.name,
-              s3Url: file.url || file.fileUrl || file.s3Url || '',
-              mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            };
-          });
-
-          // Store s3Files array in localStorage for the API to pick up
-          localStorage.setItem('s3FilesForAPI', JSON.stringify(s3FilesArray));
-          localStorage.setItem('directS3Files', JSON.stringify(s3FilesArray));
-          console.log('Created s3Files in localStorage for API from useChatMessages:', s3FilesArray);
-        }
-      }
-
       const apiSendMessage = apiService.sendMessage;
       const response = await apiSendMessage(text, chatSessionId, attachments);
       if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {

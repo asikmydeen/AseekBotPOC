@@ -49,49 +49,6 @@ const useFileUpload = ({ onFilesUpdate }: UseFileUploadProps = {}) => {
     });
   }, []);
 
-  // Listen for custom events to add external files
-  useEffect(() => {
-    const handleAddExternalFile = (event: any) => {
-      if (event.detail && event.detail.name) {
-        console.log('Adding external file from event:', event.detail.name);
-        addExternalFile(event.detail);
-      }
-    };
-
-    // Add event listener
-    window.addEventListener('addExternalFile', handleAddExternalFile);
-
-    // Clean up
-    return () => {
-      window.removeEventListener('addExternalFile', handleAddExternalFile);
-    };
-  }, [addExternalFile]);
-
-  // Check for S3 files in localStorage on mount (legacy support)
-  useEffect(() => {
-    try {
-      const s3FilesJson = localStorage.getItem('selectedS3Files');
-      if (s3FilesJson) {
-        const s3Files = JSON.parse(s3FilesJson);
-        if (Array.isArray(s3Files) && s3Files.length > 0) {
-          console.log('Found S3 files in localStorage:', s3Files.length);
-
-          // Add each file to the uploaded files
-          s3Files.forEach(file => {
-            if (file && file.name) {
-              addExternalFile(file);
-            }
-          });
-
-          // Clear the localStorage after adding files
-          localStorage.removeItem('selectedS3Files');
-        }
-      }
-    } catch (error) {
-      console.error('Error loading S3 files from localStorage:', error);
-    }
-  }, []);
-
   useEffect(() => {
     if (onFilesUpdate) {
       onFilesUpdate(uploadedFiles);

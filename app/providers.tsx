@@ -5,8 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 
 // Import ThemeInitializer to handle theme initialization
 import ThemeInitializer from './utils/ThemeInitializer';
-import { ModalProvider } from './contexts/ModalContext';
-import { initGlobalFileHandler } from './utils/globalFileHandler';
 
 // Initialize Zustand stores
 import './store/themeStore';
@@ -35,9 +33,6 @@ export default function Providers({ children }: ProviderProps) {
                 console.log('Redirecting to userguide page');
                 router.push('/userguide');
             }
-
-            // Initialize the global file handler
-            initGlobalFileHandler();
         }
     }, [pathname, router]);
 
@@ -46,11 +41,8 @@ export default function Providers({ children }: ProviderProps) {
             {/* Initialize theme */}
             <ThemeInitializer />
 
-            {/* Global modal provider */}
-            <ModalProvider>
-                {/* Render children directly - all state is now managed by Zustand */}
-                {children}
-            </ModalProvider>
+            {/* Render children directly - all state is now managed by Zustand */}
+            {children}
         </>
     );
 }

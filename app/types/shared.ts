@@ -107,7 +107,6 @@ export interface UploadedFile {
   progress?: number;   // Upload progress (0-100)
   fileId?: string;     // Unique identifier for the file
   error?: string;      // Error message if upload failed
-  isPromptFile?: boolean; // Flag to indicate this file is for a prompt and should keep the dropzone open
 }
 
 export type PromptType = 'INDIVIDUAL' | 'COMMUNITY';

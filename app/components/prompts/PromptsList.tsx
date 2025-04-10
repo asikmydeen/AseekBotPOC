@@ -6,7 +6,7 @@ import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
 import { usePrompts } from '../../hooks/usePrompts';
 import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
-// Dialog is now handled by the ModalContext
+import FileSelectionDialog from './FileSelectionDialog';
 import usePromptFileHandler from '../../hooks/usePromptFileHandler';
 
 interface PromptsListProps {
@@ -48,10 +48,12 @@ const PromptsList: React.FC<PromptsListProps> = ({
 
     // Use the prompt file handler hook
     const {
+        isDialogOpen,
         selectedPrompt,
         requiredFileCount,
         requiredVariables,
         openFileDialog,
+        closeFileDialog,
         handleFileSelection
     } = usePromptFileHandler({
         onStatusUpdate,
@@ -216,10 +218,21 @@ const PromptsList: React.FC<PromptsListProps> = ({
                                 isDarkMode={isDarkMode}
                                 onClick={() => {
                                     console.log('Prompt clicked:', prompt.title);
-                                    // Always use the direct approach without modal
-                                    console.log('Using direct file dropzone approach for prompt');
-                                    // Call the click handler with the prompt
-                                    onPromptClick && onPromptClick(prompt);
+                                    // Check if the prompt requires files
+                                    if (prompt.content && (
+                                        prompt.content.includes('${') || // Has variables
+                                        prompt.content.includes('files') || // Mentions files
+                                        prompt.promptId.includes('analysis') || // Analysis prompt
+                                        prompt.promptId.includes('comparison') // Comparison prompt
+                                    )) {
+                                        console.log('Prompt requires files or variables, opening dialog');
+                                        // Open file selection dialog
+                                        openFileDialog(prompt);
+                                    } else {
+                                        console.log('Regular prompt, calling click handler');
+                                        // Regular prompt, just call the click handler
+                                        onPromptClick && onPromptClick(prompt);
+                                    }
                                 }}
                                 onEdit={() => onEditPrompt && onEditPrompt(prompt)}
                                 onDelete={() => onDeletePrompt && onDeletePrompt(prompt.promptId)}
@@ -246,7 +259,16 @@ const PromptsList: React.FC<PromptsListProps> = ({
                 </div>
             )}
 
-            {/* File Selection Dialog is now handled by the ModalContext */}
+            {/* File Selection Dialog */}
+            <FileSelectionDialog
+                isOpen={isDialogOpen}
+                onClose={closeFileDialog}
+                onSubmit={handleFileSelection}
+                promptId={selectedPrompt?.promptId || ''}
+                promptTitle={selectedPrompt?.title || ''}
+                requiredFileCount={requiredFileCount}
+                requiredVariables={requiredVariables}
+            />
         </div>
     );
 };

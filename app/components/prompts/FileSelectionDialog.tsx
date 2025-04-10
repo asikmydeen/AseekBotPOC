@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import { FiX, FiUploadCloud, FiFolder } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { apiService } from '../../utils/apiService';
@@ -157,94 +158,9 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
     }
   };
 
-  console.log('Rendering FileSelectionDialog, isOpen:', isOpen);
-
-  // Add a div that will always be visible for debugging
-  if (isOpen) {
-    console.log('Dialog should be visible now');
-  }
-
   return (
-    <>
-      {/* Fallback dialog that will definitely show */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">{promptTitle}</h2>
-              <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-                <FiX size={20} />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <p>Please select files and fill in required information:</p>
-              {error && <p className="text-red-500 mt-2">{error}</p>}
-            </div>
-
-            <div className="mb-4">
-              <h3 className="font-medium mb-2">Files:</h3>
-              <button
-                onClick={fetchS3Files}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              >
-                Load Files
-              </button>
-
-              {s3Files.length > 0 && (
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {s3Files.map((file, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleFileSelect(file)}
-                      className="p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      {file.fileName}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {requiredVariables.length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-medium mb-2">Required Information:</h3>
-                {requiredVariables.map(variable => (
-                  <div key={variable} className="mb-2">
-                    <label className="block mb-1">{formatVariableName(variable)}</label>
-                    <input
-                      type="text"
-                      value={variables[variable] || ''}
-                      onChange={(e) => handleVariableChange(variable, e.target.value)}
-                      className="w-full p-2 border rounded"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="px-4 py-2 bg-blue-500 text-white rounded"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Processing...' : 'Submit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Original Headless UI Dialog */}
-      <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[9999]" onClose={onClose}>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -409,7 +325,6 @@ const FileSelectionDialog: React.FC<FileSelectionDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
-    </>
   );
 };
 

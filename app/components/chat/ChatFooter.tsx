@@ -8,7 +8,6 @@ import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
 import { EnhancedChatInput, EnhancedFileDropzone } from './EnhancedUIComponents';
-import EnhancedPromptFileDropzone from './EnhancedPromptFileDropzone';
 
 interface ChatFooterProps {
   isDarkMode: boolean;
@@ -130,43 +129,19 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
 
     // When showing file upload section
     if (showFileDropzone) {
-      // Check if we have a stored prompt and if document analysis prompt is active
-      // Only show the enhanced prompt file dropzone when both conditions are true
-      const hasStoredPrompt = localStorage.getItem('currentPrompt') !== null;
-      const isPromptActive = showDocumentAnalysisPrompt === true;
-
       return (
         <div className="w-full max-w-full overflow-x-hidden">
-          {hasStoredPrompt && isPromptActive ? (
-            <EnhancedPromptFileDropzone
-              getRootProps={getRootProps}
-              getInputProps={getInputProps}
-              isDragActive={isDragActive}
-              isDarkMode={isDarkMode}
-              uploadedFiles={uploadedFiles}
-              removeFile={removeFile}
-              isUploading={isUploading}
-              progress={progress}
-              handleFileAction={handleFileAction}
-              onClose={() => {
-                setShowFileDropzone(false);
-                clearUploadedFiles();
-                if (clearDocumentAnalysisPrompt) clearDocumentAnalysisPrompt();
-              }}
-            />
-          ) : (
-            <EnhancedFileDropzone
-              getRootProps={getRootProps}
-              getInputProps={getInputProps}
-              isDragActive={isDragActive}
-              isDarkMode={isDarkMode}
-              uploadedFiles={uploadedFiles}
-              removeFile={removeFile}
-              isUploading={isUploading}
-              progress={progress}
-              handleFileAction={handleFileAction}
-            />
-          )}
+          <EnhancedFileDropzone
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            isDragActive={isDragActive}
+            isDarkMode={isDarkMode}
+            uploadedFiles={uploadedFiles}
+            removeFile={removeFile}
+            isUploading={isUploading}
+            progress={progress}
+            handleFileAction={handleFileAction}
+          />
         </div>
       );
     }

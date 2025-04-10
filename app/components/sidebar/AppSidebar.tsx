@@ -40,7 +40,7 @@ export interface UploadedFile {
 export interface AppSidebarProps {
   uploadedFiles: UploadedFile[];
   onFileClick: (fileUrl: string) => void;
-  onPromptClick: (prompt: any) => void;
+  onPromptClick: (prompt: string) => void;
   onToggle?: (isOpen: boolean) => void;
   onFileAddToChat?: (file: UploadedFile) => void;
   onFileDelete?: (fileKey: string) => void;
@@ -316,7 +316,7 @@ export default function AppSidebar({
               styles={styles}
               isDarkMode={isDarkMode}
               prompts={prompts}
-              onPromptClick={(prompt) => onPromptClick(prompt)}
+              onPromptClick={(prompt) => onPromptClick(prompt.content)}
               onPromptSelect={handleSelectPrompt}
               onCreatePrompt={openCreateModal}
               onEditPrompt={openEditModal}

@@ -45,9 +45,6 @@ function ChatApp() {
   };
 
   const clearDocumentAnalysisPrompt = () => {
-    // Clear localStorage when closing
-    localStorage.removeItem('currentPrompt');
-    localStorage.removeItem('promptVariables');
     setShowDocumentAnalysisPrompt(false);
   };
 
@@ -95,28 +92,8 @@ function ChatApp() {
   }, []);
 
   // When a prompt is clicked, set it as a trigger message
-  const handlePromptClick = useCallback((prompt: any) => {
-    console.log('Prompt clicked:', prompt.title);
-
-    // Check if the prompt requires files or variables
-    const requiresFiles = prompt.content && (
-      prompt.content.includes('${') || // Has variables
-      prompt.content.includes('files') || // Mentions files
-      prompt.promptId.includes('analysis') || // Analysis prompt
-      prompt.promptId.includes('comparison') // Comparison prompt
-    );
-
-    if (requiresFiles) {
-      console.log('Prompt requires files or variables, showing file dropzone');
-      // Store the prompt for later use
-      localStorage.setItem('currentPrompt', JSON.stringify(prompt));
-      // Show document analysis prompt to trigger file dropzone
-      setShowDocumentAnalysisPrompt(true);
-    } else {
-      console.log('Regular prompt, sending directly');
-      // Set the trigger message to send the prompt to the chat
-      handleTriggerMessage(prompt.content);
-    }
+  const handlePromptClick = useCallback((prompt: string) => {
+    handleTriggerMessage(prompt);
   }, []);
 
   // This function will be passed to the ChatInterface to sync messages
@@ -213,63 +190,16 @@ function ChatApp() {
     setSidebarOpen(isOpen);
   }, []);
 
-  // Track messages to prevent duplicates
-  const sentMessagesRef = useRef(new Set<string>());
-
   // Handle status updates from prompt processing
-  const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
-    console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
-
-    // If this is a prompt message and we're just starting, we need to send the message to the chat
-    if (isPromptMessage && status === 'STARTED' && userMessage) {
-      // Check if we've already sent this message to prevent duplicates
-      if (sentMessagesRef.current.has(userMessage)) {
-        console.log('Skipping duplicate message:', userMessage);
-        return;
-      }
-
-      // Check if we have a stored prompt
-      try {
-        const promptJson = localStorage.getItem('currentPrompt');
-        if (promptJson) {
-          const storedPrompt = JSON.parse(promptJson);
-          if (storedPrompt && storedPrompt.title) {
-            // Enhance the message with the prompt title
-            userMessage = `Please analyze these documents using the "${storedPrompt.title}" prompt: ${userMessage}`;
-            console.log('Enhanced message with prompt title:', userMessage);
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing stored prompt:', error);
-      }
-
-      console.log('Sending prompt message to chat:', userMessage);
-      // Add to sent messages set to prevent duplicates
-      sentMessagesRef.current.add(userMessage);
-      // Set the trigger message to send the user message to the chat
-      setTriggerMessage(userMessage);
-      return;
-    }
-
-    // Update the UI with the processing status
+  const handleStatusUpdate = useCallback((status: string, progress: number) => {
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
     // If we have a completed status, show a notification or update the UI
     if (status === 'COMPLETED') {
       console.log('Processing completed successfully!');
-      // Clear the processing status after a delay
-      setTimeout(() => {
-        setProcessingStatus('');
-        setProcessingProgress(0);
-      }, 2000);
     } else if (status === 'FAILED' || status === 'ERROR') {
       console.error('Processing failed:', status);
-      // Clear the processing status after a delay
-      setTimeout(() => {
-        setProcessingStatus('');
-        setProcessingProgress(0);
-      }, 5000);
     }
   }, []);
 
@@ -278,12 +208,10 @@ function ChatApp() {
     fileId: string;
     fileName: string;
     fileKey: string;
-    uploadDate?: string;
+    uploadDate: string;
     fileSize: number;
     fileType?: string;
     presignedUrl?: string;
-    s3Url?: string;
-    isPromptFile?: boolean; // New flag to indicate if this file is for a prompt
   }) => {
     // Check if file is valid
     if (!file || !file.fileName || file.fileSize === undefined) {
@@ -295,7 +223,7 @@ function ChatApp() {
     const fileKey = file.fileKey || '';
 
     // Don't add the same file multiple times to chat
-    if (fileKey && filesAddedToChatRef.current.has(fileKey) && !file.isPromptFile) {
+    if (fileKey && filesAddedToChatRef.current.has(fileKey)) {
       console.log('File already added to chat, skipping:', fileKey);
       return;
     }
@@ -312,12 +240,10 @@ function ChatApp() {
       name: file.fileName || 'Unnamed File',
       size: typeof file.fileSize === 'number' ? file.fileSize : 0,
       type: file.fileType || 'application/octet-stream',
-      url: file.presignedUrl || file.s3Url || '',
+      url: file.presignedUrl || '',
       fileId: file.fileId || fileKey || '',
       status: 'success',
       progress: 100,
-      // Add a flag to indicate this is a prompt file
-      isPromptFile: file.isPromptFile || false
     };
 
     console.log('Mapped file for chat:', mappedFile);
@@ -334,30 +260,6 @@ function ChatApp() {
       filesAddedToChatRef.current.clear();
     }
   }, [activeChat?.id]);
-
-  // Check for any leftover prompt data on component mount
-  useEffect(() => {
-    // Clear any leftover prompt data from localStorage
-    // This ensures prompt components don't persist after page refresh
-    if (!showDocumentAnalysisPrompt) {
-      localStorage.removeItem('currentPrompt');
-      localStorage.removeItem('promptVariables');
-    }
-
-    // Add a global function to handle file uploads directly
-    // This allows components to add files without using events
-    window.addExternalFileToUpload = (file: any) => {
-      console.log('Global addExternalFileToUpload called with file:', file.name);
-      if (file && file.name) {
-        handleFileAddToChat(file);
-      }
-    };
-
-    // Clean up the global function when component unmounts
-    return () => {
-      delete window.addExternalFileToUpload;
-    };
-  }, [handleFileAddToChat]);
 
   // Fetch user files on component mount
   useEffect(() => {
