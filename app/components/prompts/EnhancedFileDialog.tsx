@@ -593,73 +593,150 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                       <div className="p-4">
                         {/* Render different input types based on variable type */}
                         {detectedVariableTypes[variable]?.type === 'file' ? (
-                          <div>
-                            <div className="flex flex-col space-y-2">
-                              {/* File selector dropdown */}
-                              <div className={`p-3 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}>
-                                <div className="flex justify-between items-center mb-2">
-                                  <label className="text-sm font-medium">
-                                    {variables[variable] ? 'Selected file:' : 'No file selected'}
-                                  </label>
+                          <div className="relative">
+                            {/* Custom file selector dropdown */}
+                            <div className="relative">
+                              <div
+                                className={`flex items-center justify-between p-2 border rounded-md cursor-pointer ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}
+                                onClick={() => {
+                                  // Toggle dropdown for this variable
+                                  setVariables(prev => ({
+                                    ...prev,
+                                    [`${variable}_dropdown_open`]: !prev[`${variable}_dropdown_open`]
+                                  }));
+                                }}
+                              >
+                                <div className="flex items-center flex-1 min-w-0">
+                                  <FiFile className="mr-2 flex-shrink-0" size={16} />
+                                  <span className="truncate">
+                                    {variables[variable] ? variables[variable] : 'Select a file...'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center">
                                   {variables[variable] && (
                                     <button
-                                      onClick={() => handleVariableFileSelect(variable, null)}
-                                      className={`text-xs px-2 py-1 rounded-md ${isDarkMode ? 'bg-red-900 hover:bg-red-800 text-white' : 'bg-red-100 hover:bg-red-200 text-red-800'}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent dropdown toggle
+                                        handleVariableFileSelect(variable, null);
+                                      }}
+                                      className={`mr-2 p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'}`}
+                                      title="Clear selection"
                                     >
-                                      Clear
+                                      <FiX size={14} />
                                     </button>
                                   )}
+                                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                  </svg>
                                 </div>
-
-                                {variables[variable] ? (
-                                  <div className={`p-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center`}>
-                                    <span className="flex-1 truncate">{variables[variable]}</span>
-                                  </div>
-                                ) : (
-                                  <div className="text-center py-2 text-sm text-gray-500">
-                                    Select a file below or upload a new one
-                                  </div>
-                                )}
                               </div>
 
-                              {/* File upload button */}
-                              <button
-                                onClick={triggerFileUpload}
-                                className={`flex items-center justify-center p-2 rounded-md w-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
-                              >
-                                <FiUpload className="mr-2" size={16} />
-                                Upload New File
-                              </button>
-
-                              {/* Available files list */}
-                              {selectedFiles.length > 0 ? (
-                                <div className="mt-2">
-                                  <p className="text-xs font-medium mb-2">Available files:</p>
-                                  <div className="max-h-40 overflow-y-auto pr-1">
-                                    <div className="space-y-1">
-                                      {selectedFiles.map((file, idx) => (
-                                        <button
-                                          key={idx}
-                                          onClick={() => handleVariableFileSelect(variable, idx)}
-                                          className={`flex items-center w-full text-left p-2 rounded-md text-sm ${variables[variable] === file.name
-                                            ? isDarkMode
-                                              ? 'bg-blue-600 text-white'
-                                              : 'bg-blue-500 text-white'
-                                            : isDarkMode
-                                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                                        >
-                                          <FiFile className="mr-2 flex-shrink-0" size={14} />
-                                          <span className="truncate">{file.fileName}</span>
-                                        </button>
-                                      ))}
+                              {/* Dropdown content */}
+                              {variables[`${variable}_dropdown_open`] && (
+                                <div className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}>
+                                  {/* Search and upload section */}
+                                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                                    {/* Search input */}
+                                    <div className={`flex items-center mb-2 p-1.5 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                      <FiSearch className="mr-2 text-gray-500" size={14} />
+                                      <input
+                                        type="text"
+                                        placeholder="Search files..."
+                                        value={variables[`${variable}_search`] || ''}
+                                        onChange={(e) => {
+                                          setVariables(prev => ({
+                                            ...prev,
+                                            [`${variable}_search`]: e.target.value
+                                          }));
+                                        }}
+                                        onClick={(e) => e.stopPropagation()} // Prevent dropdown toggle
+                                        className={`w-full bg-transparent border-none focus:outline-none text-sm ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
+                                      />
                                     </div>
+
+                                    {/* Upload button */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent dropdown toggle
+                                        triggerFileUpload();
+                                      }}
+                                      className={`flex items-center justify-center p-1.5 rounded-md w-full text-sm ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                                    >
+                                      <FiUpload className="mr-1" size={14} />
+                                      Upload New File
+                                    </button>
+                                  </div>
+
+                                  {/* File list */}
+                                  <div className="max-h-48 overflow-y-auto">
+                                    {isLoadingS3Files ? (
+                                      <div className="flex items-center justify-center p-4">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                                      </div>
+                                    ) : filteredFiles.length === 0 ? (
+                                      <div className="p-4 text-center text-sm text-gray-500">
+                                        No files found
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        {filteredFiles
+                                          .filter(file => {
+                                            const searchTerm = variables[`${variable}_search`] || '';
+                                            if (!searchTerm) return true;
+                                            return file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
+                                          })
+                                          .map((file, idx) => (
+                                            <div
+                                              key={idx}
+                                              onClick={(e) => {
+                                                e.stopPropagation(); // Prevent dropdown toggle
+                                                // Add file to selected files if not already there
+                                                if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
+                                                  handleFileSelect(file);
+                                                }
+                                                // Set the variable value
+                                                handleVariableChange(variable, file.fileName || 'Unnamed file');
+                                                // Close dropdown
+                                                setVariables(prev => ({
+                                                  ...prev,
+                                                  [`${variable}_dropdown_open`]: false
+                                                }));
+                                              }}
+                                              className={`flex items-center p-2 cursor-pointer text-sm ${variables[variable] === file.fileName
+                                                ? isDarkMode
+                                                  ? 'bg-blue-600 text-white'
+                                                  : 'bg-blue-100 text-blue-800'
+                                                : isDarkMode
+                                                  ? 'hover:bg-gray-700'
+                                                  : 'hover:bg-gray-100'}`}
+                                            >
+                                              <FiFile className="mr-2 flex-shrink-0" size={14} />
+                                              <span className="truncate">{file.fileName}</span>
+                                            </div>
+                                          ))
+                                        }
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              ) : (
-                                <p className="text-xs text-gray-500 italic text-center">No files available</p>
                               )}
                             </div>
+
+                            {/* Upload progress indicator */}
+                            {isUploading && (
+                              <div className="mt-2">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span>Uploading...</span>
+                                  <span>{uploadProgress}%</span>
+                                </div>
+                                <div className={`w-full h-1.5 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                  <div
+                                    className="h-full rounded-full bg-green-500 transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : detectedVariableTypes[variable]?.type === 'number' ? (
                           <input
