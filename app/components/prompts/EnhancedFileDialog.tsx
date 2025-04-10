@@ -470,7 +470,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]" style={{ height: 'calc(60vh - 200px)' }}>
               {requiredVariables.length > 0 ? (
                 <div className="space-y-4">
                   {requiredVariables.map((variable) => (
