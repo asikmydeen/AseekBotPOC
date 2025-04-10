@@ -17,6 +17,7 @@ interface EnhancedPromptFileDropzoneProps {
   isUploading: boolean;
   progress: number;
   handleFileAction: (action: string) => void;
+  onClose?: () => void;
 }
 
 const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
