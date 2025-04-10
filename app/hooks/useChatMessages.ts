@@ -303,6 +303,18 @@ export default function useChatMessages({
           return prev < 90 ? prev + increment : 90;
         });
       }, 500);
+
+      // Log the attachments for debugging
+      if (attachments && attachments.length > 0) {
+        console.log(`Sending message with ${attachments.length} attachments:`,
+          attachments.map(file => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            url: file.url || file.fileUrl || file.s3Url || ''
+          })));
+      }
+
       const apiSendMessage = apiService.sendMessage;
       const response = await apiSendMessage(text, chatSessionId, attachments);
       if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {
