@@ -324,7 +324,8 @@ const usePromptFileHandler = ({
 
   // Open dialog with the selected prompt
   const openFileDialog = useCallback((prompt: Prompt) => {
-    console.log('Opening file dialog for prompt:', prompt.title);
+    console.log('usePromptFileHandler: openFileDialog called for prompt:', prompt.title);
+    console.log('usePromptFileHandler: Prompt ID:', prompt.promptId);
 
     // Set the selected prompt locally
     setSelectedPrompt(prompt);
@@ -332,7 +333,8 @@ const usePromptFileHandler = ({
 
     // Parse prompt requirements first
     if (prompt && prompt.content) {
-      console.log('Parsing prompt requirements for:', prompt.title);
+      console.log('usePromptFileHandler: Parsing prompt requirements for:', prompt.title);
+      console.log('usePromptFileHandler: Prompt content:', prompt.content.substring(0, 100) + '...');
 
       // Check for file requirements
       let fileCount = 0;
@@ -345,12 +347,14 @@ const usePromptFileHandler = ({
         prompt.promptId.includes('document')
       ) {
         fileCount = 2; // Default to at least 2 files for analysis prompts
+        console.log('usePromptFileHandler: Prompt ID suggests file requirements, setting fileCount to', fileCount);
       }
 
       // Look for explicit file mentions
       const fileMatch = prompt.content.match(/(\d+)\s+files?/i);
       if (fileMatch && fileMatch[1]) {
         fileCount = Math.max(fileCount, parseInt(fileMatch[1], 10));
+        console.log('usePromptFileHandler: Found explicit file mention in content, setting fileCount to', fileCount);
       }
 
       // Count document references like ${doc_1}, ${sow_doc}, etc.
