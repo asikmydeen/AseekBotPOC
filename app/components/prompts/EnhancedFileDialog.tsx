@@ -120,12 +120,23 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Fetch S3 files when dialog opens
+  // Fetch S3 files when dialog opens or when any dropdown is opened
   useEffect(() => {
     if (isOpen) {
       fetchS3Files();
     }
   }, [isOpen]);
+
+  // Refresh file list when a dropdown is opened
+  useEffect(() => {
+    const hasOpenDropdown = Object.keys(uiState).some(key =>
+      key.endsWith('_dropdown_open') && uiState[key] === true
+    );
+
+    if (hasOpenDropdown) {
+      fetchS3Files();
+    }
+  }, [uiState]);
 
   // Filter files based on search term
   useEffect(() => {
