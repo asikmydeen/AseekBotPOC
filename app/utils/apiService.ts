@@ -134,6 +134,96 @@ export async function makeRequest<T = any>(
 /**
  * API service with methods for common endpoints
  */
+// Special function for vendor-sow-comparison-analysis-v1 prompt
+async function sendVendorAnalysisMessage(message: string, chatSessionId: string, files: any[]) {
+  console.log('Using special vendor analysis message function');
+
+  // Create the exact payload format needed
+  const payload = {
+    promptId: 'vendor-sow-comparison-analysis-v1',
+    userId: TEST_USER_ID,
+    sessionId: chatSessionId,
+    chatId: chatSessionId,
+    message: message,
+    s3Files: []
+  };
+
+  // Format files with the exact naming convention needed
+  if (files && files.length > 0) {
+    // Find SOW file
+    const sowFile = files.find(file =>
+      file.name.toLowerCase().includes('sow') ||
+      (file.type && file.type.toLowerCase().includes('word')));
+
+    // Find LSK file
+    const lskFile = files.find(file =>
+      file.name.toLowerCase().includes('lsk') ||
+      file.name.toLowerCase().includes('sin v2'));
+
+    // Find Acme file
+    const acmeFile = files.find(file =>
+      file.name.toLowerCase().includes('acme') ||
+      file.name.toLowerCase().includes('associates'));
+
+    // Add files in the correct order with the correct names
+    if (lskFile) {
+      payload.s3Files.push({
+        name: 'LSK_Bid',
+        fileName: lskFile.name,
+        s3Url: lskFile.url || lskFile.fileUrl || lskFile.s3Url || '',
+        mimeType: lskFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    } else if (files.length > 0) {
+      // If no LSK file found, use the first file
+      payload.s3Files.push({
+        name: 'LSK_Bid',
+        fileName: files[0].name,
+        s3Url: files[0].url || files[0].fileUrl || files[0].s3Url || '',
+        mimeType: files[0].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    }
+
+    if (acmeFile) {
+      payload.s3Files.push({
+        name: 'Acme_Bid',
+        fileName: acmeFile.name,
+        s3Url: acmeFile.url || acmeFile.fileUrl || acmeFile.s3Url || '',
+        mimeType: acmeFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    } else if (files.length > 1) {
+      // If no Acme file found, use the second file
+      payload.s3Files.push({
+        name: 'Acme_Bid',
+        fileName: files[1].name,
+        s3Url: files[1].url || files[1].fileUrl || files[1].s3Url || '',
+        mimeType: files[1].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    }
+
+    if (sowFile) {
+      payload.s3Files.push({
+        name: 'SOW',
+        fileName: sowFile.name,
+        s3Url: sowFile.url || sowFile.fileUrl || sowFile.s3Url || '',
+        mimeType: sowFile.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+    } else if (files.length > 2) {
+      // If no SOW file found, use the third file
+      payload.s3Files.push({
+        name: 'SOW',
+        fileName: files[2].name,
+        s3Url: files[2].url || files[2].fileUrl || files[2].s3Url || '',
+        mimeType: files[2].type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+    }
+  }
+
+  console.log('Sending vendor analysis message with payload:', JSON.stringify(payload, null, 2));
+
+  // Make the API request directly
+  return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
+}
+
 export const apiService = {
   /**
    * Sends a message to the chat API
