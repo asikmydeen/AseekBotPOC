@@ -647,10 +647,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                             </p>
                           </div>
                         )}
-                      </div>
-                      </div>
                     </div>
-                  ))}
+                  ))
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-center">
