@@ -4,7 +4,7 @@ import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'reac
 import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface EnhancedFileDialogProps {
   isOpen: boolean;
@@ -65,7 +65,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         setFilteredFiles(s3Files);
       } else {
         const filtered = s3Files.filter(file =>
-          file.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+          file.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredFiles(filtered);
       }
@@ -80,7 +80,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
       // Try to match files to variables based on patterns
       selectedFiles.forEach(file => {
-        const fileName = file.fileName.toLowerCase();
+        const fileName = file.fileName?.toLowerCase() || '';
 
         // Match SOW documents
         if ((fileName.includes('sow') || fileName.includes('scope') || fileName.includes('work')) &&
@@ -214,14 +214,14 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     } else {
       // Add file to selected files
       const newFile: UploadedFile = {
-        name: file.fileName,
+        name: file.fileName || 'Unnamed file',
         fileName: file.fileName,
         fileId: file.fileId,
         fileKey: file.fileKey,
         size: file.fileSize,
         type: file.fileType,
         // Use the clean URL without query parameters
-        url: file.s3Url,
+        url: file.s3Url || '',
         s3Url: file.s3Url,
         // Store the original URL for reference if needed
         originalS3Url: file.originalS3Url
