@@ -239,6 +239,13 @@ export const apiService = {
               payload.promptId = promptMetadata.promptId;
             }
 
+            // If we have s3Files in the promptMetadata, add them directly to the payload
+            if (promptMetadata.s3Files && promptMetadata.s3Files.length > 0) {
+              // Add s3Files directly to the payload (not just in promptMetadata)
+              payload.s3Files = promptMetadata.s3Files;
+              console.log('Adding s3Files directly to payload from promptMetadata:', promptMetadata.s3Files.length);
+            }
+
             // If we have s3Files in the prompt metadata, merge them with any existing s3Files
             if (promptMetadata.s3Files) {
               // If we already have s3Files from the files parameter, merge them
