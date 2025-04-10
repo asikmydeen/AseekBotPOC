@@ -445,6 +445,22 @@ function ChatApp() {
             onFilesUpdate={syncUploadedFiles}
             initialMessages={activeChat?.messages || []} // Pass the active chat messages with fallback
             externalFileToAdd={preselectedFile} // New prop for adding files from sidebar
+            // Pass the async processing state to show the typing indicator
+            externalAsyncProcessing={isAsyncProcessing}
+            externalAsyncStatus={asyncStatus}
+            externalAsyncProgress={processingProgress}
+            onRefreshStatus={() => {
+              // Implement refresh functionality if needed
+              console.log('Refresh status requested');
+            }}
+            onCancelRequest={() => {
+              // Reset the async processing state
+              setIsAsyncProcessing(false);
+              setAsyncStatus('');
+              setProcessingStatus('');
+              setProcessingProgress(0);
+              console.log('Cancel request called');
+            }}
           />
         )}
       </div>
