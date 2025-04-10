@@ -439,15 +439,27 @@ const usePromptFileHandler = ({
       setRequiredVariables(variables);
 
       // Use the global modal context to open the dialog with the parsed values
+      console.log('usePromptFileHandler: Setting timeout to call openFileSelectionDialog');
       setTimeout(() => {
-        openFileSelectionDialog(
-          prompt,
-          fileCount,  // Use the local variable instead of state
-          variables,  // Use the local variable instead of state
-          handleFileSelection,
-          variableTypes  // Pass the detected variable types
-        );
-        console.log('Dialog opened via modal context with file count:', fileCount, 'and variables:', variables);
+        console.log('usePromptFileHandler: Timeout fired, calling openFileSelectionDialog with:', {
+          promptTitle: prompt.title,
+          fileCount,
+          variablesCount: variables.length,
+          variableTypesCount: Object.keys(variableTypes).length
+        });
+
+        try {
+          openFileSelectionDialog(
+            prompt,
+            fileCount,  // Use the local variable instead of state
+            variables,  // Use the local variable instead of state
+            handleFileSelection,
+            variableTypes  // Pass the detected variable types
+          );
+          console.log('usePromptFileHandler: Dialog opened via modal context successfully');
+        } catch (error) {
+          console.error('usePromptFileHandler: Error opening dialog via modal context:', error);
+        }
       }, 10);
     } else {
       // Fallback if no content
