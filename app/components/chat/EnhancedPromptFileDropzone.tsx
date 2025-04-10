@@ -319,27 +319,101 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
 
     console.log('Variable to file mapping:', variableToFileMap);
 
-    // Create s3Files array with proper naming based on variables
-    const s3FilesArray = uploadedFiles.map(file => {
-      // Find if this file is mapped to a variable
-      const variableEntry = Object.entries(variableToFileMap).find(([_, f]) => f.name === file.name);
-      const variableName = variableEntry ? variableEntry[0] : null;
+    // Special handling for vendor-sow-comparison-analysis-v1 prompt
+    let s3FilesArray = [];
 
-      // Use variable-based naming if available, otherwise use filename-based naming
-      const name = variableName ?
-        (variableName.includes('sow') ? 'SOW' :
-         variableName.includes('bid_doc_1') ? 'LSK_Bid' :
-         variableName.includes('bid_doc_2') ? 'Acme_Bid' :
-         file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')) :
-        file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+    if (prompt.promptId === 'vendor-sow-comparison-analysis-v1') {
+      console.log('Using special formatting for vendor-sow-comparison-analysis-v1 prompt');
 
-      return {
-        name: name,
-        fileName: file.name,
-        s3Url: file.url || file.fileUrl || file.s3Url || '',
-        mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      };
-    });
+      // Find SOW file
+      const sowFile = uploadedFiles.find(file =>
+        file.name.toLowerCase().includes('sow') ||
+        (file.type && file.type.toLowerCase().includes('word')));
+
+      // Find LSK file
+      const lskFile = uploadedFiles.find(file =>
+        file.name.toLowerCase().includes('lsk') ||
+        file.name.toLowerCase().includes('sin v2'));
+
+      // Find Acme file
+      const acmeFile = uploadedFiles.find(file =>
+        file.name.toLowerCase().includes('acme') ||
+        file.name.toLowerCase().includes('associates'));
+
+      // Add files in the correct order with the correct names
+      if (lskFile) {
+        s3FilesArray.push({
+          name: 'LSK_Bid',
+          fileName: lskFile.name,
+          s3Url: lskFile.url || lskFile.fileUrl || lskFile.s3Url || '',
+          mimeType: lskFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+      } else if (uploadedFiles.length > 0) {
+        // If no LSK file found, use the first file
+        s3FilesArray.push({
+          name: 'LSK_Bid',
+          fileName: uploadedFiles[0].name,
+          s3Url: uploadedFiles[0].url || uploadedFiles[0].fileUrl || uploadedFiles[0].s3Url || '',
+          mimeType: uploadedFiles[0].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+      }
+
+      if (acmeFile) {
+        s3FilesArray.push({
+          name: 'Acme_Bid',
+          fileName: acmeFile.name,
+          s3Url: acmeFile.url || acmeFile.fileUrl || acmeFile.s3Url || '',
+          mimeType: acmeFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+      } else if (uploadedFiles.length > 1) {
+        // If no Acme file found, use the second file
+        s3FilesArray.push({
+          name: 'Acme_Bid',
+          fileName: uploadedFiles[1].name,
+          s3Url: uploadedFiles[1].url || uploadedFiles[1].fileUrl || uploadedFiles[1].s3Url || '',
+          mimeType: uploadedFiles[1].type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+      }
+
+      if (sowFile) {
+        s3FilesArray.push({
+          name: 'SOW',
+          fileName: sowFile.name,
+          s3Url: sowFile.url || sowFile.fileUrl || sowFile.s3Url || '',
+          mimeType: sowFile.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+      } else if (uploadedFiles.length > 2) {
+        // If no SOW file found, use the third file
+        s3FilesArray.push({
+          name: 'SOW',
+          fileName: uploadedFiles[2].name,
+          s3Url: uploadedFiles[2].url || uploadedFiles[2].fileUrl || uploadedFiles[2].s3Url || '',
+          mimeType: uploadedFiles[2].type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+      }
+    } else {
+      // Regular handling for other prompts
+      s3FilesArray = uploadedFiles.map(file => {
+        // Find if this file is mapped to a variable
+        const variableEntry = Object.entries(variableToFileMap).find(([_, f]) => f.name === file.name);
+        const variableName = variableEntry ? variableEntry[0] : null;
+
+        // Use variable-based naming if available, otherwise use filename-based naming
+        const name = variableName ?
+          (variableName.includes('sow') ? 'SOW' :
+           variableName.includes('bid_doc_1') ? 'LSK_Bid' :
+           variableName.includes('bid_doc_2') ? 'Acme_Bid' :
+           file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')) :
+          file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+
+        return {
+          name: name,
+          fileName: file.name,
+          s3Url: file.url || file.fileUrl || file.s3Url || '',
+          mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        };
+      });
+    }
 
     console.log('Created s3Files array with proper naming:', s3FilesArray);
 
