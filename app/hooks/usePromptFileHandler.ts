@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiService } from '../utils/apiService';
-import { UploadedFile, Prompt } from '../types/shared';
+import { UploadedFile, Prompt, PromptVariable } from '../types/shared';
 import { useModal } from '../contexts/ModalContext';
 
 interface UsePromptFileHandlerProps {
@@ -29,6 +29,7 @@ const usePromptFileHandler = ({
   const [error, setError] = useState<Error | null>(null);
   const [requiredFileCount, setRequiredFileCount] = useState<number>(0);
   const [requiredVariables, setRequiredVariables] = useState<string[]>([]);
+  const [variableTypes, setVariableTypes] = useState<Record<string, { type: string; options?: string[] }>>({});
 
   // Parse prompt content to extract required files and variables
   const parsePromptRequirements = useCallback((prompt: Prompt) => {
@@ -72,8 +73,89 @@ const usePromptFileHandler = ({
       )];
       console.log('Detected variables:', uniqueVariables);
       setRequiredVariables(uniqueVariables);
+
+      // Detect variable types based on naming patterns
+      const detectedTypes: Record<string, { type: string; options?: string[] }> = {};
+
+      uniqueVariables.forEach(variable => {
+        // Start with default type
+        let type = 'text';
+
+        // Detect file-type variables
+        if (
+          variable.includes('_doc') ||
+          variable.includes('_file') ||
+          variable.includes('document') ||
+          variable.includes('attachment')
+        ) {
+          type = 'file';
+        }
+        // Detect number-type variables
+        else if (
+          variable.includes('_count') ||
+          variable.includes('_number') ||
+          variable.includes('_amount') ||
+          variable.includes('_qty') ||
+          variable.includes('_quantity')
+        ) {
+          type = 'number';
+        }
+        // Detect date-type variables
+        else if (
+          variable.includes('_date') ||
+          variable.includes('_time') ||
+          variable.includes('_day')
+        ) {
+          type = 'date';
+        }
+        // Detect select-type variables
+        else if (
+          variable.includes('_type') ||
+          variable.includes('_category') ||
+          variable.includes('_option') ||
+          variable.includes('_selection')
+        ) {
+          type = 'select';
+          // Add some default options for common select types
+          if (variable.includes('priority')) {
+            detectedTypes[variable] = { type, options: ['Low', 'Medium', 'High'] };
+          } else if (variable.includes('status')) {
+            detectedTypes[variable] = { type, options: ['New', 'In Progress', 'Completed'] };
+          } else {
+            detectedTypes[variable] = { type };
+          }
+          return; // Skip the default assignment below
+        }
+
+        // Use prompt variables if available
+        if (prompt.variables && prompt.variables.length > 0) {
+          const promptVar = prompt.variables.find(v => v.name === variable);
+          if (promptVar) {
+            // If the prompt has defined this variable, use its source to determine type
+            if (promptVar.source === 'FILE') {
+              type = 'file';
+            } else if (promptVar.sourceDetails?.type === 'number') {
+              type = 'number';
+            } else if (promptVar.sourceDetails?.type === 'date') {
+              type = 'date';
+            } else if (promptVar.sourceDetails?.type === 'select' && promptVar.sourceDetails?.options) {
+              detectedTypes[variable] = {
+                type: 'select',
+                options: promptVar.sourceDetails.options.split(',').map(o => o.trim())
+              };
+              return; // Skip the default assignment below
+            }
+          }
+        }
+
+        detectedTypes[variable] = { type };
+      });
+
+      console.log('Detected variable types:', detectedTypes);
+      setVariableTypes(detectedTypes);
     } else {
       setRequiredVariables([]);
+      setVariableTypes({});
     }
   }, []);
 
@@ -248,11 +330,70 @@ const usePromptFileHandler = ({
       // Find variables in the format ${VARIABLE_NAME}
       const variableMatches = prompt.content.match(/\${([A-Za-z0-9_]+)}/g);
       let variables: string[] = [];
+      let types: Record<string, { type: string; options?: string[] }> = {};
+
       if (variableMatches) {
         variables = [...new Set(
           variableMatches.map(match => match.replace(/\${(.*)}/,'$1'))
         )];
         console.log('Detected variables:', variables);
+
+        // Detect variable types based on naming patterns
+        variables.forEach(variable => {
+          // Start with default type
+          let type = 'text';
+
+          // Detect file-type variables
+          if (
+            variable.includes('_doc') ||
+            variable.includes('_file') ||
+            variable.includes('document') ||
+            variable.includes('attachment')
+          ) {
+            type = 'file';
+          }
+          // Detect number-type variables
+          else if (
+            variable.includes('_count') ||
+            variable.includes('_number') ||
+            variable.includes('_amount') ||
+            variable.includes('_qty') ||
+            variable.includes('_quantity')
+          ) {
+            type = 'number';
+          }
+          // Detect date-type variables
+          else if (
+            variable.includes('_date') ||
+            variable.includes('_time') ||
+            variable.includes('_day')
+          ) {
+            type = 'date';
+          }
+          // Detect select-type variables
+          else if (
+            variable.includes('_type') ||
+            variable.includes('_category') ||
+            variable.includes('_option') ||
+            variable.includes('_selection')
+          ) {
+            type = 'select';
+            // Add some default options for common select types
+            if (variable.includes('priority')) {
+              types[variable] = { type, options: ['Low', 'Medium', 'High'] };
+            } else if (variable.includes('status')) {
+              types[variable] = { type, options: ['New', 'In Progress', 'Completed'] };
+            } else {
+              types[variable] = { type };
+            }
+            return; // Skip the default assignment below
+          }
+
+          types[variable] = { type };
+        });
+
+        console.log('Detected variable types:', types);
+        setVariableTypes(types);
       }
 
       // Set the state and immediately use the values
@@ -377,6 +518,7 @@ const usePromptFileHandler = ({
     error,
     requiredFileCount,
     requiredVariables,
+    variableTypes,
     openFileDialog,
     resetState,
     handleFileSelection
