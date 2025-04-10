@@ -3,12 +3,18 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import EnhancedFileDialog from '../components/prompts/EnhancedFileDialog';
 import { Prompt, UploadedFile } from '../types/shared';
 
+interface VariableType {
+  type: 'text' | 'file' | 'number' | 'date' | 'select';
+  options?: string[];
+}
+
 interface ModalContextType {
   openFileSelectionDialog: (
     prompt: Prompt,
     requiredFileCount: number,
     requiredVariables: string[],
-    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void
+    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void,
+    variableTypes?: Record<string, VariableType>
   ) => void;
   closeFileSelectionDialog: () => void;
 }
@@ -32,17 +38,20 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [requiredFileCount, setRequiredFileCount] = useState(0);
   const [requiredVariables, setRequiredVariables] = useState<string[]>([]);
+  const [variableTypes, setVariableTypes] = useState<Record<string, VariableType>>({});
   const [onFileSubmit, setOnFileSubmit] = useState<((files: UploadedFile[], variables: Record<string, string>) => void) | null>(null);
 
   const openFileSelectionDialog = (
     prompt: Prompt,
     fileCount: number,
     variables: string[],
-    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void
+    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void,
+    types: Record<string, VariableType> = {}
   ) => {
     setCurrentPrompt(prompt);
     setRequiredFileCount(fileCount);
     setRequiredVariables(variables);
+    setVariableTypes(types);
     setOnFileSubmit(() => onSubmit);
     setFileDialogOpen(true);
   };
@@ -79,6 +88,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
           promptTitle={currentPrompt.title}
           requiredFileCount={requiredFileCount}
           requiredVariables={requiredVariables}
+          variableTypes={variableTypes}
         />
       )}
     </ModalContext.Provider>
