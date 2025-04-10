@@ -49,14 +49,14 @@ const FullScreenPromptModal: React.FC<FullScreenPromptModalProps> = ({
     return (
         <AnimatePresence>
             <motion.div
-                className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center"
+                className="fixed inset-0 bg-black bg-opacity-70 z-[10000] flex items-center justify-center"
                 initial="hidden"
                 animate="visible"
                 exit="hidden"
                 variants={backdropVariants}
             >
                 <motion.div
-                    className="w-full h-full max-w-5xl max-h-[95vh] m-4 overflow-hidden flex flex-col"
+                    className="w-full max-w-5xl max-h-[90vh] m-4 overflow-hidden flex flex-col"
                     variants={modalVariants}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -79,8 +79,8 @@ const FullScreenPromptModal: React.FC<FullScreenPromptModalProps> = ({
                                 </svg>
                             </button>
                         </div>
-                        
-                        <div className="flex-grow overflow-y-auto p-4">
+
+                        <div className="flex-grow overflow-y-auto p-6">
                             <PromptEditor
                                 isDarkMode={isDarkMode}
                                 prompt={prompt || undefined}

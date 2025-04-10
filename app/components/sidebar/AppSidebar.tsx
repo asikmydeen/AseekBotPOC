@@ -340,38 +340,38 @@ export default function AppSidebar({
             />
           )}
         </div>
-
-        {/* Prompt Modals */}
-        <FullScreenPromptModal
-          isOpen={isCreateModalOpen}
-          onClose={closeAllModals}
-          onSubmit={(data) => handleCreatePrompt(data)}
-          isDarkMode={isDarkMode}
-          isSubmitting={isSubmitting}
-          isCreateMode={true}
-        />
-
-        <FullScreenPromptModal
-          isOpen={isEditModalOpen}
-          prompt={promptToEditOrDelete}
-          onClose={closeAllModals}
-          onSubmit={(data, promptId) => {
-            if (promptId) handleUpdatePrompt(promptId, data);
-          }}
-          isDarkMode={isDarkMode}
-          isSubmitting={isSubmitting}
-          isCreateMode={false}
-        />
-
-        <DeletePromptConfirmation
-          isOpen={isDeleteModalOpen}
-          promptTitle={promptToEditOrDelete?.title || ''}
-          onClose={closeAllModals}
-          onConfirm={handleDeletePrompt}
-          isDarkMode={isDarkMode}
-          isDeleting={isDeleting}
-        />
       </motion.div>
+
+      {/* Prompt Modals - Rendered outside the sidebar container */}
+      <FullScreenPromptModal
+        isOpen={isCreateModalOpen}
+        onClose={closeAllModals}
+        onSubmit={(data) => handleCreatePrompt(data)}
+        isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
+        isCreateMode={true}
+      />
+
+      <FullScreenPromptModal
+        isOpen={isEditModalOpen}
+        prompt={promptToEditOrDelete}
+        onClose={closeAllModals}
+        onSubmit={(data, promptId) => {
+          if (promptId) handleUpdatePrompt(promptId, data);
+        }}
+        isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
+        isCreateMode={false}
+      />
+
+      <DeletePromptConfirmation
+        isOpen={isDeleteModalOpen}
+        promptTitle={promptToEditOrDelete?.title || ''}
+        onClose={closeAllModals}
+        onConfirm={handleDeletePrompt}
+        isDarkMode={isDarkMode}
+        isDeleting={isDeleting}
+      />
     </>
   );
 }
