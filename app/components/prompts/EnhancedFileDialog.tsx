@@ -737,52 +737,70 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                   </div>
 
                                   {/* File list */}
-                                  <div className="max-h-48 overflow-y-auto">
+                                  <div className="max-h-60 overflow-y-auto">
                                     {isLoadingS3Files ? (
                                       <div className="flex items-center justify-center p-4">
-                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
                                       </div>
                                     ) : filteredFiles.length === 0 ? (
-                                      <div className="p-4 text-center text-sm text-gray-500">
-                                        No files found
+                                      <div className="p-4 text-center text-gray-500">
+                                        <p>No files found</p>
+                                        <p className="text-sm mt-1">Upload a file using the button above</p>
                                       </div>
                                     ) : (
-                                      <div>
+                                      <div className="p-2">
                                         {filteredFiles
                                           .filter(file => {
                                             const searchTerm = uiState[`${variable}_search`] || '';
                                             if (!searchTerm) return true;
                                             return file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
                                           })
-                                          .map((file, idx) => (
-                                            <div
-                                              key={idx}
-                                              onClick={(e) => {
-                                                e.stopPropagation(); // Prevent dropdown toggle
-                                                // Add file to selected files if not already there
-                                                if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
-                                                  handleFileSelect(file);
-                                                }
-                                                // Set the variable value
-                                                handleVariableChange(variable, file.fileName || 'Unnamed file');
-                                                // Close dropdown
-                                                setUiState(prev => ({
-                                                  ...prev,
-                                                  [`${variable}_dropdown_open`]: false
-                                                }));
-                                              }}
-                                              className={`flex items-center p-2 cursor-pointer text-sm ${variables[variable] === file.fileName
-                                                ? isDarkMode
-                                                  ? 'bg-blue-600 text-white'
-                                                  : 'bg-blue-100 text-blue-800'
-                                                : isDarkMode
-                                                  ? 'hover:bg-gray-700'
-                                                  : 'hover:bg-gray-100'}`}
-                                            >
-                                              <FiFile className="mr-2 flex-shrink-0" size={14} />
-                                              <span className="truncate">{file.fileName}</span>
-                                            </div>
-                                          ))
+                                          .map((file, idx) => {
+                                            const isSelected = variables[variable] === file.fileName;
+                                            return (
+                                              <div
+                                                key={idx}
+                                                onClick={(e) => {
+                                                  e.stopPropagation(); // Prevent dropdown toggle
+                                                  // Add file to selected files if not already there
+                                                  if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
+                                                    handleFileSelect(file);
+                                                  }
+                                                  // Set the variable value
+                                                  handleVariableChange(variable, file.fileName || 'Unnamed file');
+                                                  // Close dropdown
+                                                  setUiState(prev => ({
+                                                    ...prev,
+                                                    [`${variable}_dropdown_open`]: false
+                                                  }));
+                                                }}
+                                                className={`flex items-center p-2 mb-1 rounded-md cursor-pointer ${isSelected
+                                                  ? isDarkMode
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-blue-100 text-blue-800'
+                                                  : isDarkMode
+                                                    ? 'bg-gray-700 hover:bg-gray-600'
+                                                    : 'bg-white hover:bg-gray-100 border border-gray-200'}`}
+                                              >
+                                                <div className={`p-2 rounded-md mr-2 ${isSelected
+                                                  ? isDarkMode ? 'bg-blue-500' : 'bg-blue-200'
+                                                  : isDarkMode ? 'bg-gray-600' : 'bg-gray-100'}`}>
+                                                  <FiFile size={16} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="font-medium truncate">{file.fileName}</div>
+                                                  <div className="text-xs opacity-70">
+                                                    {formatFileSize(file.fileSize || 0)}
+                                                  </div>
+                                                </div>
+                                                {isSelected && (
+                                                  <div className="ml-2 text-xs px-2 py-1 rounded-full bg-blue-500 text-white">
+                                                    Selected
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })
                                         }
                                       </div>
                                     )}
