@@ -534,9 +534,10 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                     <div key={variable} className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                       <div className={`px-4 py-2 ${
                         isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                      }`}>
+                      } ${!variables[variable] ? 'border-l-4 border-red-500' : ''}`}>
                         <label className="block font-medium">
                           {formatVariableName(variable)}
+                          {!variables[variable] && <span className="text-red-500 ml-1">*</span>}
                         </label>
                       </div>
                       <div className="p-4">
