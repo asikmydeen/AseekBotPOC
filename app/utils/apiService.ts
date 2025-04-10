@@ -213,7 +213,12 @@ export const apiService = {
       }
 
       console.log('Sending message with payload:', payload);
-      return await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
+      const response = await makeRequest(LAMBDA_ENDPOINTS.message, 'POST', payload);
+
+      // Clear prompt metadata after sending
+      localStorage.removeItem('promptMetadata');
+
+      return response;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
