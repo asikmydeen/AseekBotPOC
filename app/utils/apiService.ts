@@ -309,6 +309,41 @@ export const apiService = {
         }
       }
 
+      // Special handling for vendor-sow-comparison-analysis-v1 prompt
+      if (payload.promptId === 'vendor-sow-comparison-analysis-v1' && payload.s3Files && payload.s3Files.length > 0) {
+        console.log('Detected vendor-sow-comparison-analysis-v1 prompt, applying special formatting');
+
+        // Ensure we have the correct naming for the files
+        const formattedS3Files = payload.s3Files.map((file, index) => {
+          // Determine name based on file type and index
+          let name;
+          if (file.fileName.toLowerCase().includes('sow')) {
+            name = 'SOW';
+          } else if (index === 0 || file.fileName.toLowerCase().includes('lsk')) {
+            name = 'LSK_Bid';
+          } else if (index === 1 || file.fileName.toLowerCase().includes('acme')) {
+            name = 'Acme_Bid';
+          } else {
+            name = file.name || file.fileName.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+          }
+
+          return {
+            name: name,
+            fileName: file.fileName,
+            s3Url: file.s3Url,
+            mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          };
+        });
+
+        // Replace the s3Files array with the formatted one
+        payload.s3Files = formattedS3Files;
+
+        // Also update the s3Files in promptMetadata if it exists
+        if (payload.promptMetadata && payload.promptMetadata.s3Files) {
+          payload.promptMetadata.s3Files = formattedS3Files;
+        }
+      }
+
       console.log('Sending message with payload:', JSON.stringify(payload, null, 2));
 
       // Log specific details about files and s3Files
