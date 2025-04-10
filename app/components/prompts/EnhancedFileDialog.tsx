@@ -652,46 +652,72 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                         {/* Render different input types based on variable type */}
                         {detectedVariableTypes[variable]?.type === 'file' ? (
                           <div>
-                            <div className="flex items-center mb-2">
-                              <input
-                                type="text"
-                                value={variables[variable] || ''}
-                                onChange={(e) => handleVariableChange(variable, e.target.value)}
-                                className={`flex-1 p-2 rounded-md ${isDarkMode
-                                  ? 'bg-gray-800 border-gray-600 text-white'
-                                  : 'bg-white border-gray-300 text-gray-900'} border`}
-                                placeholder={`Select a file for ${formatVariableName(variable).toLowerCase()}`}
-                                readOnly
-                              />
-                            </div>
-
-                            {/* File selector for file variables */}
-                            {selectedFiles.length > 0 ? (
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500 mb-2">Select from your files:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {selectedFiles.map((file, idx) => (
+                            <div className="flex flex-col space-y-2">
+                              {/* File selector dropdown */}
+                              <div className={`p-3 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}>
+                                <div className="flex justify-between items-center mb-2">
+                                  <label className="text-sm font-medium">
+                                    {variables[variable] ? 'Selected file:' : 'No file selected'}
+                                  </label>
+                                  {variables[variable] && (
                                     <button
-                                      key={idx}
-                                      onClick={() => handleVariableFileSelect(variable, idx)}
-                                      className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
-                                        variables[variable] === file.name
-                                          ? isDarkMode
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-blue-500 text-white'
-                                          : isDarkMode
-                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                      }`}
+                                      onClick={() => handleVariableFileSelect(variable, null)}
+                                      className={`text-xs px-2 py-1 rounded-md ${isDarkMode ? 'bg-red-900 hover:bg-red-800 text-white' : 'bg-red-100 hover:bg-red-200 text-red-800'}`}
                                     >
-                                      {file.fileName}
+                                      Clear
                                     </button>
-                                  ))}
+                                  )}
                                 </div>
+
+                                {variables[variable] ? (
+                                  <div className={`p-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center`}>
+                                    <span className="flex-1 truncate">{variables[variable]}</span>
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-2 text-sm text-gray-500">
+                                    Select a file below or upload a new one
+                                  </div>
+                                )}
                               </div>
-                            ) : (
-                              <p className="text-xs text-gray-500 italic">Please upload or select files above</p>
-                            )}
+
+                              {/* File upload button */}
+                              <button
+                                onClick={triggerFileUpload}
+                                className={`flex items-center justify-center p-2 rounded-md w-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                              >
+                                <FiUpload className="mr-2" size={16} />
+                                Upload New File
+                              </button>
+
+                              {/* Available files list */}
+                              {selectedFiles.length > 0 ? (
+                                <div className="mt-2">
+                                  <p className="text-xs font-medium mb-2">Available files:</p>
+                                  <div className="max-h-40 overflow-y-auto pr-1">
+                                    <div className="space-y-1">
+                                      {selectedFiles.map((file, idx) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => handleVariableFileSelect(variable, idx)}
+                                          className={`flex items-center w-full text-left p-2 rounded-md text-sm ${variables[variable] === file.name
+                                            ? isDarkMode
+                                              ? 'bg-blue-600 text-white'
+                                              : 'bg-blue-500 text-white'
+                                            : isDarkMode
+                                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                        >
+                                          <FiFile className="mr-2 flex-shrink-0" size={14} />
+                                          <span className="truncate">{file.fileName}</span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-500 italic text-center">No files available</p>
+                              )}
+                            </div>
                           </div>
                         ) : detectedVariableTypes[variable]?.type === 'number' ? (
                           <input
@@ -737,29 +763,44 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                           />
                         )}
 
-                        {/* Show file selector for non-file variables too, but less prominently */}
+                        {/* For non-file variables, show a simple file reference option */}
                         {detectedVariableTypes[variable]?.type !== 'file' && selectedFiles.length > 0 && (
                           <div className="mt-2">
-                            <p className="text-xs text-gray-500 mb-2">Or select from your files:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedFiles.map((file, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleVariableFileSelect(variable, idx)}
-                                  className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
-                                    variables[variable] === file.name
-                                      ? isDarkMode
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-blue-500 text-white'
-                                      : isDarkMode
-                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                  }`}
-                                >
-                                  {file.fileName}
-                                </button>
-                              ))}
-                            </div>
+                            <details className="text-sm">
+                              <summary className="cursor-pointer text-xs text-gray-500 mb-2 hover:text-gray-700 dark:hover:text-gray-300">
+                                Reference a file instead
+                              </summary>
+                              <div className="mt-1 pl-2 border-l-2 border-gray-300 dark:border-gray-700">
+                                <div className="flex flex-col space-y-1">
+                                  {selectedFiles.map((file, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => handleVariableFileSelect(variable, idx)}
+                                      className={`flex items-center text-left p-1 rounded-md text-xs ${
+                                        variables[variable] === file.name
+                                          ? isDarkMode
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-blue-500 text-white'
+                                          : isDarkMode
+                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      <FiFile className="mr-1 flex-shrink-0" size={12} />
+                                      <span className="truncate">{file.fileName}</span>
+                                    </button>
+                                  ))}
+                                  {variables[variable] && (
+                                    <button
+                                      onClick={() => handleVariableFileSelect(variable, null)}
+                                      className={`text-xs px-2 py-1 rounded-md mt-1 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                    >
+                                      Clear selection
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </details>
                           </div>
                         )}
                       </div>
