@@ -151,6 +151,15 @@ export default function useChatMessages({
       console.log(`Polling status for request ${requestId}...`);
       const statusResponse = await apiService.checkStatus(requestId);
       console.log(`Received status for ${requestId}:`, statusResponse.status, `Progress: ${statusResponse.progress || 0}%`);
+      console.log(`Status response details:`, {
+        workflowType: statusResponse.workflowType,
+        hasCompletion: !!statusResponse.completion,
+        completionLength: statusResponse.completion?.length || 0,
+        hasMessage: !!statusResponse.message,
+        messageLength: statusResponse.message?.length || 0,
+        hasFormattedMessage: !!statusResponse.formattedMessage,
+        hasAggregatedResults: !!statusResponse.aggregatedResults
+      });
       setAsyncStatus(statusResponse.status || 'PROCESSING');
       setAsyncProgress(statusResponse.progress || 0);
       if (statusResponse.status === 'COMPLETED') {
