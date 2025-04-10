@@ -664,8 +664,13 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                               {/* Dropdown content - inline version */}
                               {uiState[`${variable}_dropdown_open`] && (
                                 <div
-                                  className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
-                                  style={{ maxHeight: '300px' }}
+                                  className={`fixed z-50 w-[calc(100%-4rem)] md:w-[400px] rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
+                                  style={{
+                                    maxHeight: '300px',
+                                    left: '50%',
+                                    top: '50%',
+                                    transform: 'translate(-50%, -50%)'
+                                  }}
                                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
                                 >
                                   {/* Search and upload section */}
