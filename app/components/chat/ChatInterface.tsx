@@ -477,12 +477,12 @@ function ChatInterfaceComponent({
                         handleReaction={handleReaction}
                         handlePinMessage={handlePinMessage}
                         messagesEndRef={messagesEndRef}
-                        // New async props
-                        isAsyncProcessing={isAsyncProcessing}
-                        asyncProgress={asyncProgress}
-                        asyncStatus={asyncStatus}
-                        onRefreshStatus={handleRefreshStatus}
-                        onCancelRequest={cancelAsyncRequest}
+                        // New async props - use external state if provided, otherwise use internal state
+                        isAsyncProcessing={externalAsyncProcessing || isAsyncProcessing}
+                        asyncProgress={externalAsyncProcessing ? externalAsyncProgress : asyncProgress}
+                        asyncStatus={externalAsyncProcessing ? externalAsyncStatus : asyncStatus}
+                        onRefreshStatus={externalAsyncProcessing ? onRefreshStatus : handleRefreshStatus}
+                        onCancelRequest={externalAsyncProcessing ? onCancelRequest : cancelAsyncRequest}
                     />
                 </div>
 
