@@ -52,19 +52,24 @@ function Message({
   const getMessageContent = useCallback((): string => {
     // Prioritize completion field if available, then fall back to other fields
     const content = message.completion || message.formattedMessage || message.text || message.message || "";
-    // Log content for debugging if it's empty or very short
-    if (!content || content.length < 5) {
-      console.log('Message content issue:', {
-        hasCompletion: !!message.completion,
-        hasFormattedMessage: !!message.formattedMessage,
-        hasText: !!message.text,
-        hasMessage: !!message.message,
-        contentLength: content.length,
-        messageId: message.id
-      });
-    }
+
+    // Always log message content sources for debugging
+    console.log('Message content sources:', {
+      hasCompletion: !!message.completion,
+      completionLength: message.completion?.length || 0,
+      hasFormattedMessage: !!message.formattedMessage,
+      hasText: !!message.text,
+      hasMessage: !!message.message,
+      contentLength: content.length,
+      messageId: message.id,
+      workflowType: message.agentType || 'unknown',
+      selectedContent: message.completion ? 'completion' :
+                      message.formattedMessage ? 'formattedMessage' :
+                      message.text ? 'text' : 'message'
+    });
+
     return content;
-  }, [message.completion, message.formattedMessage, message.text, message.message, message.id]);
+  }, [message.completion, message.formattedMessage, message.text, message.message, message.id, message.agentType]);
 
   // Process message content when it changes
   useEffect(() => {
