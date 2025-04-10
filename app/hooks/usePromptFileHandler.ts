@@ -176,7 +176,9 @@ const usePromptFileHandler = ({
       // Add the message to the chat UI by updating the status
       // This will trigger the chat interface to show the message
       if (currentStatusCallback) {
-        // Pass the message to the chat interface
+        console.log('Calling status callback with prompt message:', userMessage);
+        // Pass the message to the chat interface with isPromptMessage=true
+        // The page.tsx handleStatusUpdate function will update the UI but NOT trigger a duplicate message
         currentStatusCallback('STARTED', 0, userMessage, true);
       }
 
