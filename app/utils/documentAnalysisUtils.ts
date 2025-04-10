@@ -346,6 +346,7 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
 
   // Create the bot message
   // Use analysisText for both formattedMessage and text to ensure proper markdown rendering
+  // Also include the completion field if available
   return {
     sender: 'bot',
     formattedMessage: analysisText,
@@ -354,6 +355,8 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
     suggestions: suggestions,
     chatId: status.requestId || documentId,
     chatSessionId: chatSessionId,
-    agentType: 'bid-analysis' // Mark this as a document analysis message
+    agentType: 'bid-analysis', // Mark this as a document analysis message
+    completion: status.completion, // Include the completion field from the status response
+    aggregatedResults: status.aggregatedResults // Include the aggregatedResults field from the status response
   };
 }
