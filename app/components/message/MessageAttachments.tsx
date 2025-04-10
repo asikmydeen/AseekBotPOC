@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FaPaperclip, 
-  FaDownload, 
+import {
+  FaPaperclip,
+  FaDownload,
   FaExternalLinkAlt,
   FaFilePdf,
   FaFileWord,
@@ -30,15 +30,15 @@ interface MessageAttachmentsProps {
   onView: (fileUrl: string) => void;
 }
 
-const MessageAttachments: React.FC<MessageAttachmentsProps> = ({ 
-  attachments, 
+const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
+  attachments,
   isDarkMode,
   styles,
   onDownload,
   onView
 }) => {
   const [isFileCollapsed, setIsFileCollapsed] = useState(attachments.length > 3);
-  
+
   // Format file size
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -50,12 +50,15 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
 
   // Get file icon based on file type
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FaFilePdf className={styles.attachments.icon.pdf} size={16} />;
-    if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className={styles.attachments.icon.word} size={16} />;
-    if (fileType.includes('text') || fileType.includes('txt')) return <FaFile className={styles.attachments.icon.text} size={16} />;
-    if (fileType.includes('csv')) return <FaFileCsv className={styles.attachments.icon.csv} size={16} />;
-    if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className={styles.attachments.icon.excel} size={16} />;
-    if (fileType.includes('image')) return <FaFileImage className={styles.attachments.icon.image} size={16} />;
+    if (!fileType) return <FaFile className={styles.attachments.icon.default} size={16} />;
+
+    const type = fileType.toLowerCase();
+    if (type.includes('pdf')) return <FaFilePdf className={styles.attachments.icon.pdf} size={16} />;
+    if (type.includes('word') || type.includes('docx') || type.includes('doc')) return <FaFileWord className={styles.attachments.icon.word} size={16} />;
+    if (type.includes('text') || type.includes('txt')) return <FaFile className={styles.attachments.icon.text} size={16} />;
+    if (type.includes('csv')) return <FaFileCsv className={styles.attachments.icon.csv} size={16} />;
+    if (type.includes('excel') || type.includes('xlsx') || type.includes('xls') || type.includes('sheet')) return <FaFileExcel className={styles.attachments.icon.excel} size={16} />;
+    if (type.includes('image') || type.includes('png') || type.includes('jpg') || type.includes('jpeg') || type.includes('gif')) return <FaFileImage className={styles.attachments.icon.image} size={16} />;
     return <FaFile className={styles.attachments.icon.default} size={16} />;
   };
 
