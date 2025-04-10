@@ -194,11 +194,14 @@ function ChatApp() {
   const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
     console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
-    // If this is a prompt message and we're just starting, we need to send the message to the chat
+    // If this is a prompt message and we're just starting, we need to update the UI
+    // but NOT send a duplicate message since the API call is already being made by usePromptFileHandler
     if (isPromptMessage && status === 'STARTED' && userMessage) {
-      console.log('Sending prompt message to chat:', userMessage);
-      // Set the trigger message to send the user message to the chat
-      setTriggerMessage(userMessage);
+      console.log('Received prompt message status update:', userMessage);
+      // Update the UI with the processing status but don't set triggerMessage
+      // to avoid duplicate message sends
+      setProcessingStatus('PROCESSING');
+      setProcessingProgress(0);
       return;
     }
 
