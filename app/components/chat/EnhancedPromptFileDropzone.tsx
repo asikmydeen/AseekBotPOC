@@ -305,16 +305,49 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     // Store variables in localStorage for the parent component
     localStorage.setItem('promptVariables', JSON.stringify(variables));
 
-    // Create s3Files array for the API
-    const s3FilesArray = uploadedFiles.map(file => ({
-      name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
-      fileName: file.name,
-      s3Url: file.url || file.fileUrl || file.s3Url || '',
-      mimeType: file.type || 'application/octet-stream'
-    }));
+    // Create a mapping between variable names and files
+    const variableToFileMap = {};
+
+    // Map each variable to its corresponding file
+    Object.entries(variables).forEach(([variable, fileName]) => {
+      // Find the file that matches this variable's filename
+      const matchingFile = uploadedFiles.find(file => file.name === fileName);
+      if (matchingFile) {
+        variableToFileMap[variable] = matchingFile;
+      }
+    });
+
+    console.log('Variable to file mapping:', variableToFileMap);
+
+    // Create s3Files array with proper naming based on variables
+    const s3FilesArray = uploadedFiles.map(file => {
+      // Find if this file is mapped to a variable
+      const variableEntry = Object.entries(variableToFileMap).find(([_, f]) => f.name === file.name);
+      const variableName = variableEntry ? variableEntry[0] : null;
+
+      // Use variable-based naming if available, otherwise use filename-based naming
+      const name = variableName ?
+        (variableName.includes('sow') ? 'SOW' :
+         variableName.includes('bid_doc_1') ? 'LSK_Bid' :
+         variableName.includes('bid_doc_2') ? 'Acme_Bid' :
+         file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')) :
+        file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+
+      return {
+        name: name,
+        fileName: file.name,
+        s3Url: file.url || file.fileUrl || file.s3Url || '',
+        mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      };
+    });
+
+    console.log('Created s3Files array with proper naming:', s3FilesArray);
 
     // Store s3Files array in localStorage for the API to pick up
     localStorage.setItem('s3FilesForAPI', JSON.stringify(s3FilesArray));
+
+    // Also store s3Files directly in the root of the payload
+    localStorage.setItem('directS3Files', JSON.stringify(s3FilesArray));
     console.log('Stored s3Files in localStorage for API:', s3FilesArray);
 
     // Call the analyze action
