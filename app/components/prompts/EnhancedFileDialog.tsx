@@ -314,6 +314,21 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         const newFiles = prev.filter(f =>
           f.fileId !== file.fileId && f.fileKey !== file.fileKey
         );
+
+        // Clear any variables that were using this file
+        const fileNameToRemove = file.fileName || file.name;
+        setVariables(prev => {
+          const newVariables = { ...prev };
+          // Find and clear any variables that reference this file
+          Object.keys(newVariables).forEach(key => {
+            if (newVariables[key] === fileNameToRemove) {
+              newVariables[key] = '';
+              console.log(`Cleared variable ${key} that was using removed file ${fileNameToRemove}`);
+            }
+          });
+          return newVariables;
+        });
+
         // Validate form after removing file
         setTimeout(() => validateForm(), 0);
         return newFiles;
@@ -372,8 +387,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     return valid;
   };
 
-  const handleVariableFileSelect = (variable: string, fileIndex: number) => {
-    if (fileIndex >= 0 && fileIndex < selectedFiles.length) {
+  const handleVariableFileSelect = (variable: string, fileIndex: number | null) => {
+    if (fileIndex === null) {
+      // Clear the variable if null is passed
+      handleVariableChange(variable, '');
+    } else if (fileIndex >= 0 && fileIndex < selectedFiles.length) {
       handleVariableChange(variable, selectedFiles[fileIndex].name);
     }
   };
