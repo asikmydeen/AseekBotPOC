@@ -191,15 +191,36 @@ function ChatApp() {
   }, []);
 
   // Handle status updates from prompt processing
-  const handleStatusUpdate = useCallback((status: string, progress: number) => {
+  const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
+    console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
+
+    // If this is a prompt message and we're just starting, we need to send the message to the chat
+    if (isPromptMessage && status === 'STARTED' && userMessage) {
+      console.log('Sending prompt message to chat:', userMessage);
+      // Set the trigger message to send the user message to the chat
+      setTriggerMessage(userMessage);
+      return;
+    }
+
+    // Update the UI with the processing status
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
     // If we have a completed status, show a notification or update the UI
     if (status === 'COMPLETED') {
       console.log('Processing completed successfully!');
+      // Clear the processing status after a delay
+      setTimeout(() => {
+        setProcessingStatus('');
+        setProcessingProgress(0);
+      }, 2000);
     } else if (status === 'FAILED' || status === 'ERROR') {
       console.error('Processing failed:', status);
+      // Clear the processing status after a delay
+      setTimeout(() => {
+        setProcessingStatus('');
+        setProcessingProgress(0);
+      }, 5000);
     }
   }, []);
 

@@ -6,7 +6,7 @@ import { FiSearch, FiFilter, FiTag, FiX } from 'react-icons/fi';
 import { usePrompts } from '../../hooks/usePrompts';
 import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
-import FileSelectionDialog from './FileSelectionDialog';
+// Dialog is now handled by the ModalContext
 import usePromptFileHandler from '../../hooks/usePromptFileHandler';
 
 interface PromptsListProps {
@@ -48,12 +48,10 @@ const PromptsList: React.FC<PromptsListProps> = ({
 
     // Use the prompt file handler hook
     const {
-        isDialogOpen,
         selectedPrompt,
         requiredFileCount,
         requiredVariables,
         openFileDialog,
-        closeFileDialog,
         handleFileSelection
     } = usePromptFileHandler({
         onStatusUpdate,
@@ -259,16 +257,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
                 </div>
             )}
 
-            {/* File Selection Dialog */}
-            <FileSelectionDialog
-                isOpen={isDialogOpen}
-                onClose={closeFileDialog}
-                onSubmit={handleFileSelection}
-                promptId={selectedPrompt?.promptId || ''}
-                promptTitle={selectedPrompt?.title || ''}
-                requiredFileCount={requiredFileCount}
-                requiredVariables={requiredVariables}
-            />
+            {/* File Selection Dialog is now handled by the ModalContext */}
         </div>
     );
 };

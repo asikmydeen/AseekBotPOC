@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 // Import ThemeInitializer to handle theme initialization
 import ThemeInitializer from './utils/ThemeInitializer';
+import { ModalProvider } from './contexts/ModalContext';
 
 // Initialize Zustand stores
 import './store/themeStore';
@@ -41,8 +42,11 @@ export default function Providers({ children }: ProviderProps) {
             {/* Initialize theme */}
             <ThemeInitializer />
 
-            {/* Render children directly - all state is now managed by Zustand */}
-            {children}
+            {/* Global modal provider */}
+            <ModalProvider>
+                {/* Render children directly - all state is now managed by Zustand */}
+                {children}
+            </ModalProvider>
         </>
     );
 }
