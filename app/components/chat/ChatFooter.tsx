@@ -148,6 +148,11 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
               isUploading={isUploading}
               progress={progress}
               handleFileAction={handleFileAction}
+              onClose={() => {
+                setShowFileDropzone(false);
+                clearUploadedFiles();
+                if (clearDocumentAnalysisPrompt) clearDocumentAnalysisPrompt();
+              }}
             />
           ) : (
             <EnhancedFileDropzone
