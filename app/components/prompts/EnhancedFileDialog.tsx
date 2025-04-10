@@ -592,7 +592,13 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-5 border-t border-gray-200 dark:border-gray-700">
+          {/* Required fields message */}
+          {!isFormValid && (
+            <div className="text-sm text-red-500">
+              <span>* Please fill in all required fields</span>
+            </div>
+          )}
           <button
             onClick={onClose}
             className={`px-4 py-2 rounded-md mr-3 ${
