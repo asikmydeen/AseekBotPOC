@@ -232,6 +232,12 @@ function ChatApp() {
     setProcessingStatus(status);
     setProcessingProgress(progress);
 
+    // Update the async processing state based on the status
+    if (status === 'PROCESSING') {
+      setIsAsyncProcessing(true);
+      setAsyncStatus('PROCESSING');
+    }
+
     // If we have a completed status, show a notification or update the UI
     if (status === 'COMPLETED') {
       console.log('Processing completed successfully!');
