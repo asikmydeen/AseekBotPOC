@@ -50,10 +50,12 @@ function Message({
 
   // Helper function to get message content with improved priority and logging
   const getMessageContent = useCallback((): string => {
-    const content = message.formattedMessage || message.text || message.message || "";
+    // Prioritize completion field if available, then fall back to other fields
+    const content = message.completion || message.formattedMessage || message.text || message.message || "";
     // Log content for debugging if it's empty or very short
     if (!content || content.length < 5) {
       console.log('Message content issue:', {
+        hasCompletion: !!message.completion,
         hasFormattedMessage: !!message.formattedMessage,
         hasText: !!message.text,
         hasMessage: !!message.message,
@@ -62,7 +64,7 @@ function Message({
       });
     }
     return content;
-  }, [message.formattedMessage, message.text, message.message, message.id]);
+  }, [message.completion, message.formattedMessage, message.text, message.message, message.id]);
 
   // Process message content when it changes
   useEffect(() => {
