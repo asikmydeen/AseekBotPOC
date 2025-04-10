@@ -198,8 +198,25 @@ function ChatApp() {
     // but NOT send a duplicate message since the API call is already being made by usePromptFileHandler
     if (isPromptMessage && status === 'STARTED' && userMessage) {
       console.log('Received prompt message status update:', userMessage);
-      // Update the UI with the processing status but don't set triggerMessage
-      // to avoid duplicate message sends
+
+      // Instead of setting triggerMessage, we'll manually add a user message to the chat
+      // by updating the active chat's messages
+      if (activeChat) {
+        const newUserMessage = {
+          sender: 'user',
+          text: userMessage,
+          timestamp: new Date().toISOString(),
+          id: `user-${Date.now()}`,
+          chatId: activeChat.id,
+          chatSessionId: activeChat.id
+        };
+
+        // Update the active chat with the new user message
+        const updatedMessages = [...(activeChat.messages || []), newUserMessage];
+        updateChatMessages(updatedMessages);
+      }
+
+      // Update the UI with the processing status
       setProcessingStatus('PROCESSING');
       setProcessingProgress(0);
       return;
