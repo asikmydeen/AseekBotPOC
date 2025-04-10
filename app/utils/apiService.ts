@@ -181,11 +181,20 @@ export const apiService = {
 
         // Add files if they exist
         if (files && files.length > 0) {
+          // Add files to payload
           payload.files = files.map(file => ({
             name: file.name,
             type: file.type,
             size: file.size,
-            url: file.url || ''
+            url: file.url || file.fileUrl || file.s3Url || ''
+          }));
+
+          // Also add s3Files format for compatibility
+          payload.s3Files = files.map(file => ({
+            name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'),
+            fileName: file.name,
+            s3Url: file.url || file.fileUrl || file.s3Url || '',
+            mimeType: file.type || 'application/octet-stream'
           }));
         }
 
