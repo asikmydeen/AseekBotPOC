@@ -229,6 +229,26 @@ function ChatApp() {
     // If we have a completed status, show a notification or update the UI
     if (status === 'COMPLETED') {
       console.log('Processing completed successfully!');
+
+      // If we have a response message and active chat, add it to the chat
+      if (userMessage && activeChat) {
+        console.log('Adding bot response message to chat:', userMessage);
+
+        // Create a bot message with the response
+        const botMessage = {
+          sender: 'bot',
+          text: userMessage,
+          timestamp: new Date().toISOString(),
+          id: `bot-${Date.now()}`,
+          chatId: activeChat.id,
+          chatSessionId: activeChat.id
+        };
+
+        // Update the active chat with the new bot message
+        const updatedMessages = [...(activeChat.messages || []), botMessage];
+        updateChatMessages(updatedMessages);
+      }
+
       // Clear the processing status after a delay
       setTimeout(() => {
         setProcessingStatus('');
