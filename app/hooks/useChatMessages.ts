@@ -279,7 +279,7 @@ export default function useChatMessages({
         size: file.size,
         type: file.type,
         contentType: file.type,
-        url: file.url || file.fileUrl || ''
+        url: file.url || file.fileUrl || file.s3Url || ''
       }))
       : undefined;
     const userMessage: MessageType = {
