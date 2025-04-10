@@ -153,7 +153,7 @@ const useFileActions = ({
                 s3Files: uploadedFiles.map(file => ({
                   name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
                   fileName: file.name,
-                  s3Url: file.url || file.s3Url || '',
+                  s3Url: file.url || file.fileUrl || file.s3Url || '',
                   mimeType: file.type || 'application/octet-stream'
                 }))
               };
