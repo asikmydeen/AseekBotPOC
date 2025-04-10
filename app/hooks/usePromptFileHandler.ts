@@ -265,7 +265,8 @@ const usePromptFileHandler = ({
           prompt,
           fileCount,  // Use the local variable instead of state
           variables,  // Use the local variable instead of state
-          handleFileSelection
+          handleFileSelection,
+          variableTypes  // Pass the detected variable types
         );
         console.log('Dialog opened via modal context with file count:', fileCount, 'and variables:', variables);
       }, 10);
