@@ -29,7 +29,8 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
   removeFile,
   isUploading,
   progress,
-  handleFileAction
+  handleFileAction,
+  onClose = () => {}
 }) => {
   const [promptTitle, setPromptTitle] = useState<string>('');
   const [variables, setVariables] = useState<Record<string, string>>({});
