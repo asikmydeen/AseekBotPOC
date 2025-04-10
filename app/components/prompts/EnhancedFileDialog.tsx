@@ -27,8 +27,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 }) => {
   const { isDarkMode } = useTheme();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
-  const [s3Files, setS3Files] = useState<any[]>([]);
-  const [filteredFiles, setFilteredFiles] = useState<any[]>([]);
+  const [s3Files, setS3Files] = useState<UploadedFile[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<UploadedFile[]>([]);
   const [isLoadingS3Files, setIsLoadingS3Files] = useState(false);
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,14 +126,14 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       }
 
       // Sort files by date (newest first)
-      files.sort((a, b) => {
+      files.sort((a: any, b: any) => {
         const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
         const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
         return dateB - dateA;
       });
 
       // Create object URLs for each file instead of using signed S3 URLs
-      const processedFiles = files.map(file => ({
+      const processedFiles = files.map((file: any) => ({
         ...file,
         // Store the original S3 URL in a separate property
         originalS3Url: file.s3Url || file.presignedUrl,
@@ -173,7 +173,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         setUploadProgress(progress);
 
         // Upload the file
-        await apiService.uploadFile(formData);
+        await apiService.uploadFile(formData as unknown as File);
       }
 
       // Set progress to 100% when done
@@ -200,7 +200,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   };
 
-  const handleFileSelect = (file: any) => {
+  const handleFileSelect = (file: UploadedFile) => {
     // Check if file is already selected
     const isAlreadySelected = selectedFiles.some(f =>
       f.fileId === file.fileId || f.fileKey === file.fileKey

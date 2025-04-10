@@ -115,6 +115,9 @@ export interface UploadedFile {
   fileKey?: string;    // The S3 key or identifier for the file
   s3Url?: string;      // The S3 URL for the file
   originalS3Url?: string; // The original S3 URL with query parameters
+  fileSize?: number;   // The size of the file in bytes (alternative to size)
+  fileType?: string;   // The MIME type of the file (alternative to type)
+  uploadDate?: string; // The date when the file was uploaded
 }
 
 export type PromptType = 'INDIVIDUAL' | 'COMMUNITY';
