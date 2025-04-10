@@ -224,6 +224,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     try {
       setIsLoadingS3Files(true);
       const response = await apiService.getUserFiles();
+      console.log('API response from getUserFiles:', response);
 
       let files = [];
       // Handle different response formats
@@ -236,15 +237,21 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         files = [];
       }
 
+      // Filter out files without fileName
+      const validFiles = files.filter((file: any) => file && file.fileName);
+      if (validFiles.length < files.length) {
+        console.warn(`Filtered out ${files.length - validFiles.length} files without fileName property`);
+      }
+
       // Sort files by date (newest first)
-      files.sort((a: any, b: any) => {
+      validFiles.sort((a: any, b: any) => {
         const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
         const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
         return dateB - dateA;
       });
 
       // Create object URLs for each file instead of using signed S3 URLs
-      const processedFiles = files.map((file: any) => ({
+      const processedFiles = validFiles.map((file: any) => ({
         ...file,
         // Store the original S3 URL in a separate property
         originalS3Url: file.s3Url || file.presignedUrl,
@@ -252,6 +259,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         s3Url: file.s3Url ? file.s3Url.split('?')[0] : (file.presignedUrl ? file.presignedUrl.split('?')[0] : '')
       }));
 
+      console.log('Processed files for dropdown:', processedFiles);
       setS3Files(processedFiles);
       setFilteredFiles(processedFiles);
     } catch (error) {
