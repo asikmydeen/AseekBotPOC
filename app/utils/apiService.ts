@@ -269,6 +269,16 @@ export const apiService = {
         );
       }
 
+      // Check if the message text contains the prompt name
+      if (typeof messageOrOptions === 'string' &&
+          (messageOrOptions.includes('vendor-sow-comparison-analysis') ||
+           messageOrOptions.includes('Bid Analysis') ||
+           messageOrOptions.includes('Vendor Bid Comparison Analysis')) &&
+          files && files.length > 0) {
+        console.log('Detected vendor analysis in message text, using special function');
+        return await sendVendorAnalysisMessage(messageOrOptions, chatSessionId || '', files);
+      }
+
       let payload: any;
 
       // Handle the case where messageOrOptions is an object (new format)
