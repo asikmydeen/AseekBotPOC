@@ -113,8 +113,9 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
                 whileHover={styles.attachments.actionButtonHover}
                 whileTap={{ scale: 0.9 }}
                 className={styles.attachments.actionButton}
-                onClick={() => onView(file.url)}
+                onClick={() => file.url && onView(file.url)}
                 aria-label={`View ${file.name}`}
+                disabled={!file.url}
               >
                 <FaExternalLinkAlt size={14} className={styles.attachments.icon.default} />
               </motion.button>
@@ -122,8 +123,9 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
                 whileHover={styles.attachments.actionButtonHover}
                 whileTap={{ scale: 0.9 }}
                 className={styles.attachments.actionButton}
-                onClick={() => onDownload(file.url, file.name)}
+                onClick={() => file.url && onDownload(file.url, file.name)}
                 aria-label={`Download ${file.name}`}
+                disabled={!file.url}
               >
                 <FaDownload size={14} className={styles.attachments.icon.default} />
               </motion.button>
