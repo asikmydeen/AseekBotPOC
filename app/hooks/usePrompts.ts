@@ -1,5 +1,5 @@
 // app/hooks/usePrompts.ts
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePromptsStore } from '../store/promptsStore';
 
 /**
@@ -23,13 +23,17 @@ export function usePrompts() {
     clearFilters
   } = usePromptsStore();
 
+  // Use a ref to track if we've already initiated a fetch
+  const hasFetchedRef = useRef(false);
+
   // Fetch prompts on mount (similar to what the original context provider did)
   useEffect(() => {
-    // Only fetch if we don't already have prompts and we're not already loading
-    if (prompts.length === 0 && !isLoading) {
+    // Only fetch if we don't already have prompts, we're not already loading, and we haven't already initiated a fetch
+    if (prompts.length === 0 && !isLoading && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       fetchPrompts();
     }
-  }, [prompts.length, isLoading, fetchPrompts]);
+  }, [isLoading, fetchPrompts]);
 
   return {
     prompts,
