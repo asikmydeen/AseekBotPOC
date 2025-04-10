@@ -563,49 +563,91 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                       <div className={`px-4 py-2 ${
                         isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                       } ${!variables[variable] ? 'border-l-4 border-red-500' : ''}`}>
-                        <label className="block font-medium">
-                          {formatVariableName(variable)}
-                          {!variables[variable] && <span className="text-red-500 ml-1">*</span>}
-                        </label>
+                        <div className="flex justify-between items-center">
+                          <label className="block font-medium">
+                            {formatVariableName(variable)}
+                            {!variables[variable] && <span className="text-red-500 ml-1">*</span>}
+                          </label>
+
+                          {/* Variable type indicator */}
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            isFileVariable(variable)
+                              ? isDarkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-800'
+                              : isDarkMode ? 'bg-purple-900/40 text-purple-300' : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {isFileVariable(variable) ? 'File' : 'Text'}
+                          </span>
+                        </div>
                       </div>
                       <div className="p-4">
-                        <input
-                          type="text"
-                          value={variables[variable] || ''}
-                          onChange={(e) => handleVariableChange(variable, e.target.value)}
-                          className={`w-full p-2 rounded-md mb-2 ${
-                            isDarkMode
-                              ? 'bg-gray-800 border-gray-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-900'
-                          } border`}
-                          placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
-                        />
-
-                        {/* File selector for variables */}
-                        {selectedFiles.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-500 mb-2">Or select from your files:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedFiles.map((file, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleVariableFileSelect(variable, idx)}
-                                  className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
-                                    variables[variable] === file.name
-                                      ? isDarkMode
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-blue-500 text-white'
-                                      : isDarkMode
-                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                  }`}
-                                >
-                                  {file.fileName}
-                                </button>
-                              ))}
+                        {/* Show different UI based on variable type */}
+                        {isFileVariable(variable) ? (
+                          /* File variable UI */
+                          <div>
+                            <div className="mb-2">
+                              <input
+                                type="text"
+                                value={variables[variable] || ''}
+                                onChange={(e) => handleVariableChange(variable, e.target.value)}
+                                className={`w-full p-2 rounded-md ${
+                                  isDarkMode
+                                    ? 'bg-gray-800 border-gray-600 text-white'
+                                    : 'bg-white border-gray-300 text-gray-900'
+                                } border`}
+                                placeholder="Select a file below or enter file name"
+                                readOnly={selectedFiles.length > 0}
+                              />
                             </div>
+
+                            {selectedFiles.length > 0 ? (
+                              <div className="mt-2">
+                                <p className="text-xs text-gray-500 mb-2">Select a file for this variable:</p>
+                                <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto pr-2">
+                                  {selectedFiles.map((file, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => handleVariableFileSelect(variable, idx)}
+                                      className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
+                                        variables[variable] === file.name
+                                          ? isDarkMode
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-blue-500 text-white'
+                                          : isDarkMode
+                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                      }`}
+                                    >
+                                      {file.fileName}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center p-4 border border-dashed rounded-md border-gray-400 dark:border-gray-600">
+                                <p className="text-sm text-gray-500">Please upload files in the left panel first</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          /* Text variable UI */
+                          <div>
+                            <input
+                              type="text"
+                              value={variables[variable] || ''}
+                              onChange={(e) => handleVariableChange(variable, e.target.value)}
+                              className={`w-full p-2 rounded-md ${
+                                isDarkMode
+                                  ? 'bg-gray-800 border-gray-600 text-white'
+                                  : 'bg-white border-gray-300 text-gray-900'
+                              } border`}
+                              placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Enter text for this variable
+                            </p>
                           </div>
                         )}
+                      </div>
                       </div>
                     </div>
                   ))}
