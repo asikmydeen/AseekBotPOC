@@ -47,6 +47,9 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         initialVariables[variable] = '';
       });
       setVariables(initialVariables);
+
+      // Validate form when dialog opens
+      setTimeout(() => validateForm(initialVariables), 0);
     }
   }, [isOpen, requiredVariables]);
 
