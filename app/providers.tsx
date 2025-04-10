@@ -35,6 +35,9 @@ export default function Providers({ children }: ProviderProps) {
                 console.log('Redirecting to userguide page');
                 router.push('/userguide');
             }
+
+            // Initialize the global file handler
+            initGlobalFileHandler();
         }
     }, [pathname, router]);
 
