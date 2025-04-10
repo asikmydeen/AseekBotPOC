@@ -480,90 +480,68 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         {/* Content */}
         <div className="flex flex-col flex-1 overflow-hidden">
           <div className="p-5 flex flex-col h-full overflow-hidden">
-            {/* Upload controls and selected files */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">
-                  Files ({selectedFiles.length}/{requiredFileCount > 0 ? requiredFileCount : 'unlimited'})
-                </h3>
-                <div className="flex space-x-2">
-                  {/* Upload new file button */}
-                  <button
-                    onClick={triggerFileUpload}
-                    className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                      isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                    title="Upload new file"
-                  >
-                    <FiPlus size={16} className="mr-2" />
-                    Upload File
-                  </button>
+            {/* Upload controls */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">
+                Required Information
+                {requiredFileCount > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                    (Files: {selectedFiles.length}/{requiredFileCount})
+                  </span>
+                )}
+              </h3>
+              <div className="flex space-x-2">
+                {/* Upload new file button */}
+                <button
+                  onClick={triggerFileUpload}
+                  className={`flex items-center px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  }`}
+                  title="Upload new file"
+                >
+                  <FiPlus size={14} className="mr-1" />
+                  Upload
+                </button>
 
-                  {/* Refresh files button */}
-                  <button
-                    onClick={fetchS3Files}
-                    className={`p-2 rounded-md transition-colors ${
-                      isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
-                    }`}
-                    title="Refresh file list"
-                  >
-                    <FiUpload size={18} />
-                  </button>
-                </div>
-
-                {/* Hidden file input */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  multiple
-                />
+                {/* Refresh files button */}
+                <button
+                  onClick={fetchS3Files}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    isDarkMode ? 'hover:bg-gray-700 text-blue-400' : 'hover:bg-gray-200 text-blue-600'
+                  }`}
+                  title="Refresh file list"
+                >
+                  <FiUpload size={16} />
+                </button>
               </div>
 
-              {/* Upload progress indicator */}
-              {isUploading && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Uploading files...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <div
-                      className="h-full rounded-full bg-green-500 transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
-              {/* Selected files summary */}
-              {selectedFiles.length > 0 && (
-                <div className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} mb-4`}>
-                  <h4 className="text-sm font-medium mb-2">Selected Files:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={file.fileId || file.fileKey || index}
-                        className={`flex items-center px-3 py-1.5 rounded-md text-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}
-                      >
-                        <FiFile size={14} className="mr-2 flex-shrink-0" />
-                        <span className="truncate max-w-[150px]">{file.fileName}</span>
-                        <button
-                          onClick={() => handleFileSelect(file)}
-                          className={`ml-2 p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-red-400' : 'hover:bg-gray-200 text-gray-500 hover:text-red-500'}`}
-                          title="Remove file"
-                        >
-                          <FiX size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
             </div>
 
-            <h3 className="text-lg font-medium mb-4">Required Information</h3>
+            {/* Upload progress indicator */}
+            {isUploading && (
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Uploading files...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+
 
             {error && (
               <div className={`p-3 mb-4 rounded-md ${
