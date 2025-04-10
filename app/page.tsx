@@ -221,6 +221,10 @@ function ChatApp() {
       // Update the UI with the processing status
       setProcessingStatus('PROCESSING');
       setProcessingProgress(0);
+
+      // Set the async processing state to show the typing indicator and AseekBot is thinking UI
+      setIsAsyncProcessing(true);
+      setAsyncStatus('PROCESSING');
       return;
     }
 
