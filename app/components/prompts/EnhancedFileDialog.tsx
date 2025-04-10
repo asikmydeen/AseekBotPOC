@@ -673,6 +673,22 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                   }}
                                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
                                 >
+                                  {/* Header */}
+                                  <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+                                    <h3 className="font-medium">Select a file</h3>
+                                    <button
+                                      onClick={() => {
+                                        setUiState(prev => ({
+                                          ...prev,
+                                          [`${variable}_dropdown_open`]: false
+                                        }));
+                                      }}
+                                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    >
+                                      <FiX size={18} />
+                                    </button>
+                                  </div>
+
                                   {/* Search and upload section */}
                                   <div className="p-2 border-b border-gray-200 dark:border-gray-700">
                                     {/* Search input */}
