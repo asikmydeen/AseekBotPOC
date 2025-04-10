@@ -463,13 +463,19 @@ const usePromptFileHandler = ({
       }, 10);
     } else {
       // Fallback if no content
-      openFileSelectionDialog(
-        prompt,
-        0,
-        [],
-        handleFileSelection,
-        {}
-      );
+      console.log('usePromptFileHandler: No prompt content, using fallback with no files or variables');
+      try {
+        openFileSelectionDialog(
+          prompt,
+          0,
+          [],
+          handleFileSelection,
+          {}
+        );
+        console.log('usePromptFileHandler: Fallback dialog opened successfully');
+      } catch (error) {
+        console.error('usePromptFileHandler: Error opening fallback dialog:', error);
+      }
     }
   }, [openFileSelectionDialog, handleFileSelection]);
 
