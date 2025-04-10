@@ -786,10 +786,17 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                         {/* For non-file variables, show a simple file reference option */}
                         {detectedVariableTypes[variable]?.type !== 'file' && selectedFiles.length > 0 && (
                           <div className="mt-2">
-                            <details className="text-sm">
-                              <summary className="cursor-pointer text-xs text-gray-500 mb-2 hover:text-gray-700 dark:hover:text-gray-300">
-                                Reference a file instead
-                              </summary>
+                            <button
+                              onClick={() => setUiState(prev => ({ ...prev, [`${variable}_file_ref_open`]: !prev[`${variable}_file_ref_open`] }))}
+                              className={`flex items-center text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 ${uiState[`${variable}_file_ref_open`] ? 'mb-2' : ''}`}
+                            >
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={uiState[`${variable}_file_ref_open`] ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"} />
+                              </svg>
+                              Reference a file instead
+                            </button>
+
+                            {uiState[`${variable}_file_ref_open`] && (
                               <div className="mt-1 pl-2 border-l-2 border-gray-300 dark:border-gray-700">
                                 <div className="flex flex-col space-y-1">
                                   {selectedFiles.map((file, idx) => (
@@ -820,7 +827,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                   )}
                                 </div>
                               </div>
-                            </details>
+                            )}
                           </div>
                         )}
                       </div>
