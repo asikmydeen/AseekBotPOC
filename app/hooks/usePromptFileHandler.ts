@@ -193,7 +193,19 @@ const usePromptFileHandler = ({
       console.log('usePromptFileHandler: Setting timeout to call handleSubmitPrompt');
       setTimeout(() => {
         console.log('usePromptFileHandler: Timeout fired, calling handleSubmitPrompt');
-        handleSubmitPrompt(currentPrompt, files, inputVariables);
+        // Ensure all files have the required properties
+        const validatedFiles = files.map(file => ({
+          ...file,
+          name: file.name || file.fileName || 'Unnamed file',
+          fileName: file.fileName || file.name || 'Unnamed file',
+          s3Url: file.s3Url || file.url || '',
+          type: file.type || 'application/octet-stream'
+        }));
+
+        console.log('usePromptFileHandler: Validated files before submitting:',
+          validatedFiles.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
+
+        handleSubmitPrompt(currentPrompt, validatedFiles, inputVariables);
       }, 0);
     } else {
       console.error('usePromptFileHandler: No current prompt found!');
