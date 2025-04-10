@@ -88,20 +88,71 @@ const usePromptFileHandler = ({
     setSelectedPrompt(prompt);
     setError(null);
 
-    // Parse prompt requirements
-    parsePromptRequirements(prompt);
+    // Parse prompt requirements first
+    if (prompt && prompt.content) {
+      console.log('Parsing prompt requirements for:', prompt.title);
 
-    // Use the global modal context to open the dialog
-    setTimeout(() => {
+      // Check for file requirements
+      let fileCount = 0;
+
+      // Check if prompt ID suggests file requirements
+      if (
+        prompt.promptId.includes('analysis') ||
+        prompt.promptId.includes('comparison') ||
+        prompt.promptId.includes('vendor') ||
+        prompt.promptId.includes('document')
+      ) {
+        fileCount = 2; // Default to at least 2 files for analysis prompts
+      }
+
+      // Look for explicit file mentions
+      const fileMatch = prompt.content.match(/(\d+)\s+files?/i);
+      if (fileMatch && fileMatch[1]) {
+        fileCount = Math.max(fileCount, parseInt(fileMatch[1], 10));
+      }
+
+      // Count document references like ${doc_1}, ${sow_doc}, etc.
+      const docMatches = prompt.content.match(/\${([a-zA-Z0-9_]+_doc[a-zA-Z0-9_]*|[a-zA-Z0-9_]*doc_[a-zA-Z0-9_]+)}/g);
+      if (docMatches) {
+        fileCount = Math.max(fileCount, docMatches.length);
+      }
+
+      console.log('Detected required file count:', fileCount);
+
+      // Find variables in the format ${VARIABLE_NAME}
+      const variableMatches = prompt.content.match(/\${([A-Za-z0-9_]+)}/g);
+      let variables: string[] = [];
+      if (variableMatches) {
+        variables = [...new Set(
+          variableMatches.map(match => match.replace(/\${(.*)}/,'$1'))
+        )];
+        console.log('Detected variables:', variables);
+      }
+
+      // Set the state and immediately use the values
+      setRequiredFileCount(fileCount);
+      setRequiredVariables(variables);
+
+      // Use the global modal context to open the dialog with the parsed values
+      setTimeout(() => {
+        openFileSelectionDialog(
+          prompt,
+          fileCount,  // Use the local variable instead of state
+          variables,  // Use the local variable instead of state
+          handleFileSelection
+        );
+        console.log('Dialog opened via modal context with file count:', fileCount, 'and variables:', variables);
+      }, 10);
+    } else {
+      // Fallback if no content
       openFileSelectionDialog(
         prompt,
-        requiredFileCount,
-        requiredVariables,
+        0,
+        [],
         handleFileSelection
       );
-      console.log('Dialog opened via modal context');
-    }, 10);
-  }, [parsePromptRequirements, requiredFileCount, requiredVariables, openFileSelectionDialog]);
+    }
+  }, [openFileSelectionDialog, handleFileSelection]);
 
   // Reset state (dialog closing is handled by the modal context)
   const resetState = useCallback(() => {
