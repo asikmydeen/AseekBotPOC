@@ -69,7 +69,7 @@ function Message({
     });
 
     return content;
-  }, [message.completion, message.formattedMessage, message.text, message.message, message.id, message.agentType]);
+  }, [message.completion, message.formattedMessage, message.text, message.message, message.id, message.agentType, message.sender]);
 
   // Process message content when it changes
   useEffect(() => {
@@ -100,7 +100,7 @@ function Message({
     // Set displayed text immediately for both user and bot
     setDisplayedText(messageContent);
     setIsTyping(false);
-  }, [message.text, message.message, message.formattedMessage, message.completion, message.sender, message.id, getMessageContent]);
+  }, [getMessageContent, message.sender]);
 
   // Handle image click
   const handleImageClick = (imageUrl: string) => {
