@@ -563,6 +563,7 @@ export default function useChatMessages({
 
   useEffect(() => {
     if (triggerMessage) {
+      console.log('Received triggerMessage in useChatMessages:', triggerMessage);
       sendMessageHandler(triggerMessage);
       onTriggerHandled();
     }
