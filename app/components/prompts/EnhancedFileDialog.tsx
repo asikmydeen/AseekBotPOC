@@ -300,7 +300,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col ${
+        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col ${
           isDarkMode ? 'text-white' : 'text-gray-900'
         }`}
       >
