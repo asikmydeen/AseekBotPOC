@@ -272,6 +272,11 @@ function ChatApp() {
       }, 2000);
     } else if (status === 'FAILED' || status === 'ERROR') {
       console.error('Processing failed:', status);
+
+      // Reset the async processing state
+      setIsAsyncProcessing(false);
+      setAsyncStatus('');
+
       // Clear the processing status after a delay
       setTimeout(() => {
         setProcessingStatus('');
