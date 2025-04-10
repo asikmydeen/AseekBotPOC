@@ -39,12 +39,15 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
   // Initialize variables state based on requiredVariables
   useEffect(() => {
-    const initialVariables: Record<string, string> = {};
-    requiredVariables.forEach(variable => {
-      initialVariables[variable] = '';
-    });
-    setVariables(initialVariables);
-  }, [requiredVariables]);
+    if (isOpen) {
+      console.log('Dialog opened, initializing variables:', requiredVariables);
+      const initialVariables: Record<string, string> = {};
+      requiredVariables.forEach(variable => {
+        initialVariables[variable] = '';
+      });
+      setVariables(initialVariables);
+    }
+  }, [isOpen, requiredVariables]);
 
   // File input ref for upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -272,6 +275,16 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // Reset state when dialog is closed
+  useEffect(() => {
+    if (!isOpen) {
+      // Clear state when dialog is closed
+      setSelectedFiles([]);
+      setError(null);
+      setSearchTerm('');
+    }
+  }, [isOpen]);
 
   // Handle click outside to close
   useEffect(() => {
