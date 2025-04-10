@@ -88,6 +88,8 @@ export interface MessageType {
   formattedMessage?: string;  // Optional formatted message for display override
   isError?: boolean;
   userId?: string;
+  completion?: string;  // Completion data from status API response
+  aggregatedResults?: any;  // Aggregated results from status API response
 }
 
 // Helper type for sharing setState functions
