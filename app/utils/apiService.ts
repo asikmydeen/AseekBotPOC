@@ -188,6 +188,28 @@ export const apiService = {
             url: file.url || ''
           }));
         }
+
+        // Check if we have prompt metadata
+        try {
+          const metadataJson = localStorage.getItem('promptMetadata');
+          if (metadataJson) {
+            const promptMetadata = JSON.parse(metadataJson);
+            console.log('Including prompt metadata in request:', promptMetadata);
+            payload.promptMetadata = promptMetadata;
+
+            // If we have variables, add them directly to the payload
+            if (promptMetadata.variables) {
+              payload.variables = promptMetadata.variables;
+            }
+
+            // If we have a promptId, add it directly to the payload
+            if (promptMetadata.promptId) {
+              payload.promptId = promptMetadata.promptId;
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing prompt metadata:', error);
+        }
       }
 
       console.log('Sending message with payload:', payload);
