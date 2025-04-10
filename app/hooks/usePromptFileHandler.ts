@@ -283,14 +283,15 @@ const usePromptFileHandler = ({
           console.log('usePromptFileHandler: Prompt API call successful, got requestId:', response.requestId);
           setRequestId(response.requestId);
           setIsPolling(true);
-      } else {
+        } else {
           console.error('usePromptFileHandler: API response missing requestId:', response);
-      }
+        }
       } catch (apiError) {
         console.error('usePromptFileHandler: API call failed:', apiError);
         throw apiError; // Re-throw to be caught by the outer try/catch
+      }
 
-        if (currentStatusCallback) {
+      if (currentStatusCallback) {
           // Update status to show processing in the chat interface
           // This will trigger the typing indicator and progress bar
           currentStatusCallback('PROCESSING', 10);
