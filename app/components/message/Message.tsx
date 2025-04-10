@@ -73,6 +73,17 @@ function Message({
 
   // Process message content when it changes
   useEffect(() => {
+    // Log when the message content changes
+    console.log('Message content changed:', {
+      id: message.id,
+      hasCompletion: !!message.completion,
+      completionLength: message.completion?.length || 0,
+      hasFormattedMessage: !!message.formattedMessage,
+      hasText: !!message.text,
+      hasMessage: !!message.message,
+      sender: message.sender
+    });
+
     // Get message content regardless of sender
     const messageContent = getMessageContent();
 
@@ -89,7 +100,7 @@ function Message({
     // Set displayed text immediately for both user and bot
     setDisplayedText(messageContent);
     setIsTyping(false);
-  }, [message.text, message.message, message.formattedMessage, message.completion, message.sender, getMessageContent]);
+  }, [message.text, message.message, message.formattedMessage, message.completion, message.sender, message.id, getMessageContent]);
 
   // Handle image click
   const handleImageClick = (imageUrl: string) => {
