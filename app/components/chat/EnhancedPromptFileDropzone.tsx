@@ -305,6 +305,18 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     // Store variables in localStorage for the parent component
     localStorage.setItem('promptVariables', JSON.stringify(variables));
 
+    // Create s3Files array for the API
+    const s3FilesArray = uploadedFiles.map(file => ({
+      name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
+      fileName: file.name,
+      s3Url: file.url || file.fileUrl || file.s3Url || '',
+      mimeType: file.type || 'application/octet-stream'
+    }));
+
+    // Store s3Files array in localStorage for the API to pick up
+    localStorage.setItem('s3FilesForAPI', JSON.stringify(s3FilesArray));
+    console.log('Stored s3Files in localStorage for API:', s3FilesArray);
+
     // Call the analyze action
     handleFileAction('analyze');
   };
