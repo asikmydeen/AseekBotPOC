@@ -238,7 +238,14 @@ export default function useChatMessages({
             aggregatedResults: statusResponse.aggregatedResults
           };
         }
-        console.log('Adding document analysis message to chat history');
+        console.log('Adding message to chat history with properties:', {
+          hasCompletion: !!botMessage.completion,
+          completionLength: botMessage.completion?.length || 0,
+          hasText: !!botMessage.text,
+          textLength: botMessage.text?.length || 0,
+          workflowType: statusResponse.workflowType,
+          agentType: botMessage.agentType
+        });
         safeUpdateMessages(prev => {
           const newMessages = [...prev, botMessage];
           console.log('Updated messages count:', newMessages.length);
