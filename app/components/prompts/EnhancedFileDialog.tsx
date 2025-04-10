@@ -79,40 +79,68 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   }, [s3Files, searchTerm]);
 
-  // Auto-map files to variables based on file types and names
+  // Detect variable types and auto-map files to variables
   useEffect(() => {
     if (selectedFiles.length > 0 && requiredVariables.length > 0) {
       console.log('Attempting to auto-map files to variables:', selectedFiles.length, 'files,', requiredVariables.length, 'variables');
       const newVariables = { ...variables };
       let variablesUpdated = false;
 
-      // Try to match files to variables based on patterns
-      selectedFiles.forEach(file => {
-        const fileName = file.fileName?.toLowerCase() || '';
-        console.log('Checking file for variable mapping:', fileName);
+      // Get file-related variables (those containing 'file', 'doc', or 'document' in their name)
+      const fileVariables = requiredVariables.filter(v =>
+        v.toLowerCase().includes('file') ||
+        v.toLowerCase().includes('doc') ||
+        v.toLowerCase().includes('document')
+      );
 
-        // Match SOW documents
-        if ((fileName.includes('sow') || fileName.includes('scope') || fileName.includes('work')) &&
-            requiredVariables.includes('sow_doc') && !newVariables['sow_doc']) {
-          newVariables['sow_doc'] = file.name;
-          variablesUpdated = true;
-          console.log('Mapped file to sow_doc variable:', file.name);
-        }
+      console.log('Detected file variables:', fileVariables);
 
-        // Match bid documents
-        else if (fileName.includes('bid') || fileName.includes('proposal') || fileName.includes('quote')) {
-          // Find an empty bid_doc variable
-          for (let i = 1; i <= 3; i++) {
-            const varName = `bid_doc_${i}`;
-            if (requiredVariables.includes(varName) && !newVariables[varName]) {
+      // If we have file variables and files, try to map them intelligently
+      if (fileVariables.length > 0) {
+        // First, try to match files to variables based on name similarity
+        selectedFiles.forEach(file => {
+          const fileName = file.fileName?.toLowerCase() || file.name.toLowerCase();
+          console.log('Checking file for variable mapping:', fileName);
+
+          // Try to find the best matching variable for this file
+          for (const varName of fileVariables) {
+            // Skip if this variable is already filled
+            if (newVariables[varName]) continue;
+
+            const varNameLower = varName.toLowerCase();
+
+            // Check for keyword matches in the filename
+            const keywords = varNameLower.split(/[_\s-]/).filter(k => k.length > 2);
+            const hasMatch = keywords.some(keyword => fileName.includes(keyword));
+
+            if (hasMatch) {
               newVariables[varName] = file.name;
               variablesUpdated = true;
-              console.log(`Mapped file to ${varName} variable:`, file.name);
-              break;
+              console.log(`Mapped file to ${varName} variable based on name match:`, file.name);
+              break; // Move to next file after finding a match
             }
           }
+        });
+
+        // If we still have unmapped file variables and files, assign sequentially
+        const unmappedFileVars = fileVariables.filter(v => !newVariables[v]);
+        const unmappedFiles = selectedFiles.filter(f =>
+          !Object.values(newVariables).includes(f.name)
+        );
+
+        if (unmappedFileVars.length > 0 && unmappedFiles.length > 0) {
+          console.log('Assigning remaining files sequentially to variables');
+
+          // Assign files to variables sequentially
+          unmappedFileVars.forEach((varName, index) => {
+            if (index < unmappedFiles.length) {
+              newVariables[varName] = unmappedFiles[index].name;
+              variablesUpdated = true;
+              console.log(`Mapped file to ${varName} variable sequentially:`, unmappedFiles[index].name);
+            }
+          });
         }
-      });
+      }
 
       if (variablesUpdated) {
         console.log('Updated variables with mapped files:', newVariables);
