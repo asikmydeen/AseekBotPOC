@@ -127,14 +127,13 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   }, [isOpen]);
 
-  // Refresh file list when a dropdown is opened
+  // Update filtered files when search terms change in dropdowns
   useEffect(() => {
-    const hasOpenDropdown = Object.keys(uiState).some(key =>
-      key.endsWith('_dropdown_open') && uiState[key] === true
-    );
-
-    if (hasOpenDropdown) {
-      fetchS3Files();
+    // Check if any dropdown search terms have changed
+    const searchTerms = Object.keys(uiState).filter(key => key.endsWith('_search'));
+    if (searchTerms.length > 0) {
+      // We don't need to fetch files again, just use the existing s3Files
+      console.log('Dropdown search terms updated');
     }
   }, [uiState]);
 
@@ -591,7 +590,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                       <div className="p-4">
                         {/* Render different input types based on variable type */}
                         {detectedVariableTypes[variable]?.type === 'file' ? (
-                          <div className="relative mb-8"> {/* Added margin to prevent overlap */}
+                          <div className="relative mb-4"> {/* Reduced margin */}
                             {/* Custom file selector dropdown */}
                             <div className="relative">
                               <div
@@ -634,123 +633,96 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                 </div>
                               </div>
 
-                              {/* Dropdown content */}
+                              {/* Dropdown content - inline version */}
                               {uiState[`${variable}_dropdown_open`] && (
                                 <div
-                                  className={`fixed inset-0 z-50 ${isDarkMode ? 'bg-black bg-opacity-50' : 'bg-gray-600 bg-opacity-25'}`}
-                                  onClick={() => {
-                                    setUiState(prev => ({
-                                      ...prev,
-                                      [`${variable}_dropdown_open`]: false
-                                    }));
-                                  }}
+                                  className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
+                                  style={{ maxHeight: '300px' }}
                                 >
-                                  <div
-                                    className={`absolute z-50 w-80 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}
-                                    style={{
-                                      top: '50%',
-                                      left: '50%',
-                                      transform: 'translate(-50%, -50%)'
-                                    }}
-                                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-                                  >
-                                    <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
-                                      <h3 className="font-medium">Select a file</h3>
-                                      <button
-                                        onClick={() => {
+                                  {/* Search and upload section */}
+                                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                                    {/* Search input */}
+                                    <div className={`flex items-center mb-2 p-1.5 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                      <FiSearch className="mr-2 text-gray-500" size={14} />
+                                      <input
+                                        type="text"
+                                        placeholder="Search files..."
+                                        value={uiState[`${variable}_search`] || ''}
+                                        onChange={(e) => {
                                           setUiState(prev => ({
                                             ...prev,
-                                            [`${variable}_dropdown_open`]: false
+                                            [`${variable}_search`]: e.target.value
                                           }));
                                         }}
-                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                                      >
-                                        <FiX size={18} />
-                                      </button>
+                                        onClick={(e) => e.stopPropagation()} // Prevent dropdown toggle
+                                        className={`w-full bg-transparent border-none focus:outline-none text-sm ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
+                                        autoFocus
+                                      />
                                     </div>
 
-                                    {/* Search and upload section */}
-                                    <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                                      {/* Search input */}
-                                      <div className={`flex items-center mb-3 p-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                        <FiSearch className="mr-2 text-gray-500" size={16} />
-                                        <input
-                                          type="text"
-                                          placeholder="Search files..."
-                                          value={uiState[`${variable}_search`] || ''}
-                                          onChange={(e) => {
-                                            setUiState(prev => ({
-                                              ...prev,
-                                              [`${variable}_search`]: e.target.value
-                                            }));
-                                          }}
-                                          className={`w-full bg-transparent border-none focus:outline-none ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
-                                          autoFocus
-                                        />
+                                    {/* Upload button */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent dropdown toggle
+                                        triggerFileUpload();
+                                      }}
+                                      className={`flex items-center justify-center p-1.5 rounded-md w-full text-sm ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                                    >
+                                      <FiUpload className="mr-1" size={14} />
+                                      Upload New File
+                                    </button>
+                                  </div>
+
+                                  {/* File list */}
+                                  <div className="max-h-48 overflow-y-auto">
+                                    {isLoadingS3Files ? (
+                                      <div className="flex items-center justify-center p-4">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
                                       </div>
-
-                                      {/* Upload button */}
-                                      <button
-                                        onClick={() => {
-                                          triggerFileUpload();
-                                        }}
-                                        className={`flex items-center justify-center p-2 rounded-md w-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
-                                      >
-                                        <FiUpload className="mr-2" size={16} />
-                                        Upload New File
-                                      </button>
-                                    </div>
-
-                                    {/* File list */}
-                                    <div className="max-h-64 overflow-y-auto p-1">
-                                      {isLoadingS3Files ? (
-                                        <div className="flex items-center justify-center p-4">
-                                          <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-                                        </div>
-                                      ) : filteredFiles.length === 0 ? (
-                                        <div className="p-4 text-center text-gray-500">
-                                          No files found
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-1 p-2">
-                                          {filteredFiles
-                                            .filter(file => {
-                                              const searchTerm = uiState[`${variable}_search`] || '';
-                                              if (!searchTerm) return true;
-                                              return file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
-                                            })
-                                            .map((file, idx) => (
-                                              <div
-                                                key={idx}
-                                                onClick={() => {
-                                                  // Add file to selected files if not already there
-                                                  if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
-                                                    handleFileSelect(file);
-                                                  }
-                                                  // Set the variable value
-                                                  handleVariableChange(variable, file.fileName || 'Unnamed file');
-                                                  // Close dropdown
-                                                  setUiState(prev => ({
-                                                    ...prev,
-                                                    [`${variable}_dropdown_open`]: false
-                                                  }));
-                                                }}
-                                                className={`flex items-center p-2 rounded-md cursor-pointer ${variables[variable] === file.fileName
-                                                  ? isDarkMode
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-blue-100 text-blue-800'
-                                                  : isDarkMode
-                                                    ? 'hover:bg-gray-700'
-                                                    : 'hover:bg-gray-100'}`}
-                                              >
-                                                <FiFile className="mr-2 flex-shrink-0" size={16} />
-                                                <span className="truncate">{file.fileName}</span>
-                                              </div>
-                                            ))
-                                          }
-                                        </div>
-                                      )}
-                                    </div>
+                                    ) : filteredFiles.length === 0 ? (
+                                      <div className="p-4 text-center text-sm text-gray-500">
+                                        No files found
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        {filteredFiles
+                                          .filter(file => {
+                                            const searchTerm = uiState[`${variable}_search`] || '';
+                                            if (!searchTerm) return true;
+                                            return file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
+                                          })
+                                          .map((file, idx) => (
+                                            <div
+                                              key={idx}
+                                              onClick={(e) => {
+                                                e.stopPropagation(); // Prevent dropdown toggle
+                                                // Add file to selected files if not already there
+                                                if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
+                                                  handleFileSelect(file);
+                                                }
+                                                // Set the variable value
+                                                handleVariableChange(variable, file.fileName || 'Unnamed file');
+                                                // Close dropdown
+                                                setUiState(prev => ({
+                                                  ...prev,
+                                                  [`${variable}_dropdown_open`]: false
+                                                }));
+                                              }}
+                                              className={`flex items-center p-2 cursor-pointer text-sm ${variables[variable] === file.fileName
+                                                ? isDarkMode
+                                                  ? 'bg-blue-600 text-white'
+                                                  : 'bg-blue-100 text-blue-800'
+                                                : isDarkMode
+                                                  ? 'hover:bg-gray-700'
+                                                  : 'hover:bg-gray-100'}`}
+                                            >
+                                              <FiFile className="mr-2 flex-shrink-0" size={14} />
+                                              <span className="truncate">{file.fileName}</span>
+                                            </div>
+                                          ))
+                                        }
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}
