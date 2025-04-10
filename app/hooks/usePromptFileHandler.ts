@@ -238,13 +238,24 @@ const usePromptFileHandler = ({
       console.log('usePromptFileHandler: Processed content with variables:', processedContent.substring(0, 100) + '...');
 
       // Format files for API
-      const s3Files = files.map(file => ({
-        name: file.name,
-        fileName: file.fileName || file.name,
-        // Use clean URL without query parameters
-        s3Url: file.s3Url || file.url,
-        mimeType: file.type
-      }));
+      const s3Files = files.map(file => {
+        // Log each file's properties to help debug
+        console.log('usePromptFileHandler: Processing file for API:', {
+          name: file.name,
+          fileName: file.fileName,
+          s3Url: file.s3Url,
+          url: file.url,
+          type: file.type
+        });
+
+        return {
+          name: file.name || file.fileName || 'Unnamed file',
+          fileName: file.fileName || file.name || 'Unnamed file',
+          // Use clean URL without query parameters
+          s3Url: file.s3Url || file.url || '',
+          mimeType: file.type || 'application/octet-stream'
+        };
+      });
       console.log('usePromptFileHandler: Formatted s3Files for API:', s3Files);
 
       // Capture current values to avoid closure issues
@@ -279,14 +290,20 @@ const usePromptFileHandler = ({
       });
 
       try {
-        const response = await apiService.sendMessage({
+        // Create the payload with all required fields
+        const payload = {
           promptId: prompt.promptId,
           userId: currentUserId,
           sessionId: currentSessionId,
           chatId: currentChatId,
           s3Files,
           message: userMessage  // Include the user message in the API call
-        });
+        };
+
+        // Log the exact payload being sent to the API
+        console.log('usePromptFileHandler: Sending API payload:', JSON.stringify(payload, null, 2));
+
+        const response = await apiService.sendMessage(payload);
 
         console.log('usePromptFileHandler: API response:', response);
 
