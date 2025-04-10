@@ -56,7 +56,13 @@ function ChatInterfaceComponent({
     onMessagesUpdate,
     onFilesUpdate,
     initialMessages = [],
-    externalFileToAdd = null
+    externalFileToAdd = null,
+    // External async processing state
+    externalAsyncProcessing = false,
+    externalAsyncStatus = '',
+    externalAsyncProgress = 0,
+    onRefreshStatus = () => console.log('Refresh status called'),
+    onCancelRequest = () => console.log('Cancel request called')
 }: ChatInterfaceProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     // Using useRef<HTMLTextAreaElement>(null) to match ChatFooter's expected type
