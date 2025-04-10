@@ -593,8 +593,9 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
               isDarkMode
                 ? 'bg-blue-600 hover:bg-blue-500 text-white'
                 : 'bg-blue-600 hover:bg-blue-500 text-white'
-            } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-            disabled={isSubmitting}
+            } ${(isSubmitting || !isFormValid) ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={isSubmitting || !isFormValid}
+            title={!isFormValid ? 'Please fill in all required fields' : ''}
           >
             {isSubmitting ? 'Processing...' : 'Submit'}
           </button>
