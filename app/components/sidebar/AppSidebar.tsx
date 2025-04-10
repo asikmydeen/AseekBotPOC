@@ -7,8 +7,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import usePromptsManager from '../../hooks/usePromptsManager';
 import HistoryList from '../chat/HistoryList';
-import CreatePromptModal from '../prompts/CreatePromptModal';
-import EditPromptModal from '../prompts/EditPromptModal';
+import FullScreenPromptModal from '../prompts/FullScreenPromptModal';
 import DeletePromptConfirmation from '../prompts/DeletePromptConfirmation';
 import {
   sidebarAnimationVariants,
@@ -343,21 +342,25 @@ export default function AppSidebar({
         </div>
 
         {/* Prompt Modals */}
-        <CreatePromptModal
+        <FullScreenPromptModal
           isOpen={isCreateModalOpen}
           onClose={closeAllModals}
-          onSubmit={handleCreatePrompt}
+          onSubmit={(data) => handleCreatePrompt(data)}
           isDarkMode={isDarkMode}
           isSubmitting={isSubmitting}
+          isCreateMode={true}
         />
 
-        <EditPromptModal
+        <FullScreenPromptModal
           isOpen={isEditModalOpen}
           prompt={promptToEditOrDelete}
           onClose={closeAllModals}
-          onSubmit={handleUpdatePrompt}
+          onSubmit={(data, promptId) => {
+            if (promptId) handleUpdatePrompt(promptId, data);
+          }}
           isDarkMode={isDarkMode}
           isSubmitting={isSubmitting}
+          isCreateMode={false}
         />
 
         <DeletePromptConfirmation

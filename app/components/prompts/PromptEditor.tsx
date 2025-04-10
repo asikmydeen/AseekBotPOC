@@ -152,10 +152,10 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`w-full rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow-md`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}
         >
             <form onSubmit={handleSubmit}>
                 <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -248,7 +248,7 @@ const PromptEditor: React.FC<PromptEditorProps> = ({
                         id="prompt-content"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        rows={8}
+                        rows={12}
                         className={`w-full p-2 rounded-md transition-colors ${errors.content ? 'border-red-500' : ''} ${isDarkMode
                                 ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600'
                                 : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
