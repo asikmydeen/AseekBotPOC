@@ -825,7 +825,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                               <div className="flex-1 overflow-hidden">
                                 <div className="truncate text-sm">{file.fileName}</div>
                                 <div className="text-xs opacity-70 flex items-center">
-                                  <span className="mr-2">{formatFileSize(file.fileSize || 0)}</span>
+                                  <span>{formatFileSize(file.fileSize || 0)}</span>
                                 </div>
                               </div>
                             </div>
