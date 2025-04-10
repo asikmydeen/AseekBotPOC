@@ -177,6 +177,21 @@ const useFileActions = ({
           console.error('Error parsing stored prompt or variables:', error);
         }
 
+        // Create s3Files array for the API if not already created
+        const s3FilesJson = localStorage.getItem('s3FilesForAPI');
+        if (!s3FilesJson) {
+          const s3FilesArray = uploadedFiles.map(file => ({
+            name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
+            fileName: file.name,
+            s3Url: file.url || file.fileUrl || file.s3Url || '',
+            mimeType: file.type || 'application/octet-stream'
+          }));
+
+          // Store s3Files array in localStorage for the API to pick up
+          localStorage.setItem('s3FilesForAPI', JSON.stringify(s3FilesArray));
+          console.log('Created s3Files in localStorage for API from useFileActions:', s3FilesArray);
+        }
+
         // Send message with files for analysis
         sendMessage(analysisText, uploadedFiles);
 
