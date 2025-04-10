@@ -264,15 +264,11 @@ export default function useChatMessages({
       clearInterval(intervalId);
     });
     pollIntervalRefs.current.clear();
+    // Keep the original text for the message
     let userMessageText = text;
-    if (isFileUpload) {
-      const fileNames = attachments.map(file => file.name).join(', ');
-      if (text.trim()) {
-        userMessageText = `${text} [Files: ${fileNames}]`;
-      } else {
-        userMessageText = `Uploaded files: ${fileNames}`;
-      }
-    }
+
+    // Don't modify the text with file names - we'll show the attachments separately
+    // This ensures the UI shows the files as attachments rather than just text
     const userAttachments = isFileUpload
       ? attachments.map(file => ({
         name: file.name,
