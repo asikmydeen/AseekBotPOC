@@ -48,11 +48,19 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void,
     types: Record<string, VariableType> = {}
   ) => {
+    console.log('ModalContext: openFileSelectionDialog called with prompt:', prompt.title);
+    console.log('ModalContext: Required file count:', fileCount);
+    console.log('ModalContext: Required variables:', variables);
+
     setCurrentPrompt(prompt);
     setRequiredFileCount(fileCount);
     setRequiredVariables(variables);
     setVariableTypes(types);
+
+    console.log('ModalContext: Setting onFileSubmit callback');
     setOnFileSubmit(() => onSubmit);
+
+    console.log('ModalContext: Opening file dialog');
     setFileDialogOpen(true);
   };
 
