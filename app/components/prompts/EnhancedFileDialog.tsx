@@ -377,11 +377,17 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   };
 
   const handleVariableChange = (variable: string, value: string) => {
+    // Log the change for debugging
+    console.log(`Setting variable ${variable} to value: ${value}`);
+
     setVariables(prev => {
       const newVariables = {
         ...prev,
         [variable]: value
       };
+
+      // Log the new variables state
+      console.log('New variables state:', newVariables);
 
       // Validate form after variable change
       validateForm(newVariables);
