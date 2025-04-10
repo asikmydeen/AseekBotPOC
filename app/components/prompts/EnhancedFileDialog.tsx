@@ -38,6 +38,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   const [filteredFiles, setFilteredFiles] = useState<UploadedFile[]>([]);
   const [isLoadingS3Files, setIsLoadingS3Files] = useState(false);
   const [variables, setVariables] = useState<Record<string, string>>({});
+  const [uiState, setUiState] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -600,7 +601,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                 className={`flex items-center justify-between p-2 border rounded-md cursor-pointer ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}
                                 onClick={() => {
                                   // Toggle dropdown for this variable
-                                  setVariables(prev => ({
+                                  setUiState(prev => ({
                                     ...prev,
                                     [`${variable}_dropdown_open`]: !prev[`${variable}_dropdown_open`]
                                   }));
@@ -632,7 +633,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                               </div>
 
                               {/* Dropdown content */}
-                              {variables[`${variable}_dropdown_open`] && (
+                              {uiState[`${variable}_dropdown_open`] && (
                                 <div className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}>
                                   {/* Search and upload section */}
                                   <div className="p-2 border-b border-gray-200 dark:border-gray-700">
@@ -642,9 +643,9 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                       <input
                                         type="text"
                                         placeholder="Search files..."
-                                        value={variables[`${variable}_search`] || ''}
+                                        value={uiState[`${variable}_search`] || ''}
                                         onChange={(e) => {
-                                          setVariables(prev => ({
+                                          setUiState(prev => ({
                                             ...prev,
                                             [`${variable}_search`]: e.target.value
                                           }));
@@ -681,7 +682,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                       <div>
                                         {filteredFiles
                                           .filter(file => {
-                                            const searchTerm = variables[`${variable}_search`] || '';
+                                            const searchTerm = uiState[`${variable}_search`] || '';
                                             if (!searchTerm) return true;
                                             return file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
                                           })
@@ -697,7 +698,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                                 // Set the variable value
                                                 handleVariableChange(variable, file.fileName || 'Unnamed file');
                                                 // Close dropdown
-                                                setVariables(prev => ({
+                                                setUiState(prev => ({
                                                   ...prev,
                                                   [`${variable}_dropdown_open`]: false
                                                 }));
