@@ -261,36 +261,90 @@ export const apiService = {
       }
 
       // Special handling for vendor-sow-comparison-analysis-v1 prompt
-      if (payload.promptId === 'vendor-sow-comparison-analysis-v1' && payload.s3Files && payload.s3Files.length > 0) {
+      if ((payload.promptId === 'vendor-sow-comparison-analysis-v1' ||
+           (payload.promptMetadata && payload.promptMetadata.promptId === 'vendor-sow-comparison-analysis-v1')) &&
+          payload.s3Files && payload.s3Files.length > 0) {
         console.log('Detected vendor-sow-comparison-analysis-v1 prompt, applying special formatting');
 
-        // Ensure we have the correct naming for the files
-        const formattedS3Files = payload.s3Files.map((file, index) => {
-          // Determine name based on file type and index
-          let name;
-          if (file.fileName.toLowerCase().includes('sow')) {
-            name = 'SOW';
-          } else if (index === 0 || file.fileName.toLowerCase().includes('lsk')) {
-            name = 'LSK_Bid';
-          } else if (index === 1 || file.fileName.toLowerCase().includes('acme')) {
-            name = 'Acme_Bid';
-          } else {
-            name = file.name || file.fileName.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
-          }
+        // Hard-code the exact format needed for the vendor-sow-comparison-analysis-v1 prompt
+        const formattedS3Files = [];
 
-          return {
-            name: name,
-            fileName: file.fileName,
-            s3Url: file.s3Url,
-            mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          };
-        });
+        // Find SOW file
+        const sowFile = payload.s3Files.find(file =>
+          file.fileName.toLowerCase().includes('sow') ||
+          file.name.toLowerCase().includes('sow'));
+
+        // Find LSK file
+        const lskFile = payload.s3Files.find(file =>
+          file.fileName.toLowerCase().includes('lsk') ||
+          file.fileName.toLowerCase().includes('sin v2') ||
+          file.name.toLowerCase().includes('lsk'));
+
+        // Find Acme file
+        const acmeFile = payload.s3Files.find(file =>
+          file.fileName.toLowerCase().includes('acme') ||
+          file.fileName.toLowerCase().includes('associates') ||
+          file.name.toLowerCase().includes('acme'));
+
+        // Add files in the correct order with the correct names
+        if (lskFile) {
+          formattedS3Files.push({
+            name: 'LSK_Bid',
+            fileName: lskFile.fileName,
+            s3Url: lskFile.s3Url,
+            mimeType: lskFile.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          });
+        } else if (payload.s3Files.length > 0) {
+          // If no LSK file found, use the first file
+          formattedS3Files.push({
+            name: 'LSK_Bid',
+            fileName: payload.s3Files[0].fileName,
+            s3Url: payload.s3Files[0].s3Url,
+            mimeType: payload.s3Files[0].mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          });
+        }
+
+        if (acmeFile) {
+          formattedS3Files.push({
+            name: 'Acme_Bid',
+            fileName: acmeFile.fileName,
+            s3Url: acmeFile.s3Url,
+            mimeType: acmeFile.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          });
+        } else if (payload.s3Files.length > 1) {
+          // If no Acme file found, use the second file
+          formattedS3Files.push({
+            name: 'Acme_Bid',
+            fileName: payload.s3Files[1].fileName,
+            s3Url: payload.s3Files[1].s3Url,
+            mimeType: payload.s3Files[1].mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          });
+        }
+
+        if (sowFile) {
+          formattedS3Files.push({
+            name: 'SOW',
+            fileName: sowFile.fileName,
+            s3Url: sowFile.s3Url,
+            mimeType: sowFile.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+        } else if (payload.s3Files.length > 2) {
+          // If no SOW file found, use the third file
+          formattedS3Files.push({
+            name: 'SOW',
+            fileName: payload.s3Files[2].fileName,
+            s3Url: payload.s3Files[2].s3Url,
+            mimeType: payload.s3Files[2].mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          });
+        }
+
+        console.log('Formatted s3Files for vendor-sow-comparison-analysis-v1:', formattedS3Files);
 
         // Replace the s3Files array with the formatted one
         payload.s3Files = formattedS3Files;
 
         // Also update the s3Files in promptMetadata if it exists
-        if (payload.promptMetadata && payload.promptMetadata.s3Files) {
+        if (payload.promptMetadata) {
           payload.promptMetadata.s3Files = formattedS3Files;
         }
       }
