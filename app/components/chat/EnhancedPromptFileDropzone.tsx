@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { FiUploadCloud, FiX, FiFile, FiFolder, FiRefreshCw } from 'react-icons/fi';
 import { apiService } from '../../utils/apiService';
 import { UploadedFile } from '../../types/shared';
+import { sendVendorAnalysisRequest } from '../../utils/vendorAnalysisApi';
+import { useChatStore } from '../../store/chatStore';
 
 interface EnhancedPromptFileDropzoneProps {
   getRootProps: any;
