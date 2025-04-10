@@ -395,18 +395,16 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       // The parent component (usePromptFileHandler) will handle the API call
       console.log('EnhancedFileDialog: Calling onSubmit function with files and variables');
 
-      // Format files for API
-      const formattedFiles = selectedFiles.map(file => ({
-        ...file,
-        name: file.name || file.fileName,
-        fileName: file.fileName || file.name,
-        s3Url: file.s3Url || file.url,
-        mimeType: file.type
-      }));
+      // Ensure all files have the required properties
+      selectedFiles.forEach(file => {
+        if (!file.name) file.name = file.fileName || 'Unnamed file';
+        if (!file.fileName) file.fileName = file.name;
+        if (!file.s3Url) file.s3Url = file.url || '';
+      });
 
-      // Call the onSubmit function with the formatted files and variables
-      console.log('EnhancedFileDialog: Calling onSubmit with formatted files:', formattedFiles.length);
-      onSubmit(formattedFiles, variables);
+      // Call the onSubmit function with the files and variables
+      console.log('EnhancedFileDialog: Calling onSubmit with files:', selectedFiles.length);
+      onSubmit(selectedFiles, variables);
 
       console.log('EnhancedFileDialog: onSubmit function called successfully');
     } catch (error) {
