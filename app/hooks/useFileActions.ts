@@ -124,9 +124,17 @@ const useFileActions = ({
 
               // Replace variables in the content
               Object.entries(promptVariables).forEach(([key, value]) => {
-                const regex = new RegExp(`\$\{${key}\}`, 'g');
-                processedContent = processedContent.replace(regex, value);
+                if (value) {
+                  const regex = new RegExp(`\$\{${key}\}`, 'g');
+                  processedContent = processedContent.replace(regex, value);
+                }
               });
+
+              // Check if there are still unreplaced variables
+              const remainingVariables = processedContent.match(/\$\{([^}]+)\}/g) || [];
+              if (remainingVariables.length > 0) {
+                console.log('Warning: Some variables were not replaced:', remainingVariables);
+              }
 
               // Use the processed content as the message
               analysisText = `Please analyze these documents using the "${storedPrompt.title}" prompt with the following instructions: ${processedContent}`;
