@@ -109,6 +109,12 @@ export interface UploadedFile {
   progress?: number;   // Upload progress (0-100)
   fileId?: string;     // Unique identifier for the file
   error?: string;      // Error message if upload failed
+
+  // Additional properties for S3 file handling
+  fileName?: string;   // The file name (may be different from name in some cases)
+  fileKey?: string;    // The S3 key or identifier for the file
+  s3Url?: string;      // The S3 URL for the file
+  originalS3Url?: string; // The original S3 URL with query parameters
 }
 
 export type PromptType = 'INDIVIDUAL' | 'COMMUNITY';
