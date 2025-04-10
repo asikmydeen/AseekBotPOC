@@ -623,6 +623,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
           >
             {isSubmitting ? 'Processing...' : 'Submit'}
           </button>
+          </div>
         </div>
       </motion.div>
     </div>
