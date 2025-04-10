@@ -296,7 +296,7 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Check if all required variables are filled
     const missingVariables = requiredVariables.filter(variable => !variables[variable]);
     if (missingVariables.length > 0) {
@@ -307,6 +307,31 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
     // Store variables in localStorage for the parent component
     localStorage.setItem('promptVariables', JSON.stringify(variables));
 
+    // Special handling for vendor-sow-comparison-analysis-v1 prompt
+    if (prompt.promptId === 'vendor-sow-comparison-analysis-v1') {
+      console.log('Using direct API call for vendor-sow-comparison-analysis-v1 prompt');
+
+      try {
+        // Get the current chat session ID
+        const chatStore = useChatStore.getState();
+        const chatSessionId = chatStore.currentChatSessionId || `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+        // Make the direct API call
+        await sendVendorAnalysisRequest(chatSessionId, uploadedFiles, variables);
+
+        // Close the prompt dialog
+        onClose();
+
+        // Return early to bypass the regular flow
+        return;
+      } catch (error) {
+        console.error('Error making direct vendor analysis API call:', error);
+        setError('Failed to send vendor analysis request. Please try again.');
+        return;
+      }
+    }
+
+    // Regular flow for other prompts
     // Create a mapping between variable names and files
     const variableToFileMap = {};
 
