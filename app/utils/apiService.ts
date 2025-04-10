@@ -206,6 +206,15 @@ export const apiService = {
             if (promptMetadata.promptId) {
               payload.promptId = promptMetadata.promptId;
             }
+
+            // If we have s3Files, add them directly to the payload
+            if (promptMetadata.s3Files && promptMetadata.s3Files.length > 0) {
+              payload.s3Files = promptMetadata.s3Files;
+              console.log('Including s3Files in request:', promptMetadata.s3Files);
+
+              // Remove the regular files array if we're using s3Files
+              delete payload.files;
+            }
           }
         } catch (error) {
           console.error('Error parsing prompt metadata:', error);
