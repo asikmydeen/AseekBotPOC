@@ -147,16 +147,24 @@ const useFileActions = ({
               console.log('Using stored prompt for analysis:', storedPrompt.title);
 
               // Also pass variables as metadata to the API
+              const s3FilesArray = uploadedFiles.map(file => ({
+                name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
+                fileName: file.name,
+                s3Url: file.url || file.fileUrl || file.s3Url || '',
+                mimeType: file.type || 'application/octet-stream'
+              }));
+
+              // Log the s3Files array for debugging
+              console.log('Creating s3Files array for API:', s3FilesArray);
+
               const metadata = {
                 promptId: storedPrompt.promptId,
                 variables: promptVariables,
-                s3Files: uploadedFiles.map(file => ({
-                  name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'), // Create a clean name for the file
-                  fileName: file.name,
-                  s3Url: file.url || file.fileUrl || file.s3Url || '',
-                  mimeType: file.type || 'application/octet-stream'
-                }))
+                s3Files: s3FilesArray
               };
+
+              // Also store the s3Files array directly in localStorage for the API to pick up
+              localStorage.setItem('s3FilesForAPI', JSON.stringify(s3FilesArray));
 
               // Store metadata in localStorage for the API to pick up
               localStorage.setItem('promptMetadata', JSON.stringify(metadata));
