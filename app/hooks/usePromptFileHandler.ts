@@ -273,12 +273,7 @@ const usePromptFileHandler = ({
     }
   }, [openFileSelectionDialog, handleFileSelection]);
 
-  // Reset state (dialog closing is handled by the modal context)
-  const resetState = useCallback(() => {
-    setSelectedFiles([]);
-    setVariables({});
-    setError(null);
-  }, []);
+  // Note: resetState is defined earlier in the file
 
   // Poll for status updates
   useEffect(() => {
