@@ -766,8 +766,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                                   if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
                                                     handleFileSelect(file);
                                                   }
-                                                  // Set the variable value
+                                                  // Set the variable value for ONLY this variable
                                                   handleVariableChange(variable, file.fileName || 'Unnamed file');
+
+                                                  // Log the selection for debugging
+                                                  console.log(`Selected file ${file.fileName} for variable ${variable}`);
                                                   // Close dropdown
                                                   setUiState(prev => ({
                                                     ...prev,
