@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
-import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
+import { FiX, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
 import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
@@ -43,7 +43,6 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
-  const fileListRef = useRef<HTMLDivElement>(null);
 
   // Detect variable types based on naming patterns
   const detectVariableTypes = useCallback(() => {
@@ -897,20 +896,6 @@ const formatVariableName = (variable: string): string => {
     .replace(/^./, str => str.toUpperCase());
 };
 
-// Helper function to format date
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return 'Unknown date';
 
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  } catch (e) {
-    return 'Invalid date';
-  }
-};
 
 export default EnhancedFileDialog;
