@@ -1,6 +1,7 @@
 // app/utils/apiService.ts
 import { useApiStore } from '../store/apiStore';
 import { LAMBDA_ENDPOINTS } from './lambdaApi';
+import { getCurrentUserId } from '../store/userStore';
 
 /**
  * Extracts the S3 key from a file URL
@@ -29,8 +30,7 @@ function extractS3KeyFromUrl(fileUrl: string): string {
   }
 }
 
-// Placeholder for user ID and auth token - can be replaced with actual values when integrating with user management
-export const TEST_USER_ID = 'test-user';
+// Placeholder for auth token - can be replaced with actual values when integrating with user management
 export const API_KEY = 'aseekbot-dev-key'; // This is a placeholder API key
 
 // Generate a unique request ID
@@ -63,7 +63,7 @@ export async function makeRequest<T = any>(
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': `Bearer ${API_KEY}`,
-      'X-User-ID': TEST_USER_ID,
+      'X-User-ID': getCurrentUserId(),
       ...options.headers,
     };
 
@@ -163,14 +163,14 @@ export const apiService = {
 
         // Ensure userId is set
         if (!payload.userId) {
-          payload.userId = TEST_USER_ID;
+          payload.userId = getCurrentUserId();
         }
       }
       // Handle the case where messageOrOptions is a string (old format)
       else {
         payload = {
           message: messageOrOptions,
-          userId: TEST_USER_ID
+          userId: getCurrentUserId()
         };
 
         // Include chatId if it exists (for continuing conversations)
@@ -207,7 +207,7 @@ export const apiService = {
         throw new Error('No requestId provided');
       }
 
-      return await makeRequest(`${LAMBDA_ENDPOINTS.status}/${requestId}?userId=${TEST_USER_ID}`, 'GET');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.status}/${requestId}?userId=${getCurrentUserId()}`, 'GET');
     } catch (error) {
       console.error('Error checking status:', error);
       throw error;
@@ -226,7 +226,7 @@ export const apiService = {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('userId', TEST_USER_ID);
+      formData.append('userId', getCurrentUserId());
 
       if (sessionId) {
         formData.append('sessionId', sessionId);
@@ -260,7 +260,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ s3Key, userId: TEST_USER_ID })
+        body: JSON.stringify({ s3Key, userId: getCurrentUserId() })
       });
 
       if (!response.ok) {
@@ -288,7 +288,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileKey, userId: TEST_USER_ID })
+        body: JSON.stringify({ fileKey, userId: getCurrentUserId() })
       });
 
       if (!response.ok) {
@@ -313,13 +313,14 @@ export const apiService = {
    */
   getUserFiles: async () => {
     try {
-      console.log('Fetching user files for user:', TEST_USER_ID);
+      const userId = getCurrentUserId();
+      console.log('Fetching user files for user:', userId);
 
       // Make the request directly with fetch
       const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: TEST_USER_ID })
+        body: JSON.stringify({ userId })
       });
 
       if (!response.ok) {
@@ -375,7 +376,7 @@ export const apiService = {
    */
   createTicket: async (ticketDetails: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.createTicket, 'POST', { ...ticketDetails, userId: TEST_USER_ID });
+      return await makeRequest(LAMBDA_ENDPOINTS.createTicket, 'POST', { ...ticketDetails, userId: getCurrentUserId() });
     } catch (error) {
       console.error('Error creating ticket:', error);
       throw error;
@@ -387,7 +388,7 @@ export const apiService = {
    */
   getPrompts: async () => {
     try {
-      return await makeRequest(`${LAMBDA_ENDPOINTS.getPrompts}?userId=${TEST_USER_ID}`, 'GET');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.getPrompts}?userId=${getCurrentUserId()}`, 'GET');
     } catch (error) {
       console.error('Error getting prompts:', error);
       throw error;
@@ -399,7 +400,7 @@ export const apiService = {
    */
   getPromptById: async (id: string) => {
     try {
-      return await makeRequest(`${LAMBDA_ENDPOINTS.getPromptById.replace(':id', id)}?userId=${TEST_USER_ID}`, 'GET');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.getPromptById.replace(':id', id)}?userId=${getCurrentUserId()}`, 'GET');
     } catch (error) {
       console.error(`Error getting prompt ${id}:`, error);
       throw error;
@@ -411,7 +412,7 @@ export const apiService = {
    */
   createPrompt: async (promptData: any) => {
     try {
-      return await makeRequest(LAMBDA_ENDPOINTS.createPrompt, 'POST', { ...promptData, userId: TEST_USER_ID });
+      return await makeRequest(LAMBDA_ENDPOINTS.createPrompt, 'POST', { ...promptData, userId: getCurrentUserId() });
     } catch (error) {
       console.error('Error creating prompt:', error);
       throw error;
@@ -426,7 +427,7 @@ export const apiService = {
       // Add userId to the request body
       const requestData = {
         ...promptData,
-        userId: TEST_USER_ID
+        userId: getCurrentUserId()
       };
 
       const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
@@ -452,7 +453,7 @@ export const apiService = {
    */
   deletePrompt: async (id: string) => {
     try {
-      return await makeRequest(`${LAMBDA_ENDPOINTS.deletePrompt.replace(':id', id)}?userId=${TEST_USER_ID}`, 'DELETE');
+      return await makeRequest(`${LAMBDA_ENDPOINTS.deletePrompt.replace(':id', id)}?userId=${getCurrentUserId()}`, 'DELETE');
     } catch (error) {
       console.error(`Error deleting prompt ${id}:`, error);
       throw error;

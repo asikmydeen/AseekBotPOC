@@ -6,6 +6,7 @@ import AppSidebar from './components/sidebar/AppSidebar';
 import { useChatHistory } from './hooks/useChatHistory';
 import { apiService } from './utils/apiService';
 import { UploadedFile } from './types/shared';
+import { getCurrentUserId } from './store/userStore';
 
 
 // Dynamically import ChatInterface with SSR disabled
@@ -442,7 +443,7 @@ function ChatApp() {
         onFileAddToChat={handleFileAddToChat}
         sessionId={activeChat?.id || ''}
         chatId={activeChat?.id || ''}
-        userId="test-user"
+        userId={getCurrentUserId()}
         onStatusUpdate={handleStatusUpdate}
       />
       <div className={`flex-1 h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-[300px] ml-0' : 'md:ml-[60px] ml-0'}`}>

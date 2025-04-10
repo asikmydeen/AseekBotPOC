@@ -2,12 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { apiService } from '../utils/apiService';
 import { UploadedFile, Prompt, PromptVariable } from '../types/shared';
 import { useModal } from '../contexts/ModalContext';
+import { getCurrentUserId } from '../store/userStore';
 
 interface UsePromptFileHandlerProps {
   onStatusUpdate?: (status: string, progress: number, userMessage?: string) => void;
   sessionId: string;
   chatId: string;
-  userId: string;
+  userId?: string; // Make userId optional since we'll use the centralized one if not provided
 }
 
 /**
@@ -223,7 +224,7 @@ const usePromptFileHandler = ({
       }));
 
       // Capture current values to avoid closure issues
-      const currentUserId = userId;
+      const currentUserId = userId || getCurrentUserId();
       const currentSessionId = sessionId;
       const currentChatId = chatId;
       const currentStatusCallback = onStatusUpdate;

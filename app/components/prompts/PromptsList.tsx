@@ -8,6 +8,7 @@ import { Prompt, PromptType, UploadedFile } from '../../types/shared';
 import PromptItem from './PromptItem';
 // Dialog is now handled by the ModalContext
 import usePromptFileHandler from '../../hooks/usePromptFileHandler';
+import { getCurrentUserId } from '../../store/userStore';
 
 interface PromptsListProps {
     isDarkMode: boolean;
@@ -33,7 +34,7 @@ const PromptsList: React.FC<PromptsListProps> = ({
     maxHeight = '70vh',
     sessionId = '',
     chatId = '',
-    userId = 'test-user',
+    userId = getCurrentUserId(),
     onStatusUpdate
 }) => {
     const {

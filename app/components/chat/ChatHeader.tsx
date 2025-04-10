@@ -17,6 +17,7 @@ import {
 import { FiHelpCircle, FiCode } from 'react-icons/fi';
 import { TicketIcon } from '@heroicons/react/24/outline';
 import { useChatHistory } from '../../hooks/useChatHistory';
+import { getCurrentUserId } from '../../store/userStore';
 
 interface ChatHeaderProps {
   isDarkMode: boolean;
@@ -195,7 +196,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* User Profile */}
         <Link href="/profile" aria-label="Go to profile">
-          <UserThumbnail userId="test-user" size={16} className="sm:w-5 sm:h-5" />
+          <UserThumbnail userId={getCurrentUserId()} size={16} className="sm:w-5 sm:h-5" />
         </Link>
       </div>
     </header>

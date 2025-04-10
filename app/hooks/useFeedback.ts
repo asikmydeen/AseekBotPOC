@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FeedbackData } from '../types/index';
+import { getCurrentUserId } from '../store/userStore';
 
 /**
  * Custom hook to manage user feedback functionality
@@ -39,9 +40,10 @@ export default function useFeedback() {
   const submitFeedback = async () => {
     try {
       // Include userId with the feedback data
+      const userId = getCurrentUserId();
       const feedbackWithUser = {
         ...feedback,
-        userId: 'test-user', // Using placeholder userId as required
+        userId,
         timestamp: new Date().toISOString()
       };
 
@@ -53,7 +55,7 @@ export default function useFeedback() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'feedback',
-          userId: 'test-user',
+          userId,
           data: feedbackWithUser
         })
       });

@@ -14,6 +14,7 @@ import './store/artifactStore';
 import './store/apiStore';
 import './store/promptsStore';
 import './store/chatStore';
+import './store/userStore';
 
 interface ProviderProps {
     children: React.ReactNode;

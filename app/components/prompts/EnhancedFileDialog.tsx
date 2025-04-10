@@ -5,6 +5,7 @@ import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
 import { motion } from 'framer-motion';
+import { getCurrentUserId } from '../../store/userStore';
 
 interface VariableType {
   type: 'text' | 'file' | 'number' | 'date' | 'select';
@@ -284,7 +285,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         const file = files[i];
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('userId', 'test-user'); // Use the appropriate user ID
+        formData.append('userId', getCurrentUserId()); // Use the centralized user ID
 
         // Show progress for current file
         const progress = Math.round(((i) / files.length) * 100);
