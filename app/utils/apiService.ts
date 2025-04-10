@@ -198,8 +198,25 @@ export const apiService = {
           }));
         }
 
-        // Check if we have prompt metadata
+        // Check if we have s3Files directly stored in localStorage
         try {
+          const s3FilesJson = localStorage.getItem('s3FilesForAPI');
+          if (s3FilesJson) {
+            try {
+              const s3FilesFromStorage = JSON.parse(s3FilesJson);
+              if (Array.isArray(s3FilesFromStorage) && s3FilesFromStorage.length > 0) {
+                console.log('Found s3Files in localStorage:', s3FilesFromStorage.length);
+                // Use these files directly in the payload
+                payload.s3Files = s3FilesFromStorage;
+                // Remove the regular files array if we're using s3Files
+                delete payload.files;
+              }
+            } catch (e) {
+              console.error('Error parsing s3FilesForAPI from localStorage:', e);
+            }
+          }
+
+          // Check if we have prompt metadata
           const metadataJson = localStorage.getItem('promptMetadata');
           if (metadataJson) {
             const promptMetadata = JSON.parse(metadataJson);
