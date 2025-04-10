@@ -1,6 +1,7 @@
 // app/utils/apiService.ts
 import { useApiStore } from '../store/apiStore';
 import { LAMBDA_ENDPOINTS } from './lambdaApi';
+import { interceptRequest } from './requestInterceptor';
 
 /**
  * Extracts the S3 key from a file URL
