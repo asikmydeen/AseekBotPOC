@@ -300,6 +300,15 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     });
   };
 
+  // Helper function to determine if a variable is a file variable
+  const isFileVariable = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('file') ||
+           varLower.includes('doc') ||
+           varLower.includes('document') ||
+           varLower.includes('attachment');
+  };
+
   // Validate the form and update isFormValid state
   const validateForm = (currentVariables: Record<string, string> = variables) => {
     // Check if all required variables are filled
