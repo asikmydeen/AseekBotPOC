@@ -116,6 +116,9 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
         setVariables(newVariables);
       }
     }
+
+    // Validate form whenever files or variables change
+    validateForm();
   }, [selectedFiles, requiredVariables, variables]);
 
   const fetchS3Files = async () => {
