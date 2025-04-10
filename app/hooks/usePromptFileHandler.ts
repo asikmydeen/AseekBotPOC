@@ -325,17 +325,19 @@ const usePromptFileHandler = ({
           currentStatusCallback('PROCESSING', 10);
 
           // Store the request ID in localStorage to ensure it's tracked across page refreshes
-          try {
-            let pending: Record<string, { status: string }> = {};
-            const stored = localStorage.getItem('pendingRequests');
-            if (stored) {
-              pending = JSON.parse(stored);
+          if (requestId) {
+            try {
+              let pending: Record<string, { status: string }> = {};
+              const stored = localStorage.getItem('pendingRequests');
+              if (stored) {
+                pending = JSON.parse(stored);
+              }
+              pending[requestId] = { status: 'PROCESSING' };
+              localStorage.setItem('pendingRequests', JSON.stringify(pending));
+              console.log('Stored request ID in localStorage:', requestId);
+            } catch (e) {
+              console.error('Error storing request ID in localStorage:', e);
             }
-            pending[response.requestId] = { status: 'PROCESSING' };
-            localStorage.setItem('pendingRequests', JSON.stringify(pending));
-            console.log('Stored request ID in localStorage:', response.requestId);
-          } catch (e) {
-            console.error('Error storing request ID in localStorage:', e);
           }
         }
 
