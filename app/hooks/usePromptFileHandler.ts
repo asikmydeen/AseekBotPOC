@@ -338,7 +338,6 @@ const usePromptFileHandler = ({
             console.error('Error storing request ID in localStorage:', e);
           }
         }
-      }
 
       // Reset state after successful submission
       resetState();
