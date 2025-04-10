@@ -417,7 +417,8 @@ const usePromptFileHandler = ({
         prompt,
         0,
         [],
-        handleFileSelection
+        handleFileSelection,
+        {}
       );
     }
   }, [openFileSelectionDialog, handleFileSelection]);
