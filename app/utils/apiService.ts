@@ -254,15 +254,10 @@ export const apiService = {
           }
         }
 
-            // Always log the s3Files that will be included
-            if (payload.s3Files && payload.s3Files.length > 0) {
-              console.log('Including s3Files in request:', payload.s3Files);
-            }
-
-            // Remove the regular files array if we're using s3Files
-            if (payload.s3Files && payload.s3Files.length > 0) {
-              delete payload.files;
-            }
+        // Log the s3Files that will be included
+        if (payload.s3Files && payload.s3Files.length > 0) {
+          console.log('Including s3Files in request:', payload.s3Files);
+        }
           }
         } catch (error) {
           console.error('Error parsing prompt metadata:', error);
