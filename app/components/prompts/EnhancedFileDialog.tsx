@@ -6,6 +6,11 @@ import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
 import { motion } from 'framer-motion';
 
+interface VariableType {
+  type: 'text' | 'file' | 'number' | 'date' | 'select';
+  options?: string[];
+}
+
 interface EnhancedFileDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,6 +19,7 @@ interface EnhancedFileDialogProps {
   promptTitle: string;
   requiredFileCount?: number;
   requiredVariables?: string[];
+  variableTypes?: Record<string, VariableType>;
 }
 
 const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
@@ -23,7 +29,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   promptId: _promptId, // Not currently used but kept for future use
   promptTitle,
   requiredFileCount = 0,
-  requiredVariables = []
+  requiredVariables = [],
+  variableTypes = {}
 }) => {
   const { isDarkMode } = useTheme();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
@@ -38,6 +45,56 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const fileListRef = useRef<HTMLDivElement>(null);
 
+  // Detect variable types based on naming patterns
+  const detectVariableTypes = useCallback(() => {
+    const detectedTypes: Record<string, VariableType> = {};
+
+    requiredVariables.forEach(variable => {
+      // Start with default type
+      let type: VariableType = { type: 'text' };
+
+      // Detect file-type variables
+      if (
+        variable.includes('_doc') ||
+        variable.includes('_file') ||
+        variable.includes('document') ||
+        variable.includes('attachment')
+      ) {
+        type = { type: 'file' };
+      }
+      // Detect number-type variables
+      else if (
+        variable.includes('_count') ||
+        variable.includes('_number') ||
+        variable.includes('_amount') ||
+        variable.includes('_qty') ||
+        variable.includes('_quantity')
+      ) {
+        type = { type: 'number' };
+      }
+      // Detect date-type variables
+      else if (
+        variable.includes('_date') ||
+        variable.includes('_time') ||
+        variable.includes('_day')
+      ) {
+        type = { type: 'date' };
+      }
+
+      // Override with provided types if available
+      if (variableTypes[variable]) {
+        type = variableTypes[variable];
+      }
+
+      detectedTypes[variable] = type;
+    });
+
+    return detectedTypes;
+  }, [requiredVariables, variableTypes]);
+
+  // Store detected variable types
+  const [detectedVariableTypes, setDetectedVariableTypes] = useState<Record<string, VariableType>>({});
+
   // Initialize variables state based on requiredVariables
   useEffect(() => {
     if (isOpen) {
@@ -48,10 +105,15 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       });
       setVariables(initialVariables);
 
+      // Detect variable types
+      const types = detectVariableTypes();
+      setDetectedVariableTypes(types);
+      console.log('Detected variable types:', types);
+
       // Validate form when dialog opens
       setTimeout(() => validateForm(initialVariables), 0);
     }
-  }, [isOpen, requiredVariables]);
+  }, [isOpen, requiredVariables, detectVariableTypes]);
 
   // File input ref for upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,67 +141,62 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   }, [s3Files, searchTerm]);
 
-  // Detect variable types and auto-map files to variables
+  // Detect variable types and auto-map files to variables based on naming patterns
   useEffect(() => {
     if (selectedFiles.length > 0 && requiredVariables.length > 0) {
       console.log('Attempting to auto-map files to variables:', selectedFiles.length, 'files,', requiredVariables.length, 'variables');
       const newVariables = { ...variables };
       let variablesUpdated = false;
 
-      // Get file-related variables (those containing 'file', 'doc', or 'document' in their name)
-      const fileVariables = requiredVariables.filter(v =>
-        v.toLowerCase().includes('file') ||
-        v.toLowerCase().includes('doc') ||
-        v.toLowerCase().includes('document')
+      // Identify file-type variables based on naming patterns
+      const fileVariables = requiredVariables.filter(variable =>
+        variable.includes('_doc') ||
+        variable.includes('_file') ||
+        variable.includes('document') ||
+        variable.includes('attachment')
       );
 
-      console.log('Detected file variables:', fileVariables);
-
-      // If we have file variables and files, try to map them intelligently
       if (fileVariables.length > 0) {
-        // First, try to match files to variables based on name similarity
+        console.log('Detected file-type variables:', fileVariables);
+
+        // Try to match files to variables based on naming patterns
         selectedFiles.forEach(file => {
-          const fileName = file.fileName?.toLowerCase() || file.name.toLowerCase();
+          const fileName = file.fileName?.toLowerCase() || '';
           console.log('Checking file for variable mapping:', fileName);
 
           // Try to find the best matching variable for this file
-          for (const varName of fileVariables) {
-            // Skip if this variable is already filled
-            if (newVariables[varName]) continue;
+          let bestMatch = null;
+          let bestMatchScore = 0;
 
-            const varNameLower = varName.toLowerCase();
+          fileVariables.forEach(varName => {
+            if (newVariables[varName]) return; // Skip already filled variables
 
-            // Check for keyword matches in the filename
-            const keywords = varNameLower.split(/[_\s-]/).filter(k => k.length > 2);
-            const hasMatch = keywords.some(keyword => fileName.includes(keyword));
+            // Calculate a match score based on variable name and file name
+            let matchScore = 0;
+            const normalizedVarName = varName.replace(/[_-]/g, ' ').toLowerCase();
+            const parts = normalizedVarName.split(' ');
 
-            if (hasMatch) {
-              newVariables[varName] = file.name;
-              variablesUpdated = true;
-              console.log(`Mapped file to ${varName} variable based on name match:`, file.name);
-              break; // Move to next file after finding a match
-            }
-          }
-        });
+            // Check for keyword matches
+            parts.forEach(part => {
+              if (part.length > 2 && fileName.includes(part)) {
+                matchScore += 10;
+              }
+            });
 
-        // If we still have unmapped file variables and files, assign sequentially
-        const unmappedFileVars = fileVariables.filter(v => !newVariables[v]);
-        const unmappedFiles = selectedFiles.filter(f =>
-          !Object.values(newVariables).includes(f.name)
-        );
-
-        if (unmappedFileVars.length > 0 && unmappedFiles.length > 0) {
-          console.log('Assigning remaining files sequentially to variables');
-
-          // Assign files to variables sequentially
-          unmappedFileVars.forEach((varName, index) => {
-            if (index < unmappedFiles.length) {
-              newVariables[varName] = unmappedFiles[index].name;
-              variablesUpdated = true;
-              console.log(`Mapped file to ${varName} variable sequentially:`, unmappedFiles[index].name);
+            // If this is a better match than what we've found so far, update
+            if (matchScore > bestMatchScore) {
+              bestMatch = varName;
+              bestMatchScore = matchScore;
             }
           });
-        }
+
+          // If we found a good match, assign the file to that variable
+          if (bestMatch && bestMatchScore > 0) {
+            newVariables[bestMatch] = file.name;
+            variablesUpdated = true;
+            console.log(`Mapped file to ${bestMatch} variable with score ${bestMatchScore}:`, file.name);
+          }
+        });
       }
 
       if (variablesUpdated) {
@@ -298,15 +355,6 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
       return newVariables;
     });
-  };
-
-  // Helper function to determine if a variable is a file variable
-  const isFileVariable = (variable: string): boolean => {
-    const varLower = variable.toLowerCase();
-    return varLower.includes('file') ||
-           varLower.includes('doc') ||
-           varLower.includes('document') ||
-           varLower.includes('attachment');
   };
 
   // Validate the form and update isFormValid state
@@ -572,90 +620,50 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                       <div className={`px-4 py-2 ${
                         isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                       } ${!variables[variable] ? 'border-l-4 border-red-500' : ''}`}>
-                        <div className="flex justify-between items-center">
-                          <label className="block font-medium">
-                            {formatVariableName(variable)}
-                            {!variables[variable] && <span className="text-red-500 ml-1">*</span>}
-                          </label>
-
-                          {/* Variable type indicator */}
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            isFileVariable(variable)
-                              ? isDarkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-800'
-                              : isDarkMode ? 'bg-purple-900/40 text-purple-300' : 'bg-purple-100 text-purple-800'
-                          }`}>
-                            {isFileVariable(variable) ? 'File' : 'Text'}
-                          </span>
-                        </div>
+                        <label className="block font-medium">
+                          {formatVariableName(variable)}
+                          {!variables[variable] && <span className="text-red-500 ml-1">*</span>}
+                        </label>
                       </div>
                       <div className="p-4">
-                        {/* Show different UI based on variable type */}
-                        {isFileVariable(variable) ? (
-                          /* File variable UI */
-                          <div>
-                            <div className="mb-2">
-                              <input
-                                type="text"
-                                value={variables[variable] || ''}
-                                onChange={(e) => handleVariableChange(variable, e.target.value)}
-                                className={`w-full p-2 rounded-md ${
-                                  isDarkMode
-                                    ? 'bg-gray-800 border-gray-600 text-white'
-                                    : 'bg-white border-gray-300 text-gray-900'
-                                } border`}
-                                placeholder="Select a file below or enter file name"
-                                readOnly={selectedFiles.length > 0}
-                              />
-                            </div>
+                        <input
+                          type="text"
+                          value={variables[variable] || ''}
+                          onChange={(e) => handleVariableChange(variable, e.target.value)}
+                          className={`w-full p-2 rounded-md mb-2 ${
+                            isDarkMode
+                              ? 'bg-gray-800 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border`}
+                          placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
+                        />
 
-                            {selectedFiles.length > 0 ? (
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500 mb-2">Select a file for this variable:</p>
-                                <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto pr-2">
-                                  {selectedFiles.map((file, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => handleVariableFileSelect(variable, idx)}
-                                      className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
-                                        variables[variable] === file.name
-                                          ? isDarkMode
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-blue-500 text-white'
-                                          : isDarkMode
-                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                      }`}
-                                    >
-                                      {file.fileName}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center p-4 border border-dashed rounded-md border-gray-400 dark:border-gray-600">
-                                <p className="text-sm text-gray-500">Please upload files in the left panel first</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          /* Text variable UI */
-                          <div>
-                            <input
-                              type="text"
-                              value={variables[variable] || ''}
-                              onChange={(e) => handleVariableChange(variable, e.target.value)}
-                              className={`w-full p-2 rounded-md ${
-                                isDarkMode
-                                  ? 'bg-gray-800 border-gray-600 text-white'
-                                  : 'bg-white border-gray-300 text-gray-900'
-                              } border`}
-                              placeholder={`Enter ${formatVariableName(variable).toLowerCase()}`}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Enter text for this variable
-                            </p>
+                        {/* File selector for variables */}
+                        {selectedFiles.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-500 mb-2">Or select from your files:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedFiles.map((file, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleVariableFileSelect(variable, idx)}
+                                  className={`text-xs px-2 py-1 rounded-md truncate max-w-[150px] ${
+                                    variables[variable] === file.name
+                                      ? isDarkMode
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-blue-500 text-white'
+                                      : isDarkMode
+                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                  }`}
+                                >
+                                  {file.fileName}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         )}
+                      </div>
                     </div>
                   ))}
                 </div>
