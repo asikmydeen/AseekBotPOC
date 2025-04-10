@@ -155,10 +155,23 @@ const EnhancedPromptFileDropzone: React.FC<EnhancedPromptFileDropzoneProps> = ({
         url: file.s3Url || file.presignedUrl || '',
         fileId: file.fileId || '',
         status: 'success',
-        progress: 100
+        progress: 100,
+        // Mark this as a prompt file to prevent the dropzone from being hidden
+        isPromptFile: true
       };
 
       console.log('Adding S3 file to uploaded files:', newFile.name);
+
+      // Add the file directly to the parent component's uploadedFiles array
+      // This is a workaround to prevent the component from unmounting
+      try {
+        // Create a custom event to add the file
+        const event = new CustomEvent('addExternalFile', { detail: newFile });
+        window.dispatchEvent(event);
+        console.log('Dispatched addExternalFile event');
+      } catch (error) {
+        console.error('Error dispatching addExternalFile event:', error);
+      }
 
       // Try to populate variables based on the file name
       if (requiredVariables.length > 0) {
