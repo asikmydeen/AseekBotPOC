@@ -250,7 +250,21 @@ const usePromptFileHandler = ({
 
             if (currentStatusCallback) {
               // Update the status in the UI
-              currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
+              // For COMPLETED status, pass the response message to be displayed in the chat
+              if (statusResponse.status === 'COMPLETED') {
+                // Pass the response message to be displayed in the chat
+                // The isPromptMessage flag is false here because we want this message to be displayed
+                // as a bot message in the chat
+                currentStatusCallback(
+                  statusResponse.status,
+                  100,
+                  statusResponse.message || 'Processing complete.',
+                  false
+                );
+              } else {
+                // For other statuses, just update the progress
+                currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
+              }
             }
 
             // Stop polling when complete or error
