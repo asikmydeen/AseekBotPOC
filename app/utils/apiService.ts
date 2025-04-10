@@ -319,6 +319,7 @@ export const apiService = {
       // Clear prompt metadata and s3Files after sending
       localStorage.removeItem('promptMetadata');
       localStorage.removeItem('s3FilesForAPI');
+      localStorage.removeItem('directS3Files');
 
       return response;
     } catch (error) {
