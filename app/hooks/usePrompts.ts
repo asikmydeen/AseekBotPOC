@@ -26,14 +26,15 @@ export function usePrompts() {
   // Use a ref to track if we've already initiated a fetch
   const hasFetchedRef = useRef(false);
 
-  // Fetch prompts on mount (similar to what the original context provider did)
+  // Fetch prompts on mount only (not on every render)
   useEffect(() => {
     // Only fetch if we don't already have prompts, we're not already loading, and we haven't already initiated a fetch
     if (prompts.length === 0 && !isLoading && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
       fetchPrompts();
     }
-  }, [prompts, isLoading, fetchPrompts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this only runs once on mount
 
   // Wrap fetchPrompts to reset the ref when manually called
   const wrappedFetchPrompts = useCallback(async (filters?: any) => {
