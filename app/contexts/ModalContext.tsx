@@ -63,9 +63,17 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   };
 
   const handleSubmit = (files: UploadedFile[], variables: Record<string, string>) => {
+    console.log('ModalContext: handleSubmit called with', files.length, 'files and', Object.keys(variables).length, 'variables');
+
     if (onFileSubmit) {
+      console.log('ModalContext: Calling onFileSubmit callback');
       onFileSubmit(files, variables);
+      console.log('ModalContext: onFileSubmit callback called successfully');
+    } else {
+      console.error('ModalContext: onFileSubmit callback is not defined!');
     }
+
+    console.log('ModalContext: Closing file selection dialog');
     closeFileSelectionDialog();
   };
 
