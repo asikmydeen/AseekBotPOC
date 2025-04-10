@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 // Import ThemeInitializer to handle theme initialization
 import ThemeInitializer from './utils/ThemeInitializer';
 import { ModalProvider } from './contexts/ModalContext';
+import { initGlobalFileHandler } from './utils/globalFileHandler';
 
 // Initialize Zustand stores
 import './store/themeStore';
