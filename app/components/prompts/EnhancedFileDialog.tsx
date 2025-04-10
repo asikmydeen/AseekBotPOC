@@ -174,7 +174,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
 
         // Upload the file with a session ID
         const sessionId = `session-${Date.now()}`;
-        await apiService.uploadFile(file, sessionId);
+        const uploadResult = await apiService.uploadFile(file, sessionId);
+        console.log(`File ${file.name} uploaded:`, uploadResult);
       }
 
       // Set progress to 100% when done
