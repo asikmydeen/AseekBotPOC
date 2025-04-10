@@ -1,15 +1,10 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
-import { FiX, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
+import { FiX, FiFolder, FiFile, FiCheck, FiUpload, FiSearch, FiPlus } from 'react-icons/fi';
 import { apiService } from '../../utils/apiService';
 import { useTheme } from '../../hooks/useTheme';
 import { UploadedFile } from '../../types/shared';
-import { motion } from 'framer-motion';
-
-interface VariableType {
-  type: 'text' | 'file' | 'number' | 'date' | 'select';
-  options?: string[];
-}
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EnhancedFileDialogProps {
   isOpen: boolean;
@@ -19,7 +14,7 @@ interface EnhancedFileDialogProps {
   promptTitle: string;
   requiredFileCount?: number;
   requiredVariables?: string[];
-  variableTypes?: Record<string, VariableType>;
+  variableTypes?: Record<string, any>;
 }
 
 const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
