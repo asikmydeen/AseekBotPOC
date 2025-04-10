@@ -370,6 +370,23 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     setError(null);
 
     try {
+      // Format files for API
+      const s3Files = selectedFiles.map(file => ({
+        name: file.name || file.fileName,
+        fileName: file.fileName || file.name,
+        s3Url: file.s3Url || file.url,
+        mimeType: file.type
+      }));
+
+      // Log the data being sent to the API
+      console.log('Submitting files and variables to API:', {
+        files: selectedFiles,
+        s3Files,
+        variables,
+        promptId
+      });
+
+      // Call the onSubmit function with the selected files and variables
       onSubmit(selectedFiles, variables);
     } catch (error) {
       console.error('Error submitting files:', error);
