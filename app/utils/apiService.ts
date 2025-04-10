@@ -189,13 +189,35 @@ export const apiService = {
             url: file.url || file.fileUrl || file.s3Url || ''
           }));
 
-          // Also add s3Files format for compatibility
-          payload.s3Files = files.map(file => ({
-            name: file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_'),
-            fileName: file.name,
-            s3Url: file.url || file.fileUrl || file.s3Url || '',
-            mimeType: file.type || 'application/octet-stream'
-          }));
+          // Create s3Files with specific naming for vendor bid analysis
+          payload.s3Files = files.map((file, index) => {
+            // Determine name based on file type and index
+            let name;
+            const lowerFileName = file.name.toLowerCase();
+
+            if (lowerFileName.includes('sow')) {
+              name = 'SOW';
+            } else if (lowerFileName.includes('lsk') || lowerFileName.includes('sin v2')) {
+              name = 'LSK_Bid';
+            } else if (lowerFileName.includes('acme') || lowerFileName.includes('associates')) {
+              name = 'Acme_Bid';
+            } else if (index === 0) {
+              name = 'LSK_Bid';
+            } else if (index === 1) {
+              name = 'Acme_Bid';
+            } else if (index === 2) {
+              name = 'SOW';
+            } else {
+              name = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+            }
+
+            return {
+              name: name,
+              fileName: file.name,
+              s3Url: file.url || file.fileUrl || file.s3Url || '',
+              mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            };
+          });
         }
 
         // Check if we have s3Files directly stored in localStorage
