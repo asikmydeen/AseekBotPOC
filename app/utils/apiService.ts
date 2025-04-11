@@ -319,7 +319,9 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileKey, userId: getCurrentUserId() })
+        body: JSON.stringify({ fileKey, userId: getCurrentUserId() }),
+        mode: 'cors',
+        credentials: 'include',
       });
 
       if (!response.ok) {
