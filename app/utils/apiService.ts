@@ -71,6 +71,8 @@ export async function makeRequest<T = any>(
     const requestOptions: RequestInit = {
       method,
       headers,
+      mode: 'cors', // Add CORS mode explicitly
+      credentials: 'include', // Include credentials like cookies
       ...options,
     };
 
