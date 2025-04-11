@@ -1,8 +1,5 @@
 'use client';
 
-import { CSSProperties } from 'react';
-import { SenderType } from '../constants';
-
 // Animation interfaces
 export interface PulseAnimation {
   scale: number;
@@ -133,6 +130,79 @@ export interface EnhancedTypingIndicatorStyles {
 export interface MessageListStyles {
   container: string;
   messageItem: string;
+}
+
+export interface DocumentAnalysisPromptStyles {
+  container: string;
+  contentWrapper: string;
+  title: string;
+  description: string;
+  buttonsContainer: string;
+  analyzeButton: string;
+  closeButton: string;
+}
+
+export interface FeedbackFormStyles {
+  container: string;
+  header: string;
+  title: string;
+  closeButton: string;
+  ratingContainer: string;
+  ratingLabel: string;
+  starsContainer: string;
+  starButton: string;
+  starActive: string;
+  starInactive: string;
+  commentContainer: string;
+  commentLabel: string;
+  commentTextarea: string;
+  buttonsContainer: string;
+  cancelButton: string;
+  submitButton: string;
+  submitButtonDisabled: string;
+}
+
+export interface FileActionPromptStyles {
+  container: string;
+  actionButton: (type: 'preview' | 'analyze' | 'bid' | 'send' | 'cancel', isDarkMode: boolean) => string;
+}
+
+export interface FileUploadSectionStyles {
+  container: string;
+  dropzoneContainer: (isDragActive: boolean) => string;
+  dropzoneActive: string;
+  uploadIcon: string;
+  dropzoneText: string;
+  dropzoneSubtext: string;
+  fileListContainer: string;
+  fileListHeader: string;
+  fileListTitle: string;
+  progressBar: string;
+  progressBarFill: string;
+  fileList: string;
+  fileItem: string;
+  fileIconContainer: string;
+  fileIcon: (fileType: string) => string;
+  fileDetails: string;
+  fileName: string;
+  fileSize: string;
+  removeButton: string;
+  actionsContainer: string;
+  actionButton: (type: 'analyze' | 'send' | 'cancel', isDarkMode: boolean) => string;
+}
+
+export interface ChatInterfaceStyles {
+  container: string;
+  errorDialog: {
+    overlay: string;
+    container: string;
+    title: string;
+    message: string;
+    buttonContainer: string;
+    button: string;
+  };
+  mainContent: string;
+  messageContainer: string;
 }
 
 export interface TicketFormStyles {
@@ -466,11 +536,294 @@ export const getEnhancedTypingIndicatorDotClass = (isDarkMode: boolean): string 
 
 // Utility functions for MessageList
 export const getMessageListContainerClass = (): string => {
-  return 'flex-1 overflow-y-auto p-4 space-y-4';
+  return 'flex flex-col space-y-4 sm:space-y-6 px-1 sm:px-2 w-full';
 };
 
 export const getMessageListItemClass = (): string => {
-  return 'animate-fadeIn';
+  return 'message-container w-full max-w-full';
+};
+
+// Utility functions for DocumentAnalysisPrompt
+export const getDocumentAnalysisPromptContainerClass = (isDarkMode: boolean): string => {
+  return `mb-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} shadow-md`;
+};
+
+export const getDocumentAnalysisPromptContentWrapperClass = (): string => {
+  return 'flex justify-between items-start';
+};
+
+export const getDocumentAnalysisPromptTitleClass = (isDarkMode: boolean): string => {
+  return `font-medium ${isDarkMode ? 'text-white' : 'text-blue-800'}`;
+};
+
+export const getDocumentAnalysisPromptDescriptionClass = (isDarkMode: boolean): string => {
+  return `text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`;
+};
+
+export const getDocumentAnalysisPromptButtonsContainerClass = (): string => {
+  return 'flex flex-wrap gap-2 mt-3';
+};
+
+export const getDocumentAnalysisPromptAnalyzeButtonClass = (isDarkMode: boolean): string => {
+  return `px-3 py-1.5 rounded-md text-sm font-medium ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`;
+};
+
+export const getDocumentAnalysisPromptCloseButtonClass = (isDarkMode: boolean): string => {
+  return `p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} transition-colors duration-200`;
+};
+
+// Utility functions for FeedbackForm
+export const getFeedbackFormContainerClass = (isDarkMode: boolean): string => {
+  return `mb-6 p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`;
+};
+
+export const getFeedbackFormHeaderClass = (): string => {
+  return 'flex justify-between items-center mb-4';
+};
+
+export const getFeedbackFormTitleClass = (): string => {
+  return 'text-xl font-semibold';
+};
+
+export const getFeedbackFormCloseButtonClass = (isDarkMode: boolean): string => {
+  return `p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`;
+};
+
+export const getFeedbackFormRatingContainerClass = (): string => {
+  return 'mb-4';
+};
+
+export const getFeedbackFormRatingLabelClass = (): string => {
+  return 'block mb-2 text-sm font-medium';
+};
+
+export const getFeedbackFormStarsContainerClass = (): string => {
+  return 'flex space-x-2';
+};
+
+export const getFeedbackFormStarButtonClass = (): string => {
+  return 'p-1 focus:outline-none transition-colors';
+};
+
+export const getFeedbackFormStarActiveClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'text-yellow-400' : 'text-yellow-500';
+};
+
+export const getFeedbackFormStarInactiveClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'text-gray-600' : 'text-gray-300';
+};
+
+export const getFeedbackFormCommentContainerClass = (): string => {
+  return 'mb-6';
+};
+
+export const getFeedbackFormCommentLabelClass = (): string => {
+  return 'block mb-2 text-sm font-medium';
+};
+
+export const getFeedbackFormCommentTextareaClass = (isDarkMode: boolean): string => {
+  return `w-full p-3 rounded-md ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} border focus:ring-blue-500 focus:border-blue-500 min-h-[100px]`;
+};
+
+export const getFeedbackFormButtonsContainerClass = (): string => {
+  return 'flex justify-end space-x-3';
+};
+
+export const getFeedbackFormCancelButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`;
+};
+
+export const getFeedbackFormSubmitButtonClass = (_isDarkMode: boolean, isDisabled: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`;
+};
+
+// Utility functions for FileActionPrompt
+export const getFileActionPromptContainerClass = (): string => {
+  return 'flex flex-wrap gap-3 mb-4';
+};
+
+export const getFileActionPromptButtonClass = (type: 'preview' | 'analyze' | 'bid' | 'send' | 'cancel', isDarkMode: boolean): string => {
+  let colorClasses = '';
+
+  switch (type) {
+    case 'preview':
+      colorClasses = isDarkMode
+        ? 'bg-amber-900 hover:bg-amber-800 text-amber-100 dark:border-amber-700'
+        : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-transparent';
+      break;
+    case 'analyze':
+      colorClasses = isDarkMode
+        ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 dark:border-blue-700'
+        : 'bg-blue-100 hover:bg-blue-200 text-blue-800 border-transparent';
+      break;
+    case 'bid':
+      colorClasses = isDarkMode
+        ? 'bg-purple-900 hover:bg-purple-800 text-purple-100 dark:border-purple-700'
+        : 'bg-purple-100 hover:bg-purple-200 text-purple-800 border-transparent';
+      break;
+    case 'send':
+      colorClasses = isDarkMode
+        ? 'bg-green-900 hover:bg-green-800 text-green-100 dark:border-green-700'
+        : 'bg-green-100 hover:bg-green-200 text-green-800 border-transparent';
+      break;
+    case 'cancel':
+      colorClasses = isDarkMode
+        ? 'bg-red-900 hover:bg-red-800 text-red-100 dark:border-red-700'
+        : 'bg-red-100 hover:bg-red-200 text-red-800 border-transparent';
+      break;
+  }
+
+  return `px-5 py-2.5 ${colorClasses} rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md border-2`;
+};
+
+// Utility functions for FileUploadSection
+export const getFileUploadSectionContainerClass = (): string => {
+  return 'w-full';
+};
+
+export const getFileUploadSectionDropzoneContainerClass = (isDarkMode: boolean, isDragActive: boolean): string => {
+  return `border-2 border-dashed rounded-lg p-6 mb-4 text-center cursor-pointer transition-colors ${isDarkMode
+    ? isDragActive
+      ? 'border-blue-400 bg-blue-900/20'
+      : 'border-gray-600 hover:border-gray-500'
+    : isDragActive
+      ? 'border-blue-400 bg-blue-50'
+      : 'border-gray-300 hover:border-gray-400'
+    }`;
+};
+
+export const getFileUploadSectionUploadIconClass = (): string => {
+  return 'mx-auto h-12 w-12 mb-2';
+};
+
+export const getFileUploadSectionDropzoneTextClass = (isDarkMode: boolean): string => {
+  return `text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`;
+};
+
+export const getFileUploadSectionDropzoneSubtextClass = (isDarkMode: boolean): string => {
+  return `text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getFileUploadSectionFileListContainerClass = (isDarkMode: boolean): string => {
+  return `rounded-lg p-4 mb-4 ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'}`;
+};
+
+export const getFileUploadSectionFileListHeaderClass = (): string => {
+  return 'mb-3';
+};
+
+export const getFileUploadSectionFileListTitleClass = (isDarkMode: boolean): string => {
+  return `text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`;
+};
+
+export const getFileUploadSectionProgressBarClass = (): string => {
+  return 'w-full h-1 bg-gray-300 rounded-full mt-2';
+};
+
+export const getFileUploadSectionProgressBarFillClass = (): string => {
+  return 'h-1 bg-blue-500 rounded-full';
+};
+
+export const getFileUploadSectionFileListClass = (): string => {
+  return 'space-y-2 mb-3 max-h-40 overflow-y-auto';
+};
+
+export const getFileUploadSectionFileItemClass = (isDarkMode: boolean): string => {
+  return `flex items-center justify-between p-2 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`;
+};
+
+export const getFileUploadSectionFileIconContainerClass = (): string => {
+  return 'flex items-center';
+};
+
+export const getFileUploadSectionFileIconClass = (fileType: string): string => {
+  if (!fileType) return 'text-gray-500';
+  if (fileType.includes('pdf')) return 'text-red-500';
+  if (fileType.includes('doc')) return 'text-blue-500';
+  if (fileType.includes('xlsx') || fileType.includes('csv')) return 'text-green-500';
+  if (fileType.includes('image') || fileType.includes('jpg') || fileType.includes('png')) return 'text-purple-500';
+  return 'text-gray-500';
+};
+
+export const getFileUploadSectionFileDetailsClass = (): string => {
+  return 'flex flex-col';
+};
+
+export const getFileUploadSectionFileNameClass = (isDarkMode: boolean): string => {
+  return `text-sm font-medium truncate max-w-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`;
+};
+
+export const getFileUploadSectionFileSizeClass = (isDarkMode: boolean): string => {
+  return `text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getFileUploadSectionRemoveButtonClass = (isDarkMode: boolean): string => {
+  return `p-1 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`;
+};
+
+export const getFileUploadSectionActionsContainerClass = (): string => {
+  return 'flex space-x-2';
+};
+
+export const getFileUploadSectionActionButtonClass = (type: 'analyze' | 'send' | 'cancel', isDarkMode: boolean): string => {
+  let colorClasses = '';
+
+  switch (type) {
+    case 'analyze':
+      colorClasses = isDarkMode
+        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+        : 'bg-blue-500 hover:bg-blue-600 text-white';
+      break;
+    case 'send':
+      colorClasses = isDarkMode
+        ? 'bg-green-600 hover:bg-green-700 text-white'
+        : 'bg-green-500 hover:bg-green-600 text-white';
+      break;
+    case 'cancel':
+      colorClasses = isDarkMode
+        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+        : 'bg-gray-200 hover:bg-gray-300 text-gray-700';
+      break;
+  }
+
+  return `flex-1 py-2 px-4 rounded-md text-sm font-medium ${colorClasses}`;
+};
+
+// Utility functions for ChatInterface
+export const getChatInterfaceContainerClass = (isDarkMode: boolean): string => {
+  return `flex-1 flex h-full ${isDarkMode ? 'dark-bg dark-text' : 'bg-gray-50 text-gray-900'} font-sans shadow-lg`;
+};
+
+export const getChatInterfaceErrorDialogOverlayClass = (): string => {
+  return 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+};
+
+export const getChatInterfaceErrorDialogContainerClass = (isDarkMode: boolean): string => {
+  return `p-6 rounded-lg shadow-xl max-w-md ${isDarkMode ? 'dark-card-bg dark-text' : 'bg-white text-gray-900'}`;
+};
+
+export const getChatInterfaceErrorDialogTitleClass = (): string => {
+  return 'text-xl font-bold mb-4';
+};
+
+export const getChatInterfaceErrorDialogMessageClass = (): string => {
+  return 'mb-6';
+};
+
+export const getChatInterfaceErrorDialogButtonContainerClass = (): string => {
+  return 'flex justify-end';
+};
+
+export const getChatInterfaceErrorDialogButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDarkMode ? 'dark-primary-bg hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`;
+};
+
+export const getChatInterfaceMainContentClass = (isArtifactPanelOpen: boolean): string => {
+  return `flex-1 flex flex-col w-full transition-all duration-300 ${isArtifactPanelOpen ? 'mr-[40%]' : 'mr-0'}`;
+};
+
+export const getChatInterfaceMessageContainerClass = (isDarkMode: boolean): string => {
+  return `flex-1 overflow-y-auto overscroll-contain p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-50'} rounded-lg shadow-inner mx-2 my-2`;
 };
 
 // Utility functions for TicketForm
@@ -636,6 +989,89 @@ export const getMessageListStyles = (): MessageListStyles => {
   return {
     container: getMessageListContainerClass(),
     messageItem: getMessageListItemClass(),
+  };
+};
+
+export const getDocumentAnalysisPromptStyles = (isDarkMode: boolean): DocumentAnalysisPromptStyles => {
+  return {
+    container: getDocumentAnalysisPromptContainerClass(isDarkMode),
+    contentWrapper: getDocumentAnalysisPromptContentWrapperClass(),
+    title: getDocumentAnalysisPromptTitleClass(isDarkMode),
+    description: getDocumentAnalysisPromptDescriptionClass(isDarkMode),
+    buttonsContainer: getDocumentAnalysisPromptButtonsContainerClass(),
+    analyzeButton: getDocumentAnalysisPromptAnalyzeButtonClass(isDarkMode),
+    closeButton: getDocumentAnalysisPromptCloseButtonClass(isDarkMode),
+  };
+};
+
+export const getFeedbackFormStyles = (isDarkMode: boolean): FeedbackFormStyles => {
+  return {
+    container: getFeedbackFormContainerClass(isDarkMode),
+    header: getFeedbackFormHeaderClass(),
+    title: getFeedbackFormTitleClass(),
+    closeButton: getFeedbackFormCloseButtonClass(isDarkMode),
+    ratingContainer: getFeedbackFormRatingContainerClass(),
+    ratingLabel: getFeedbackFormRatingLabelClass(),
+    starsContainer: getFeedbackFormStarsContainerClass(),
+    starButton: getFeedbackFormStarButtonClass(),
+    starActive: getFeedbackFormStarActiveClass(isDarkMode),
+    starInactive: getFeedbackFormStarInactiveClass(isDarkMode),
+    commentContainer: getFeedbackFormCommentContainerClass(),
+    commentLabel: getFeedbackFormCommentLabelClass(),
+    commentTextarea: getFeedbackFormCommentTextareaClass(isDarkMode),
+    buttonsContainer: getFeedbackFormButtonsContainerClass(),
+    cancelButton: getFeedbackFormCancelButtonClass(isDarkMode),
+    submitButton: getFeedbackFormSubmitButtonClass(isDarkMode, false),
+    submitButtonDisabled: getFeedbackFormSubmitButtonClass(isDarkMode, true),
+  };
+};
+
+export const getFileActionPromptStyles = (): FileActionPromptStyles => {
+  return {
+    container: getFileActionPromptContainerClass(),
+    actionButton: getFileActionPromptButtonClass,
+  };
+};
+
+export const getFileUploadSectionStyles = (isDarkMode: boolean): FileUploadSectionStyles => {
+  return {
+    container: getFileUploadSectionContainerClass(),
+    dropzoneContainer: (isDragActive: boolean) => getFileUploadSectionDropzoneContainerClass(isDarkMode, isDragActive),
+    dropzoneActive: getFileUploadSectionDropzoneContainerClass(isDarkMode, true),
+    uploadIcon: getFileUploadSectionUploadIconClass(),
+    dropzoneText: getFileUploadSectionDropzoneTextClass(isDarkMode),
+    dropzoneSubtext: getFileUploadSectionDropzoneSubtextClass(isDarkMode),
+    fileListContainer: getFileUploadSectionFileListContainerClass(isDarkMode),
+    fileListHeader: getFileUploadSectionFileListHeaderClass(),
+    fileListTitle: getFileUploadSectionFileListTitleClass(isDarkMode),
+    progressBar: getFileUploadSectionProgressBarClass(),
+    progressBarFill: getFileUploadSectionProgressBarFillClass(),
+    fileList: getFileUploadSectionFileListClass(),
+    fileItem: getFileUploadSectionFileItemClass(isDarkMode),
+    fileIconContainer: getFileUploadSectionFileIconContainerClass(),
+    fileIcon: getFileUploadSectionFileIconClass,
+    fileDetails: getFileUploadSectionFileDetailsClass(),
+    fileName: getFileUploadSectionFileNameClass(isDarkMode),
+    fileSize: getFileUploadSectionFileSizeClass(isDarkMode),
+    removeButton: getFileUploadSectionRemoveButtonClass(isDarkMode),
+    actionsContainer: getFileUploadSectionActionsContainerClass(),
+    actionButton: getFileUploadSectionActionButtonClass,
+  };
+};
+
+export const getChatInterfaceStyles = (isDarkMode: boolean, isArtifactPanelOpen: boolean): ChatInterfaceStyles => {
+  return {
+    container: getChatInterfaceContainerClass(isDarkMode),
+    errorDialog: {
+      overlay: getChatInterfaceErrorDialogOverlayClass(),
+      container: getChatInterfaceErrorDialogContainerClass(isDarkMode),
+      title: getChatInterfaceErrorDialogTitleClass(),
+      message: getChatInterfaceErrorDialogMessageClass(),
+      buttonContainer: getChatInterfaceErrorDialogButtonContainerClass(),
+      button: getChatInterfaceErrorDialogButtonClass(isDarkMode),
+    },
+    mainContent: getChatInterfaceMainContentClass(isArtifactPanelOpen),
+    messageContainer: getChatInterfaceMessageContainerClass(isDarkMode),
   };
 };
 
