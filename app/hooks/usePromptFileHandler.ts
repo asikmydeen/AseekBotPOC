@@ -361,6 +361,21 @@ const usePromptFileHandler = ({
           } catch (e) {
             console.error('usePromptFileHandler: Error storing request ID in localStorage:', e);
           }
+
+          // Start polling for status updates immediately
+          console.log('usePromptFileHandler: Starting immediate status check for requestId:', apiResponse.requestId);
+          setTimeout(async () => {
+            try {
+              const statusResponse = await apiService.checkStatus(apiResponse.requestId);
+              console.log('usePromptFileHandler: Initial status check response:', statusResponse);
+
+              if (statusResponse && currentStatusCallback) {
+                currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
+              }
+            } catch (error) {
+              console.error('usePromptFileHandler: Error checking initial status:', error);
+            }
+          }, 1000);
         } else {
           console.error('usePromptFileHandler: API response missing requestId:', apiResponse);
         }
