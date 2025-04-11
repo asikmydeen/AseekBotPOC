@@ -125,7 +125,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 };
 // Enhanced File Dropzone Component
 import { FiUploadCloud, FiX, FiFile } from 'react-icons/fi';
-import { EnhancedFileDropzoneStyles } from '../../styles/chatStyles';
+import { getEnhancedFileDropzoneStyles } from '../../styles/chatStyles';
 
 interface EnhancedFileDropzoneProps {
   getRootProps: any;
