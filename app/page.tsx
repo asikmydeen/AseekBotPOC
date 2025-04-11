@@ -381,9 +381,30 @@ function ChatApp() {
     async function fetchFiles() {
       try {
         const filesResponse = await apiService.getUserFiles();
-        // Check if response has data and no errors
-        if (filesResponse && filesResponse.data && !filesResponse.error) {
-          const filesArray = Array.isArray(filesResponse.data) ? filesResponse.data : [];
+        console.log('Files response:', filesResponse);
+
+        // Handle different response formats
+        let filesArray = [];
+
+        if (Array.isArray(filesResponse)) {
+          // Direct array response
+          filesArray = filesResponse;
+          console.log(`Found ${filesArray.length} files in direct array format`);
+        } else if (filesResponse && filesResponse.data && Array.isArray(filesResponse.data)) {
+          // Response with data property containing array
+          filesArray = filesResponse.data;
+          console.log(`Found ${filesArray.length} files in data.array format`);
+        } else if (filesResponse && filesResponse.files && Array.isArray(filesResponse.files)) {
+          // Response with files property containing array
+          filesArray = filesResponse.files;
+          console.log(`Found ${filesArray.length} files in files.array format`);
+        } else if (filesResponse && !filesResponse.error) {
+          // Single file or unknown format - try to handle it
+          filesArray = [filesResponse];
+          console.log('Converting single file response to array');
+        }
+
+        if (filesArray.length > 0) {
           const mappedFiles = filesArray.map((file: { fileId: any; name: any; fileName: any; fileKey: any; presignedUrl: string; uploadDate: any; size: any; fileSize: any; type: any; fileType: any; url: any; }) => {
             const fileObj = {
               fileId: file.fileId || '',
@@ -407,9 +428,8 @@ function ChatApp() {
           setUploadedFiles(mappedFiles);
           console.log('Initialized sidebar files:', sidebarFilesRef.current);
         } else {
-          // If there's an error or data is undefined, set empty array
-          console.warn('No valid files data received:',
-            filesResponse?.error || 'Data property missing');
+          // If no files found, set empty array
+          console.warn('No files found in response');
           setUploadedFiles([]);
         }
       } catch (error) {

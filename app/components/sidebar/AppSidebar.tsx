@@ -27,13 +27,18 @@ import {
 } from './index';
 
 export interface UploadedFile {
-  fileId: string;
-  fileName: string;
-  fileKey: string;
-  uploadDate: string;
-  fileSize: number;
+  fileId?: string;
+  fileName?: string;
+  fileKey?: string;
+  uploadDate?: string;
+  fileSize?: number;
   fileType?: string;
   presignedUrl?: string;
+  // Alternative property names that might be used
+  name?: string;
+  size?: number;
+  type?: string;
+  url?: string;
 }
 
 export interface AppSidebarProps {
@@ -153,8 +158,12 @@ export default function AppSidebar({
       return;
     }
 
+    // Get file properties using either naming convention
+    const fileName = file.fileName || file.name;
+    const fileSize = file.fileSize !== undefined ? file.fileSize : file.size;
+
     // Validate required properties
-    if (!file.fileName || file.fileSize === undefined) {
+    if (!fileName || fileSize === undefined) {
       console.error('Missing required file properties:', file);
       return;
     }
@@ -164,19 +173,19 @@ export default function AppSidebar({
       // Ensure we're passing a complete file object
       const completeFile = {
         fileId: file.fileId || `file-${Date.now()}`, // Generate a temporary ID if missing
-        fileName: file.fileName,
-        fileKey: file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() || file.fileName : file.fileName),
+        fileName: fileName,
+        fileKey: file.fileKey || (file.presignedUrl ? file.presignedUrl.split('/').pop() || fileName : fileName),
         uploadDate: file.uploadDate || new Date().toISOString(),
-        fileSize: typeof file.fileSize === 'number' ? file.fileSize : 0,
-        fileType: file.fileType || 'application/octet-stream',
-        presignedUrl: file.presignedUrl || ''
+        fileSize: typeof fileSize === 'number' ? fileSize : 0,
+        fileType: file.fileType || file.type || 'application/octet-stream',
+        presignedUrl: file.presignedUrl || file.url || ''
       };
 
       console.log('Adding file to chat:', completeFile);
       onFileAddToChat(completeFile);
-    } else if (file.presignedUrl) {
+    } else if (file.presignedUrl || file.url) {
       // Otherwise, fall back to onFileClick
-      onFileClick(file.presignedUrl);
+      onFileClick(file.presignedUrl || file.url || '');
     }
   };
 
@@ -184,7 +193,9 @@ export default function AppSidebar({
     e.stopPropagation(); // Prevent event bubbling
     try {
       // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      const fileKey = file.fileKey ||
+                     (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '') ||
+                     (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -209,7 +220,9 @@ export default function AppSidebar({
     e.stopPropagation(); // Prevent event bubbling
     try {
       // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      const fileKey = file.fileKey ||
+                     (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '') ||
+                     (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -238,7 +251,9 @@ export default function AppSidebar({
     e.stopPropagation(); // Prevent event bubbling
     try {
       // Extract fileKey from presignedUrl or use fileKey directly
-      const fileKey = file.fileKey || (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '');
+      const fileKey = file.fileKey ||
+                     (file.presignedUrl ? file.presignedUrl.split('.amazonaws.com/')[1] : '') ||
+                     (file.url ? file.url.split('.amazonaws.com/')[1] : '');
 
       if (!fileKey) {
         console.error('File key not found');
@@ -246,7 +261,7 @@ export default function AppSidebar({
       }
 
       // Here you would call your analysis API
-      console.log('Performing analysis on file:', file.fileName);
+      console.log('Performing analysis on file:', file.fileName || file.name);
       // Example: startAsyncDocumentAnalysis(fileKey);
 
       // For now, just add the file to chat as a fallback action

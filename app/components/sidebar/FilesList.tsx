@@ -14,13 +14,18 @@ import {
 } from 'react-icons/fa';
 
 interface UploadedFile {
-  fileId: string;
-  fileName: string;
-  fileKey: string;
-  uploadDate: string;
-  fileSize: number;
+  fileId?: string;
+  fileName?: string;
+  fileKey?: string;
+  uploadDate?: string;
+  fileSize?: number;
   fileType?: string;
   presignedUrl?: string;
+  // Alternative property names that might be used
+  name?: string;
+  size?: number;
+  type?: string;
+  url?: string;
 }
 
 interface FilesListProps {
@@ -40,6 +45,8 @@ const FilesList: React.FC<FilesListProps> = ({
   onAnalyze,
   onDelete
 }) => {
+  // Debug: Log the uploaded files
+  console.log('FilesList received files:', uploadedFiles);
   // Format file size
   const formatFileSize = (bytes: number): string => {
     if (bytes === undefined || bytes === null || bytes <= 0) return '0 Bytes';
@@ -69,7 +76,9 @@ const FilesList: React.FC<FilesListProps> = ({
       </div>
       {uploadedFiles && uploadedFiles.length > 0 ? (
         <div className={styles.files.list}>
-          {uploadedFiles.filter(file => file && file.fileName).map((file, index) => (
+          {uploadedFiles
+            .filter(file => file && (file.fileName || file.name))
+            .map((file, index) => (
             <div
               key={`file-${index}`}
               className={styles.files.item}
@@ -78,11 +87,11 @@ const FilesList: React.FC<FilesListProps> = ({
                 <div className="flex items-center w-full">
                   <span className={styles.files.itemIndex}>{index + 1}.</span>
                   <div className={styles.files.iconContainer}>
-                    {getFileIcon(file.fileType)}
+                    {getFileIcon(file.fileType || file.type)}
                   </div>
                   <div className={styles.files.fileInfo}>
-                    <p className={styles.files.fileName}>{file.fileName}</p>
-                    <p className={styles.files.fileSize}>{formatFileSize(file.fileSize)}</p>
+                    <p className={styles.files.fileName}>{file.fileName || file.name || 'Untitled File'}</p>
+                    <p className={styles.files.fileSize}>{formatFileSize(file.fileSize || file.size || 0)}</p>
                   </div>
                 </div>
                 <div className={styles.files.actionsContainer}>
