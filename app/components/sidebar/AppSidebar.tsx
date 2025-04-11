@@ -361,7 +361,7 @@ export default function AppSidebar({
       <FullScreenPromptModal
         isOpen={isCreateModalOpen}
         onClose={closeAllModals}
-        onSubmit={(data) => handleCreatePrompt(data)}
+        onSubmit={async (data) => await handleCreatePrompt(data as CreatePromptRequest)}
         isDarkMode={isDarkMode}
         isSubmitting={isSubmitting}
         isCreateMode={true}
@@ -371,8 +371,8 @@ export default function AppSidebar({
         isOpen={isEditModalOpen}
         prompt={promptToEditOrDelete}
         onClose={closeAllModals}
-        onSubmit={(data, promptId) => {
-          if (promptId) handleUpdatePrompt(promptId, data);
+        onSubmit={async (data, promptId) => {
+          if (promptId) await handleUpdatePrompt(promptId, data as UpdatePromptRequest);
         }}
         isDarkMode={isDarkMode}
         isSubmitting={isSubmitting}
