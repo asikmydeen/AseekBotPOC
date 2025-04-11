@@ -207,7 +207,10 @@ const usePromptFileHandler = ({
         handleSubmitPrompt(currentPrompt, files, inputVariables);
       }, 0);
     } else {
-      console.error('usePromptFileHandler: No current prompt found!');
+      // If no prompt is found in state, try to get it from the ModalContext
+      console.error('usePromptFileHandler: No current prompt found in state!');
+      console.error('usePromptFileHandler: This is likely because the prompt was not properly set when opening the dialog.');
+      console.error('usePromptFileHandler: Please make sure to call openFileDialog with a valid prompt before submitting files.');
     }
   }, [requiredVariables]);
 
