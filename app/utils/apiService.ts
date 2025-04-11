@@ -175,10 +175,7 @@ export const apiService = {
         if (!payload.userId) {
 <<<<<<< HEAD
           payload.userId = getCurrentUserId();
-=======
-          payload.userId = TEST_USER_ID;
-          console.log('apiService: Setting default userId:', TEST_USER_ID);
-        }
+=======        }
 
         // Log s3Files if present
         if (payload.s3Files) {
