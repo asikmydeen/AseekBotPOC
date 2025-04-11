@@ -150,15 +150,15 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
         onClick={toggleExpanded}
         className={styles.toggleButton}
       >
-        <FaPaperclip size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+        <FaPaperclip size={16} className={styles.iconColor} />
         <span className="flex-1 text-left">
           {uploadedFiles.length > 0
             ? `${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''} attached`
             : 'Attach files'}
         </span>
         {isExpanded
-          ? <FaChevronUp size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
-          : <FaChevronDown size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+          ? <FaChevronUp size={14} className={styles.iconColor} />
+          : <FaChevronDown size={14} className={styles.iconColor} />
         }
       </button>
 

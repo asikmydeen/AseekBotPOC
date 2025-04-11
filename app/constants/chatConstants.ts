@@ -94,6 +94,8 @@ export const CHAT_UI_TEXT = {
   TICKET_FORM_DESCRIPTION_PLACEHOLDER: "Describe your issue in detail",
   TICKET_FORM_SUBMIT_BUTTON: "Create Ticket",
   TICKET_FORM_CANCEL_BUTTON: "Cancel",
+  TICKET_FORM_NEXT_BUTTON: "Next",
+  TICKET_FORM_BACK_BUTTON: "Back",
   TICKET_FORM_SUCCESS: "Ticket created successfully!",
 
   // File handling
@@ -119,7 +121,8 @@ export const CHAT_UI_TEXT = {
   ARIA_PIN_MESSAGE: "Pin message",
   ARIA_UNPIN_MESSAGE: "Unpin message",
   ARIA_SHOW_CITATIONS: "Show citations",
-  ARIA_HIDE_CITATIONS: "Hide citations"
+  ARIA_HIDE_CITATIONS: "Hide citations",
+  ARIA_GO_TO_PROFILE: "Go to profile"
 };
 
 /**

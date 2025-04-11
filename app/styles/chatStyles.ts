@@ -29,7 +29,14 @@ export interface ChatHeaderStyles {
   };
   actionsContainer: string;
   actionButton: string;
+  actionButtonActive: string;
+  actionButtonWithText: string;
+  actionButtonText: string;
+  actionButtonIcon: string;
+  notificationBadge: string;
+  mobileSearchButton: string;
   userSection: string;
+  userThumbnail: string;
 }
 
 export interface ChatInputStyles {
@@ -74,6 +81,7 @@ export interface FileDropzoneStyles {
   progressContainer: string;
   progressBar: string;
   progressText: string;
+  iconColor: string;
 }
 
 export interface SuggestionChipStyles {
@@ -310,7 +318,7 @@ export const getChatHeaderSearchBarInputClass = (isDarkMode: boolean): string =>
 };
 
 export const getChatHeaderActionsContainerClass = (): string => {
-  return 'flex items-center space-x-1 sm:space-x-2';
+  return 'flex items-center space-x-1 sm:space-x-2 md:space-x-3';
 };
 
 export const getChatHeaderActionButtonClass = (isDarkMode: boolean): string => {
@@ -323,6 +331,34 @@ export const getChatHeaderActionButtonClass = (isDarkMode: boolean): string => {
 
 export const getChatHeaderUserSectionClass = (): string => {
   return 'ml-2 sm:ml-4';
+};
+
+export const getChatHeaderActionButtonActiveClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
+};
+
+export const getChatHeaderActionButtonWithTextClass = (isDarkMode: boolean): string => {
+  return `${getChatHeaderActionButtonClass(isDarkMode)} flex items-center`;
+};
+
+export const getChatHeaderActionButtonTextClass = (): string => {
+  return 'hidden sm:inline';
+};
+
+export const getChatHeaderActionButtonIconClass = (): string => {
+  return 'h-4 w-4 sm:h-5 sm:w-5';
+};
+
+export const getChatHeaderNotificationBadgeClass = (isDarkMode: boolean): string => {
+  return `absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs rounded-full ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white'}`;
+};
+
+export const getChatHeaderMobileSearchButtonClass = (isDarkMode: boolean): string => {
+  return `${getChatHeaderActionButtonClass(isDarkMode)} sm:hidden`;
+};
+
+export const getChatHeaderUserThumbnailClass = (): string => {
+  return 'sm:w-5 sm:h-5';
 };
 
 // Utility functions for ChatInput
@@ -392,6 +428,10 @@ export const getFileDropzoneToggleButtonClass = (isDarkMode: boolean, isExpanded
         ? 'bg-gray-200 text-gray-800'
         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
   } transition-colors`;
+};
+
+export const getFileDropzoneIconColorClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'text-gray-400' : 'text-gray-500';
 };
 
 export const getFileDropzoneDropAreaClass = (isDarkMode: boolean, isDragActive: boolean): string => {
@@ -1245,7 +1285,14 @@ export const getChatHeaderStyles = (isDarkMode: boolean): ChatHeaderStyles => {
     },
     actionsContainer: getChatHeaderActionsContainerClass(),
     actionButton: getChatHeaderActionButtonClass(isDarkMode),
+    actionButtonActive: getChatHeaderActionButtonActiveClass(isDarkMode),
+    actionButtonWithText: getChatHeaderActionButtonWithTextClass(isDarkMode),
+    actionButtonText: getChatHeaderActionButtonTextClass(),
+    actionButtonIcon: getChatHeaderActionButtonIconClass(),
+    notificationBadge: getChatHeaderNotificationBadgeClass(isDarkMode),
+    mobileSearchButton: getChatHeaderMobileSearchButtonClass(isDarkMode),
     userSection: getChatHeaderUserSectionClass(),
+    userThumbnail: getChatHeaderUserThumbnailClass(),
   };
 };
 
@@ -1296,6 +1343,7 @@ export const getFileDropzoneStyles = (isDarkMode: boolean): FileDropzoneStyles =
     progressContainer: getFileDropzoneProgressContainerClass(),
     progressBar: getFileDropzoneProgressBarClass(),
     progressText: getFileDropzoneProgressTextClass(isDarkMode),
+    iconColor: getFileDropzoneIconColorClass(isDarkMode),
   };
 };
 

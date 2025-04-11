@@ -75,8 +75,8 @@ const EnhancedSuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, 
           whileHover={{
             scale: 1.05,
             boxShadow: darkMode
-              ? '0 10px 15px -3px rgba(30, 64, 175, 0.3), 0 4px 6px -4px rgba(30, 64, 175, 0.3)'
-              : '0 10px 15px -3px rgba(59, 130, 246, 0.2), 0 4px 6px -4px rgba(59, 130, 246, 0.2)'
+              ? 'var(--shadow-dark-hover)'
+              : 'var(--shadow-light-hover)'
           }}
           whileTap={{ scale: 0.95 }}
         >

@@ -82,23 +82,17 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className={styles.actionsContainer + " space-x-1 sm:space-x-2 md:space-x-3"}>
+      <div className={styles.actionsContainer}>
         {/* Artifacts Button - New */}
         {artifactsCount > 0 && (
           <button
             onClick={onToggleArtifacts}
-            className={`${styles.actionButton} flex items-center ${isArtifactPanelOpen
-                ? isDarkMode
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-500 text-white'
-                : ''
-              } relative`}
+            className={`${styles.actionButton} ${isArtifactPanelOpen ? styles.actionButtonActive : ''} relative`}
             aria-label={CHAT_UI_TEXT.ARIA_TOGGLE_ARTIFACTS}
           >
-            <FiCode className="h-4 w-4 sm:h-5 sm:w-5" />
+            <FiCode className={styles.actionButtonIcon} />
             {/* Notification badge */}
-            <span className={`absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs rounded-full ${isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white'
-              }`}>
+            <span className={styles.notificationBadge}>
               {artifactsCount}
             </span>
           </button>
@@ -107,11 +101,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* New Chat Button */}
         <button
           onClick={createChat}
-          className={`${styles.actionButton} flex items-center`}
+          className={styles.actionButtonWithText}
           aria-label={CHAT_UI_TEXT.ARIA_START_NEW_CHAT}
         >
-          <MdAdd className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-          <span className="hidden sm:inline">{CHAT_UI_TEXT.CHAT_HEADER_NEW_CHAT}</span>
+          <MdAdd className={styles.actionButtonIcon} />
+          <span className={styles.actionButtonText}>{CHAT_UI_TEXT.CHAT_HEADER_NEW_CHAT}</span>
         </button>
 
         {/* Theme Toggle */}
@@ -120,7 +114,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           className={styles.actionButton}
           aria-label={isDarkMode ? CHAT_UI_TEXT.ARIA_TOGGLE_THEME.replace('{0}', 'light') : CHAT_UI_TEXT.ARIA_TOGGLE_THEME.replace('{0}', 'dark')}
         >
-          {isDarkMode ? <MdLightMode className="h-4 w-4 sm:h-5 sm:w-5" /> : <MdDarkMode className="h-4 w-4 sm:h-5 sm:w-5" />}
+          {isDarkMode ? <MdLightMode className={styles.actionButtonIcon} /> : <MdDarkMode className={styles.actionButtonIcon} />}
         </button>
 
         {/* Help Button */}
@@ -129,7 +123,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           className={styles.actionButton}
           aria-label={CHAT_UI_TEXT.ARIA_USER_GUIDE}
         >
-          <FiHelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+          <FiHelpCircle className={styles.actionButtonIcon} />
         </Link>
 
         {/* Export Chat */}
@@ -139,7 +133,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             className={styles.actionButton}
             aria-label={CHAT_UI_TEXT.ARIA_EXPORT_CONVERSATION}
           >
-            <MdDownload className="h-4 w-4 sm:h-5 sm:w-5" />
+            <MdDownload className={styles.actionButtonIcon} />
           </button>
         )}
 
@@ -150,7 +144,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             className={styles.actionButton}
             aria-label={CHAT_UI_TEXT.ARIA_PROVIDE_FEEDBACK}
           >
-            <MdFeedback className="h-4 w-4 sm:h-5 sm:w-5" />
+            <MdFeedback className={styles.actionButtonIcon} />
           </button>
         )}
 
@@ -161,21 +155,21 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             className={styles.actionButton}
             aria-label={CHAT_UI_TEXT.ARIA_CREATE_TICKET}
           >
-            <TicketIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <TicketIcon className={styles.actionButtonIcon} />
           </button>
         )}
 
         {/* Mobile Search Button */}
         <button
-          className={`${styles.actionButton} sm:hidden`}
+          className={styles.mobileSearchButton}
           aria-label={CHAT_UI_TEXT.ARIA_SEARCH}
         >
-          <MdSearch className="h-4 w-4 sm:h-5 sm:w-5" />
+          <MdSearch className={styles.actionButtonIcon} />
         </button>
 
         {/* User Profile */}
-        <Link href="/profile" aria-label="Go to profile" className={styles.userSection}>
-          <UserThumbnail userId={getCurrentUserId()} size={16} className="sm:w-5 sm:h-5" />
+        <Link href="/profile" aria-label={CHAT_UI_TEXT.ARIA_GO_TO_PROFILE || "Go to profile"} className={styles.userSection}>
+          <UserThumbnail userId={getCurrentUserId()} size={16} className={styles.userThumbnail} />
         </Link>
       </div>
     </header>

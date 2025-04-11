@@ -2,6 +2,7 @@
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TicketDetails, TicketStep } from '../../types/shared';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 import { getTicketFormStyles } from '../../styles/chatStyles';
 
 interface TicketFormProps {
@@ -61,7 +62,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
       exit={{ opacity: 0, y: 20 }}
       className={styles.container}
     >
-      <h3 className={styles.title}>Create A Ticket</h3>
+      <h3 className={styles.title}>{CHAT_UI_TEXT.TICKET_FORM_TITLE}</h3>
       <form onSubmit={handleSubmit}>
         <AnimatePresence mode="wait">
           {ticketStep === 0 ? (
@@ -74,7 +75,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
             >
               <div className={styles.formGroup}>
                 <label htmlFor="ticketTitle" className={styles.label}>
-                  Ticket Title
+                  {CHAT_UI_TEXT.TICKET_FORM_TITLE_LABEL}
                 </label>
                 <input
                   type="text"
@@ -82,7 +83,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   value={String(ticketDetails.title || '')}
                   onChange={handleTitleChange}
                   className={styles.input}
-                  placeholder="Enter a title for your ticket"
+                  placeholder={CHAT_UI_TEXT.TICKET_FORM_TITLE_PLACEHOLDER}
                   required
                 />
               </div>
@@ -97,7 +98,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
             >
               <div className={styles.formGroup}>
                 <label htmlFor="ticketDescription" className={styles.label}>
-                  Ticket Description
+                  {CHAT_UI_TEXT.TICKET_FORM_DESCRIPTION_LABEL}
                 </label>
                 <textarea
                   id="ticketDescription"
@@ -105,7 +106,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   onChange={handleDescriptionChange}
                   rows={4}
                   className={styles.textarea}
-                  placeholder="Describe your request in detail"
+                  placeholder={CHAT_UI_TEXT.TICKET_FORM_DESCRIPTION_PLACEHOLDER}
                   required
                 />
               </div>
@@ -120,7 +121,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
               onClick={closeTicketForm}
               className={`${styles.buttonSecondary} mr-2`}
             >
-              Cancel
+              {CHAT_UI_TEXT.TICKET_FORM_CANCEL_BUTTON}
             </button>
             {ticketStep > 0 && (
               <button
@@ -128,7 +129,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 onClick={handlePreviousStep}
                 className={styles.buttonSecondary}
               >
-                Back
+                {CHAT_UI_TEXT.TICKET_FORM_BACK_BUTTON}
               </button>
             )}
           </div>
@@ -143,7 +144,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                     : styles.button
                 }
               >
-                Next
+                {CHAT_UI_TEXT.TICKET_FORM_NEXT_BUTTON || 'Next'}
               </button>
             ) : (
               <button
@@ -154,7 +155,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                     : styles.button
                 }
               >
-                Submit Ticket
+                {CHAT_UI_TEXT.TICKET_FORM_SUBMIT_BUTTON}
               </button>
             )}
           </div>
