@@ -585,9 +585,11 @@ const usePromptFileHandler = ({
 
                 // Pass the entire status response as a JSON string
                 // This will allow the page component to extract the completion data
+                console.log('Passing completed status response to callback with completion data');
                 currentStatusCallback(
                   statusResponse.status,
-                  100
+                  100,
+                  JSON.stringify(statusResponse)
                 );
               } else {
                 // For other statuses, just update the progress
