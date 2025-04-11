@@ -40,7 +40,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [requiredFileCount, setRequiredFileCount] = useState(0);
   const [requiredVariables, setRequiredVariables] = useState<string[]>([]);
   const [variableTypes, setVariableTypes] = useState<Record<string, VariableType>>({});
-  const [onFileSubmit, setOnFileSubmit] = useState<((files: UploadedFile[], variables: Record<string, string>) => void) | null>(null);
+  const [onFileSubmit, setOnFileSubmit] = useState<((files: UploadedFile[], variables: Record<string, string>, prompt: Prompt) => void) | null>(null);
 
   const openFileSelectionDialog = (
     prompt: Prompt,
