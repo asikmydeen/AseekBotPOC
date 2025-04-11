@@ -173,9 +173,7 @@ export const apiService = {
 
         // Ensure userId is set
         if (!payload.userId) {
-
-          payload.userId = getCurrentUserId();
-=======        }
+        }
 
         // Log s3Files if present
         if (payload.s3Files) {
@@ -185,7 +183,6 @@ export const apiService = {
           });
         } else {
           console.log('apiService: No s3Files in payload');
->>>>>>> my-67-changes
         }
       }
       // Handle the case where messageOrOptions is a string (old format)
