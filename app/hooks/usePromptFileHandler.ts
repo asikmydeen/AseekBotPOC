@@ -198,31 +198,24 @@ const usePromptFileHandler = ({
     // Update our local state for future reference
     setSelectedPrompt(promptToUse);
 
-    if (promptToUse) {
-      console.log('usePromptFileHandler: Using prompt:', promptToUse.title);
-      // Use setTimeout to break the potential render cycle
-      console.log('usePromptFileHandler: Setting timeout to call handleSubmitPrompt');
-      setTimeout(() => {
-        console.log('usePromptFileHandler: Timeout fired, calling handleSubmitPrompt');
-        // Ensure all files have the required properties before submitting
-        files.forEach(file => {
-          if (!file.name) file.name = file.fileName || 'Unnamed file';
-          if (!file.fileName) file.fileName = file.name;
-          if (!file.s3Url) file.s3Url = file.url || '';
-          if (!file.type) file.type = 'application/octet-stream';
-        });
+    console.log('usePromptFileHandler: Using prompt:', promptToUse.title);
+    // Use setTimeout to break the potential render cycle
+    console.log('usePromptFileHandler: Setting timeout to call handleSubmitPrompt');
+    setTimeout(() => {
+      console.log('usePromptFileHandler: Timeout fired, calling handleSubmitPrompt');
+      // Ensure all files have the required properties before submitting
+      files.forEach(file => {
+        if (!file.name) file.name = file.fileName || 'Unnamed file';
+        if (!file.fileName) file.fileName = file.name;
+        if (!file.s3Url) file.s3Url = file.url || '';
+        if (!file.type) file.type = 'application/octet-stream';
+      });
 
-        console.log('usePromptFileHandler: Validated files before submitting:',
-          files.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
+      console.log('usePromptFileHandler: Validated files before submitting:',
+        files.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
 
-        handleSubmitPrompt(promptToUse, files, inputVariables);
-      }, 0);
-    } else {
-      // If no prompt is found in state or ModalContext, show an error
-      console.error('usePromptFileHandler: No prompt found in state or ModalContext!');
-      console.error('usePromptFileHandler: This is likely because the prompt was not properly set when opening the dialog.');
-      console.error('usePromptFileHandler: Please make sure to call openFileDialog with a valid prompt before submitting files.');
-    }
+      handleSubmitPrompt(promptToUse, files, inputVariables);
+    }, 0);
   }, [requiredVariables, selectedPrompt, modalPrompt]);
 
   // Submit prompt with files and variables
