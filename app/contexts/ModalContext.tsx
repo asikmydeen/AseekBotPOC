@@ -99,7 +99,8 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     <ModalContext.Provider
       value={{
         openFileSelectionDialog,
-        closeFileSelectionDialog
+        closeFileSelectionDialog,
+        currentPrompt
       }}
     >
       {children}
