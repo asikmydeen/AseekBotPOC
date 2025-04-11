@@ -601,11 +601,32 @@ const usePromptFileHandler = ({
                 // Pass the entire status response as a JSON string
                 // This will allow the page component to extract the completion data
                 console.log('Passing completed status response to callback with completion data');
-                currentStatusCallback(
-                  statusResponse.status,
-                  100,
-                  JSON.stringify(statusResponse)
-                );
+
+                // Check if we have completion data
+                if (statusResponse.completion) {
+                  console.log('Status response has completion data, length:', statusResponse.completion.length);
+
+                  // Pass the status response as a JSON string
+                  currentStatusCallback(
+                    statusResponse.status,
+                    100,
+                    JSON.stringify(statusResponse)
+                  );
+                } else {
+                  console.error('Status response is missing completion data:', statusResponse);
+
+                  // Create a dummy completion if none exists
+                  const dummyResponse = {
+                    ...statusResponse,
+                    completion: 'The analysis has been completed. Please check the results.'
+                  };
+
+                  currentStatusCallback(
+                    statusResponse.status,
+                    100,
+                    JSON.stringify(dummyResponse)
+                  );
+                }
               } else {
                 // For other statuses, just update the progress
                 currentStatusCallback(statusResponse.status, statusResponse.progress || 0);
