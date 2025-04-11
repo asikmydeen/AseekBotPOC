@@ -728,7 +728,7 @@ export const messageAnimations = {
       height: 0,
       opacity: 0,
       transition: {
-        height: { duration: 0.3, ease: "easeInOut" },
+        height: { duration: 0.3, ease: "easeInOut" as const },
         opacity: { duration: 0.2 }
       }
     },
@@ -736,7 +736,7 @@ export const messageAnimations = {
       height: "auto",
       opacity: 1,
       transition: {
-        height: { duration: 0.3, ease: "easeInOut" },
+        height: { duration: 0.3, ease: "easeInOut" as const },
         opacity: { duration: 0.2, delay: 0.1 }
       }
     }
