@@ -289,6 +289,9 @@ const usePromptFileHandler = ({
         message: userMessage
       });
 
+      // Variable to store the API response
+      let apiResponse: any = null;
+
       try {
         // Create the payload with all required fields
         const payload = {
@@ -303,16 +306,16 @@ const usePromptFileHandler = ({
         // Log the exact payload being sent to the API
         console.log('usePromptFileHandler: Sending API payload:', JSON.stringify(payload, null, 2));
 
-        const response = await apiService.sendMessage(payload);
+        apiResponse = await apiService.sendMessage(payload);
 
-        console.log('usePromptFileHandler: API response:', response);
+        console.log('usePromptFileHandler: API response:', apiResponse);
 
-        if (response && response.requestId) {
-          console.log('usePromptFileHandler: Prompt API call successful, got requestId:', response.requestId);
-          setRequestId(response.requestId);
+        if (apiResponse && apiResponse.requestId) {
+          console.log('usePromptFileHandler: Prompt API call successful, got requestId:', apiResponse.requestId);
+          setRequestId(apiResponse.requestId);
           setIsPolling(true);
         } else {
-          console.error('usePromptFileHandler: API response missing requestId:', response);
+          console.error('usePromptFileHandler: API response missing requestId:', apiResponse);
         }
       } catch (apiError) {
         console.error('usePromptFileHandler: API call failed:', apiError);
@@ -325,21 +328,19 @@ const usePromptFileHandler = ({
           currentStatusCallback('PROCESSING', 10);
 
           // Store the request ID in localStorage to ensure it's tracked across page refreshes
-          try {
-            // Get the current requestId from state
-            const currentRequestId = response?.requestId;
-            if (currentRequestId) {
+          if (apiResponse && apiResponse.requestId) {
+            try {
               let pending: Record<string, { status: string }> = {};
               const stored = localStorage.getItem('pendingRequests');
               if (stored) {
                 pending = JSON.parse(stored);
               }
-              pending[currentRequestId] = { status: 'PROCESSING' };
+              pending[apiResponse.requestId] = { status: 'PROCESSING' };
               localStorage.setItem('pendingRequests', JSON.stringify(pending));
-              console.log('Stored request ID in localStorage:', currentRequestId);
+              console.log('Stored request ID in localStorage:', apiResponse.requestId);
+            } catch (e) {
+              console.error('Error storing request ID in localStorage:', e);
             }
-          } catch (e) {
-            console.error('Error storing request ID in localStorage:', e);
           }
         }
 
