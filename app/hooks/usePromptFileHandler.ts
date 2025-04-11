@@ -191,24 +191,12 @@ const usePromptFileHandler = ({
       return;
     }
 
-    // First try to use the prompt passed as a parameter
+    // Use the prompt passed as a parameter
     let promptToUse = prompt;
-    console.log('usePromptFileHandler: Prompt parameter:', prompt?.title || 'null');
+    console.log('usePromptFileHandler: Using prompt parameter:', prompt.title);
 
-    // If no prompt parameter, try to get it from our local state
-    if (!promptToUse && selectedPrompt) {
-      promptToUse = selectedPrompt;
-      console.log('usePromptFileHandler: Using prompt from local state:', selectedPrompt.title);
-    }
-
-    // If still not found, try to get it from the ModalContext
-    if (!promptToUse && modalPrompt) {
-      console.log('usePromptFileHandler: Using prompt from ModalContext:', modalPrompt.title);
-      // We need to create a new object to ensure React detects the change
-      promptToUse = { ...modalPrompt };
-      // Update our local state for future reference
-      setSelectedPrompt(promptToUse);
-    }
+    // Update our local state for future reference
+    setSelectedPrompt(promptToUse);
 
     if (promptToUse) {
       console.log('usePromptFileHandler: Using prompt:', promptToUse.title);
