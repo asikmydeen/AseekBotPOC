@@ -173,9 +173,7 @@ export const apiService = {
 
         // Ensure userId is set
         if (!payload.userId) {
-<<<<<<< HEAD
           payload.userId = getCurrentUserId();
-=======
           console.log('apiService: Setting default userId:', TEST_USER_ID);
         }
 
@@ -187,7 +185,6 @@ export const apiService = {
           });
         } else {
           console.log('apiService: No s3Files in payload');
->>>>>>> my-67-changes
         }
       }
       // Handle the case where messageOrOptions is a string (old format)
