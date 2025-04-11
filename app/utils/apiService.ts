@@ -263,6 +263,8 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
         method: 'POST',
         body: formData,
+        mode: 'cors',
+        credentials: 'include',
       });
 
       if (!response.ok) {
