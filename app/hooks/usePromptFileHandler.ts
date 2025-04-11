@@ -4,6 +4,12 @@ import { UploadedFile, Prompt, PromptVariable } from '../types/shared';
 import { useModal } from '../contexts/ModalContext';
 import { getCurrentUserId } from '../store/userStore';
 
+// Import the VariableType interface from ModalContext
+interface VariableType {
+  type: 'text' | 'file' | 'number' | 'date' | 'select';
+  options?: string[];
+}
+
 interface UsePromptFileHandlerProps {
   onStatusUpdate?: (status: string, progress: number, userMessage?: string, isPromptMessage?: boolean) => void;
   sessionId: string;
