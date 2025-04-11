@@ -27,7 +27,7 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  promptId: _promptId, // Not currently used but kept for future use
+  promptId,
   promptTitle,
   requiredFileCount = 0,
   requiredVariables = [],
@@ -152,71 +152,9 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     }
   }, [s3Files, searchTerm]);
 
-  // Detect variable types and auto-map files to variables based on naming patterns
+  // We're disabling auto-mapping to prevent the issue with the same file being filled for multiple fields
   useEffect(() => {
-    if (selectedFiles.length > 0 && requiredVariables.length > 0) {
-      console.log('Attempting to auto-map files to variables:', selectedFiles.length, 'files,', requiredVariables.length, 'variables');
-      const newVariables = { ...variables };
-      let variablesUpdated = false;
-
-      // Identify file-type variables based on naming patterns
-      const fileVariables = requiredVariables.filter(variable =>
-        variable.includes('_doc') ||
-        variable.includes('_file') ||
-        variable.includes('document') ||
-        variable.includes('attachment')
-      );
-
-      if (fileVariables.length > 0) {
-        console.log('Detected file-type variables:', fileVariables);
-
-        // Try to match files to variables based on naming patterns
-        selectedFiles.forEach(file => {
-          const fileName = file.fileName?.toLowerCase() || '';
-          console.log('Checking file for variable mapping:', fileName);
-
-          // Try to find the best matching variable for this file
-          let bestMatch = null;
-          let bestMatchScore = 0;
-
-          fileVariables.forEach(varName => {
-            if (newVariables[varName]) return; // Skip already filled variables
-
-            // Calculate a match score based on variable name and file name
-            let matchScore = 0;
-            const normalizedVarName = varName.replace(/[_-]/g, ' ').toLowerCase();
-            const parts = normalizedVarName.split(' ');
-
-            // Check for keyword matches
-            parts.forEach(part => {
-              if (part.length > 2 && fileName.includes(part)) {
-                matchScore += 10;
-              }
-            });
-
-            // If this is a better match than what we've found so far, update
-            if (matchScore > bestMatchScore) {
-              bestMatch = varName;
-              bestMatchScore = matchScore;
-            }
-          });
-
-          // If we found a good match, assign the file to that variable
-          if (bestMatch && bestMatchScore > 0) {
-            newVariables[bestMatch] = file.name;
-            variablesUpdated = true;
-            console.log(`Mapped file to ${bestMatch} variable with score ${bestMatchScore}:`, file.name);
-          }
-        });
-      }
-
-      if (variablesUpdated) {
-        console.log('Updated variables with mapped files:', newVariables);
-        setVariables(newVariables);
-      }
-    }
-
-    // Validate form whenever files or variables change
+    // Just validate the form whenever files or variables change
     validateForm();
   }, [selectedFiles, requiredVariables, variables]);
 
@@ -416,8 +354,11 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
   };
 
   const handleSubmit = () => {
+    console.log('EnhancedFileDialog: handleSubmit called');
+
     // Validate required files
     if (requiredFileCount > 0 && selectedFiles.length < requiredFileCount) {
+      console.error(`EnhancedFileDialog: Not enough files selected. Required: ${requiredFileCount}, Selected: ${selectedFiles.length}`);
       setError(`Please select at least ${requiredFileCount} file(s).`);
       return;
     }
@@ -425,19 +366,57 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
     // Validate required variables
     const missingVariables = requiredVariables.filter(variable => !variables[variable]);
     if (missingVariables.length > 0) {
+      console.error(`EnhancedFileDialog: Missing variables: ${missingVariables.join(', ')}`);
       setError(`Please fill in all required variables: ${missingVariables.join(', ')}`);
       return;
     }
 
+    console.log('EnhancedFileDialog: All validation passed, proceeding with submission');
     setIsSubmitting(true);
     setError(null);
 
     try {
-      onSubmit(selectedFiles, variables);
+      // Format files for API - this is just for logging, the actual formatting happens in usePromptFileHandler
+      const s3Files = selectedFiles.map(file => ({
+        name: file.name || file.fileName,
+        fileName: file.fileName || file.name,
+        s3Url: file.s3Url || file.url,
+        mimeType: file.type
+      }));
+
+      // Log the data being sent to the API
+      console.log('EnhancedFileDialog: Submitting files and variables to API:', {
+        files: selectedFiles.length,
+        fileDetails: selectedFiles.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })),
+        s3Files,
+        variables,
+        promptId
+      });
+
+      // The parent component (usePromptFileHandler) will handle the API call
+      console.log('EnhancedFileDialog: Calling onSubmit function with files and variables');
+
+      // Ensure all files have the required properties
+      const formattedFiles = selectedFiles.map(file => ({
+        ...file,
+        name: file.name || file.fileName || 'Unnamed file',
+        fileName: file.fileName || file.name || 'Unnamed file',
+        s3Url: file.s3Url || file.url || '',
+        type: file.type || 'application/octet-stream',
+        url: file.url || file.s3Url || ''
+      }));
+
+      // Call the onSubmit function with the files and variables
+      console.log('EnhancedFileDialog: Calling onSubmit with files:', formattedFiles.length);
+      console.log('EnhancedFileDialog: File details:', formattedFiles.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
+      onSubmit(formattedFiles, variables);
+
+      console.log('EnhancedFileDialog: onSubmit function called successfully');
     } catch (error) {
-      console.error('Error submitting files:', error);
+      console.error('EnhancedFileDialog: Error submitting files:', error);
       setError('Failed to submit files. Please try again.');
     } finally {
+      console.log('EnhancedFileDialog: Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -767,11 +746,8 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
                                                   if (!selectedFiles.some(f => f.fileId === file.fileId || f.fileKey === file.fileKey)) {
                                                     handleFileSelect(file);
                                                   }
-                                                  // Set the variable value for ONLY this variable
+                                                  // Set the variable value
                                                   handleVariableChange(variable, file.fileName || 'Unnamed file');
-
-                                                  // Log the selection for debugging
-                                                  console.log(`Selected file ${file.fileName} for variable ${variable}`);
                                                   // Close dropdown
                                                   setUiState(prev => ({
                                                     ...prev,
