@@ -195,9 +195,10 @@ const usePromptFileHandler = ({
     // If not found in local state, try to get it from the ModalContext
     if (!promptToUse && modalPrompt) {
       console.log('usePromptFileHandler: Using prompt from ModalContext:', modalPrompt.title);
-      promptToUse = modalPrompt;
+      // We need to create a new object to ensure React detects the change
+      promptToUse = { ...modalPrompt };
       // Update our local state for future reference
-      setSelectedPrompt(modalPrompt);
+      setSelectedPrompt(promptToUse);
     }
 
     if (promptToUse) {
