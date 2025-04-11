@@ -44,10 +44,10 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
 
   const openFileSelectionDialog = (
     prompt: Prompt,
-    fileCount: number,
-    variables: string[],
-    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void,
-    types: Record<string, VariableType> = {}
+    requiredFileCount: number,
+    requiredVariables: string[],
+    onSubmit: (files: UploadedFile[], variables: Record<string, string>, prompt: Prompt) => void,
+    variableTypes: Record<string, VariableType> = {}
   ) => {
     console.log('ModalContext: openFileSelectionDialog called with prompt:', prompt.title);
     console.log('ModalContext: Required file count:', fileCount);
