@@ -55,6 +55,7 @@ export interface FileDropzoneStyles {
   fileSizeLimit: string;
   uploadingText: string;
   dragPrompt: string;
+  dropzoneSubtext: string;
   fileList: string;
   fileItem: string;
   fileIcon: {
@@ -1276,6 +1277,7 @@ export const getFileDropzoneStyles = (isDarkMode: boolean): FileDropzoneStyles =
     fileSizeLimit: getFileDropzoneSizeLimitClass(isDarkMode),
     uploadingText: getFileDropzoneUploadingTextClass(isDarkMode),
     dragPrompt: getFileDropzoneDragPromptClass(isDarkMode),
+    dropzoneSubtext: `text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`,
     fileList: getFileDropzoneFileListClass(),
     fileItem: getFileDropzoneFileItemClass(isDarkMode),
     fileIcon: {

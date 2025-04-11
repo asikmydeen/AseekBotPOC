@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiPaperclip, FiMic } from 'react-icons/fi';
 import TextareaAutosize from 'react-textarea-autosize';
-import { getEnhancedChatInputStyles, getEnhancedTypingIndicatorStyles, messageAnimations } from '../../styles/chatStyles';
+import { getEnhancedChatInputStyles, getEnhancedTypingIndicatorStyles, getEnhancedFileDropzoneStyles, messageAnimations } from '../../styles/chatStyles';
 
 interface EnhancedChatInputProps {
   onSubmit: (message: string) => void;
@@ -125,7 +125,6 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 };
 // Enhanced File Dropzone Component
 import { FiUploadCloud, FiX, FiFile } from 'react-icons/fi';
-import { getEnhancedFileDropzoneStyles } from '../../styles/chatStyles';
 
 interface EnhancedFileDropzoneProps {
   getRootProps: any;
