@@ -330,6 +330,8 @@ const usePromptFileHandler = ({
         // Log the exact payload being sent to the API
         console.log('usePromptFileHandler: Sending API payload:', JSON.stringify(payload, null, 2));
 
+        // Make the API call
+        console.log('usePromptFileHandler: Calling apiService.sendMessage with payload');
         apiResponse = await apiService.sendMessage(payload);
 
         console.log('usePromptFileHandler: API response:', apiResponse);
@@ -338,6 +340,20 @@ const usePromptFileHandler = ({
           console.log('usePromptFileHandler: Prompt API call successful, got requestId:', apiResponse.requestId);
           setRequestId(apiResponse.requestId);
           setIsPolling(true);
+
+          // Store the request ID in localStorage to ensure it's tracked across page refreshes
+          try {
+            let pending: Record<string, { status: string }> = {};
+            const stored = localStorage.getItem('pendingRequests');
+            if (stored) {
+              pending = JSON.parse(stored);
+            }
+            pending[apiResponse.requestId] = { status: 'PROCESSING' };
+            localStorage.setItem('pendingRequests', JSON.stringify(pending));
+            console.log('usePromptFileHandler: Stored request ID in localStorage:', apiResponse.requestId);
+          } catch (e) {
+            console.error('usePromptFileHandler: Error storing request ID in localStorage:', e);
+          }
         } else {
           console.error('usePromptFileHandler: API response missing requestId:', apiResponse);
         }
