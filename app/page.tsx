@@ -319,7 +319,7 @@ function ChatApp() {
   }, [activeChat, updateChatMessages]);
 
   // Handle adding a file to chat from the sidebar
-  const handleFileAddToChat = useCallback((file: UploadedFile) => {
+  const handleFileAddToChat = useCallback((file: any) => {
     // Check if file is valid
     if (!file || !file.fileName || file.fileSize === undefined) {
       console.error('Invalid file object for chat:', file);
@@ -347,7 +347,7 @@ function ChatApp() {
       name: file.fileName || 'Unnamed File',
       size: typeof file.fileSize === 'number' ? file.fileSize : 0,
       type: file.fileType || 'application/octet-stream',
-      url: file.url || file.presignedUrl || '',
+      url: file.url || (file as any).presignedUrl || '',
       fileId: file.fileId || fileKey || '',
       status: 'success',
       progress: 100,
