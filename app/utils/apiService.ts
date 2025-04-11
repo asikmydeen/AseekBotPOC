@@ -468,7 +468,9 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
+        mode: 'cors',
+        credentials: 'include',
       });
 
       if (!response.ok) {
