@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiSend, FiPaperclip, FiMic } from 'react-icons/fi';
 import TextareaAutosize from 'react-textarea-autosize';
 import { getEnhancedChatInputStyles, getEnhancedTypingIndicatorStyles, getEnhancedFileDropzoneStyles, messageAnimations } from '../../styles/chatStyles';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface EnhancedChatInputProps {
   onSubmit: (message: string) => void;
@@ -82,7 +83,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={isThinking ? "AseekBot is thinking..." : "Type your message here..."}
+            placeholder={isThinking ? `${CHAT_UI_TEXT.TYPING_INDICATOR}...` : "Type your message here..."}
             disabled={isThinking}
             className={`${styles.textarea} ${isFocused ? 'border-transparent' : 'border'} ${isThinking ? 'opacity-70' : 'opacity-100'}`}
             minRows={1}
@@ -152,7 +153,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = CHAT_UI_TEXT.FILE_SIZE_UNITS;
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -181,10 +182,10 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
           >
             <FiUploadCloud className={styles.uploadIcon(isDragActive)} />
             <p className={styles.dropzoneText}>
-              {isDragActive ? 'Drop files here...' : 'Drag and drop files here, or click to select files'}
+              {isDragActive ? CHAT_UI_TEXT.FILE_UPLOAD_DRAG_ACTIVE : CHAT_UI_TEXT.FILE_UPLOAD_DRAG_INACTIVE}
             </p>
             <p className={styles.dropzoneSubtext}>
-              Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG
+              {CHAT_UI_TEXT.FILE_UPLOAD_SUPPORTED_FORMATS}
             </p>
           </motion.div>
         </div>
@@ -263,7 +264,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               className={styles.actionButton('analyze', isDarkMode)}
               disabled={isUploading}
             >
-              Analyze Files
+              {CHAT_UI_TEXT.FILE_UPLOAD_ANALYZE_BUTTON}
             </motion.button>
 
             <motion.button
@@ -273,7 +274,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               className={styles.actionButton('send', isDarkMode)}
               disabled={isUploading}
             >
-              Send with Message
+              {CHAT_UI_TEXT.FILE_UPLOAD_SEND_BUTTON}
             </motion.button>
 
             <motion.button
@@ -283,7 +284,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               className={styles.actionButton('cancel', isDarkMode)}
               disabled={isUploading}
             >
-              Cancel
+              {CHAT_UI_TEXT.FILE_UPLOAD_CANCEL_BUTTON}
             </motion.button>
           </div>
         </motion.div>
@@ -301,7 +302,7 @@ const EnhancedTypingIndicator = ({ isDarkMode }: { isDarkMode: boolean }) => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.text}>AseekBot is thinking</div>
+      <div className={styles.text}>{CHAT_UI_TEXT.TYPING_INDICATOR}</div>
       <div className={styles.dotsContainer}>
         <motion.div
           variants={messageAnimations.typingIndicator}

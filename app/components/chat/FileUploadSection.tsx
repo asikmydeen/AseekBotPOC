@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiFile, FiUploadCloud } from 'react-icons/fi';
 import { UploadedFile } from '../../types/shared';
 import { getFileUploadSectionStyles } from '../../styles/chatStyles';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface FileUploadSectionProps {
   uploadedFiles: UploadedFile[];
@@ -40,7 +41,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   const formatFileSize = (bytes: number): string => {
     if (bytes === undefined || bytes === null || bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = CHAT_UI_TEXT.FILE_SIZE_UNITS;
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -76,10 +77,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <input {...getInputProps()} />
             <FiUploadCloud className={styles.uploadIcon} />
             <p className={styles.dropzoneText}>
-              {isDragActive ? 'Drop the files here...' : 'Drag and drop files here, or click to select files'}
+              {isDragActive ? CHAT_UI_TEXT.FILE_UPLOAD_DRAG_ACTIVE : CHAT_UI_TEXT.FILE_UPLOAD_DRAG_INACTIVE}
             </p>
             <p className={styles.dropzoneSubtext}>
-              Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG
+              {CHAT_UI_TEXT.FILE_UPLOAD_SUPPORTED_FORMATS}
             </p>
           </div>
         ) : (
@@ -145,21 +146,21 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                   className={styles.actionButton('analyze', isDarkMode)}
                   disabled={isUploading}
                 >
-                  {showPrompt ? 'Analyze Document' : 'Analyze the File(s)'}
+                  {showPrompt ? CHAT_UI_TEXT.FILE_UPLOAD_ANALYZE_DOCUMENT : CHAT_UI_TEXT.FILE_UPLOAD_ANALYZE_BUTTON}
                 </button>
                 <button
                   onClick={sendFiles}
                   className={styles.actionButton('send', isDarkMode)}
                   disabled={isUploading}
                 >
-                  Send with Message
+                  {CHAT_UI_TEXT.FILE_UPLOAD_SEND_BUTTON}
                 </button>
                 <button
                   onClick={cancelUpload}
                   className={styles.actionButton('cancel', isDarkMode)}
                   disabled={isUploading}
                 >
-                  Cancel
+                  {CHAT_UI_TEXT.FILE_UPLOAD_CANCEL_BUTTON}
                 </button>
               </div>
             </div>

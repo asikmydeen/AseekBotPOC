@@ -1,4 +1,6 @@
 // app/types/status.ts
+import { CHAT_STATUS_MESSAGES } from '../constants/chatConstants';
+
 /**
  * Enum for all possible processing status values
  */
@@ -69,8 +71,8 @@ export function isStatusAdvanced(currentStatus: ProcessingStatus, newStatus: Pro
  * Helper function to check if a status is a terminal status
  */
 export function isTerminalStatus(status: ProcessingStatus): boolean {
-  return status === ProcessingStatus.COMPLETED || 
-         status === ProcessingStatus.FAILED || 
+  return status === ProcessingStatus.COMPLETED ||
+         status === ProcessingStatus.FAILED ||
          status === ProcessingStatus.ERROR;
 }
 
@@ -85,20 +87,5 @@ export function isErrorStatus(status: ProcessingStatus): boolean {
  * Helper function to get a human-readable status message
  */
 export function getStatusMessage(status: ProcessingStatus): string {
-  switch (status) {
-    case ProcessingStatus.QUEUED:
-      return 'Queued for processing';
-    case ProcessingStatus.STARTED:
-      return 'Starting process';
-    case ProcessingStatus.PROCESSING:
-      return 'Processing your request';
-    case ProcessingStatus.COMPLETED:
-      return 'Processing completed';
-    case ProcessingStatus.FAILED:
-      return 'Processing failed';
-    case ProcessingStatus.ERROR:
-      return 'An error occurred';
-    default:
-      return 'Unknown status';
-  }
+  return CHAT_STATUS_MESSAGES[status] || CHAT_STATUS_MESSAGES.UNKNOWN;
 }

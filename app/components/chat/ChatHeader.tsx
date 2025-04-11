@@ -19,6 +19,7 @@ import { TicketIcon } from '@heroicons/react/24/outline';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { getCurrentUserId } from '../../store/userStore';
 import { getChatHeaderStyles } from '../../styles/chatStyles';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface ChatHeaderProps {
   isDarkMode: boolean;
@@ -57,7 +58,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       {/* Logo/Title and Chat Info */}
       <div className={styles.logoSection}>
         <h1 className={styles.title}>
-          AseekBot
+          {CHAT_UI_TEXT.CHAT_HEADER_TITLE}
         </h1>
         {activeChat && (
           <span className={styles.chatTitle}>
@@ -73,7 +74,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         <input
           type="text"
-          placeholder="Search conversations..."
+          placeholder={CHAT_UI_TEXT.CHAT_HEADER_SEARCH_PLACEHOLDER}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={styles.searchBar.input}
@@ -110,7 +111,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           aria-label="Start new chat"
         >
           <MdAdd className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-          <span className="hidden sm:inline">New Chat</span>
+          <span className="hidden sm:inline">{CHAT_UI_TEXT.CHAT_HEADER_NEW_CHAT}</span>
         </button>
 
         {/* Theme Toggle */}

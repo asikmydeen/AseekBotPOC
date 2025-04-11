@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiClock, FiRefreshCw } from 'react-icons/fi';
 import { TicketStep, TicketDetails, FeedbackData } from '../../types/shared';
 import { SenderType } from '../../constants';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
@@ -161,7 +162,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
           >
             <div className="flex flex-wrap justify-between items-center mb-1 sm:mb-2">
               <h3 className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'dark-text' : 'text-gray-600'}`}>
-                Suggested replies
+                {CHAT_UI_TEXT.SUGGESTIONS_TITLE}
               </h3>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -169,7 +170,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
                 onClick={() => setShowSuggestions(false)}
                 className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md ${isDarkMode ? 'dark-text-secondary hover:dark-text hover:dark-bg-hover' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
               >
-                Hide
+                {CHAT_UI_TEXT.SUGGESTIONS_HIDE}
               </motion.button>
             </div>
             <SuggestionChips

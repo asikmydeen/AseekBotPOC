@@ -19,6 +19,7 @@ import ImageDialog from './ImageDialog';
 // Import types
 import { MessageType, MultimediaData } from '../../types/shared';
 import { SenderType, ReactionType } from '../../constants';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface MessageProps {
   message: MessageType;
@@ -91,7 +92,7 @@ function Message({
     // Handle empty content case
     if (!messageContent) {
       const errorMessage = message.sender === SenderType.BOT
-        ? "Error: No message content available."
+        ? CHAT_UI_TEXT.ERROR_NO_CONTENT
         : "";
       setDisplayedText(errorMessage);
       setIsTyping(false);

@@ -9,6 +9,7 @@ import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 import { ProcessingStatus, getStatusMessage } from '../../types/status';
 import { MultimediaType, ReactionType } from '../../constants';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 import { getMessageListStyles } from '../../styles/chatStyles';
 
 // Enhanced Empty State Component
@@ -26,8 +27,8 @@ const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => {
       <div className={styles.emptyState.iconContainer}>
         <FaRobot className={styles.emptyState.icon} />
       </div>
-      <h2 className={styles.emptyState.title}>Welcome to AseekBot!</h2>
-      <p className={styles.emptyState.description}>I'm your AI assistant for data center procurement. How can I help you today?</p>
+      <h2 className={styles.emptyState.title}>{CHAT_UI_TEXT.EMPTY_STATE_TITLE}</h2>
+      <p className={styles.emptyState.description}>{CHAT_UI_TEXT.EMPTY_STATE_DESCRIPTION}</p>
       <motion.div
         initial={{ scale: 1 }}
         animate={{
@@ -110,7 +111,7 @@ const EnhancedAsyncStatusIndicator = ({
             className={styles.statusIndicator.refreshButton}
           >
             <FiRefreshCw className="mr-1.5" size={14} />
-            Refresh
+            {CHAT_UI_TEXT.STATUS_INDICATOR_REFRESH}
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -119,7 +120,7 @@ const EnhancedAsyncStatusIndicator = ({
             className={styles.statusIndicator.cancelButton}
           >
             <FiXCircle className="mr-1.5" size={14} />
-            Cancel
+            {CHAT_UI_TEXT.STATUS_INDICATOR_CANCEL}
           </motion.button>
         </div>
       </div>

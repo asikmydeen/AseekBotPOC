@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface ImageDialogProps {
   isOpen: boolean;
@@ -12,8 +13,8 @@ interface ImageDialogProps {
   styles: any;
 }
 
-const ImageDialog: React.FC<ImageDialogProps> = ({ 
-  isOpen, 
+const ImageDialog: React.FC<ImageDialogProps> = ({
+  isOpen,
   imageUrl,
   onClose,
   onConfirm,
@@ -39,9 +40,9 @@ const ImageDialog: React.FC<ImageDialogProps> = ({
           className={styles.imageDialog.container}
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className={styles.imageDialog.title}>External Image</h3>
+          <h3 className={styles.imageDialog.title}>{CHAT_UI_TEXT.IMAGE_DIALOG_TITLE}</h3>
           <p className={styles.imageDialog.content}>
-            This message contains an image from an external source. Would you like to view it?
+            {CHAT_UI_TEXT.IMAGE_DIALOG_CONTENT}
           </p>
           <div className={styles.imageDialog.buttons}>
             <motion.button
@@ -50,7 +51,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({
               className={styles.imageDialog.cancelButton}
               onClick={onClose}
             >
-              Cancel
+              {CHAT_UI_TEXT.IMAGE_DIALOG_CANCEL}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -58,7 +59,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({
               className={styles.imageDialog.confirmButton}
               onClick={onConfirm}
             >
-              View Image
+              {CHAT_UI_TEXT.IMAGE_DIALOG_CONFIRM}
             </motion.button>
           </div>
         </motion.div>
