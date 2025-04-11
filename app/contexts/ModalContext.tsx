@@ -69,9 +69,12 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   };
 
   const closeFileSelectionDialog = () => {
+    console.log('ModalContext: Closing file selection dialog');
     setFileDialogOpen(false);
     // Don't immediately clear the prompt and variables to avoid UI flicker
     // They will be reset when the dialog is opened again
+    // IMPORTANT: We keep the currentPrompt state to ensure it's available for the handleFileSelection callback
+    console.log('ModalContext: Keeping currentPrompt state:', currentPrompt?.title);
   };
 
   const handleSubmit = (files: UploadedFile[], variables: Record<string, string>) => {
