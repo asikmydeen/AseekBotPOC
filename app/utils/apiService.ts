@@ -71,8 +71,6 @@ export async function makeRequest<T = any>(
     const requestOptions: RequestInit = {
       method,
       headers,
-      mode: 'cors', // Add CORS mode explicitly
-      credentials: 'include', // Include credentials like cookies
       ...options,
     };
 
@@ -263,8 +261,6 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.uploadFile, {
         method: 'POST',
         body: formData,
-        mode: 'cors',
-        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -289,9 +285,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ s3Key, userId: getCurrentUserId() }),
-        mode: 'cors',
-        credentials: 'include',
+        body: JSON.stringify({ s3Key, userId: getCurrentUserId() })
       });
 
       if (!response.ok) {
@@ -319,9 +313,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.downloadFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileKey, userId: getCurrentUserId() }),
-        mode: 'cors',
-        credentials: 'include',
+        body: JSON.stringify({ fileKey, userId: getCurrentUserId() })
       });
 
       if (!response.ok) {
@@ -353,9 +345,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-        mode: 'cors',
-        credentials: 'include',
+        body: JSON.stringify({ userId })
       });
 
       if (!response.ok) {
@@ -468,9 +458,7 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.updatePrompt.replace(':id', id), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
-        mode: 'cors',
-        credentials: 'include',
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
