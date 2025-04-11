@@ -7,6 +7,8 @@ import { useChatHistory } from './hooks/useChatHistory';
 import { apiService } from './utils/apiService';
 import { UploadedFile, MessageType } from './types/shared';
 import { getCurrentUserId } from './store/userStore';
+import { ProcessingStatus, StatusUpdatePayload } from './types/status';
+import { useStatusStore, updateStatus } from './store/statusStore';
 
 
 // Dynamically import ChatInterface with SSR disabled
@@ -21,10 +23,11 @@ function ChatApp() {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [preselectedFile, setPreselectedFile] = useState<UploadedFile | null>(null);
-  const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [processingProgress, setProcessingProgress] = useState<number>(0);
-  const [isAsyncProcessing, setIsAsyncProcessing] = useState<boolean>(false);
-  const [asyncStatus, setAsyncStatus] = useState<string>('');
+  // Use the status store for centralized status management
+  const { status: processingStatus, progress: processingProgress, isAsyncProcessing } = useStatusStore();
+  // Keep local state for backward compatibility during transition
+  const [localProcessingStatus, setLocalProcessingStatus] = useState<ProcessingStatus | ''>('');
+  const [localProcessingProgress, setLocalProcessingProgress] = useState<number>(0);
 
   // Track which files came from the sidebar to prevent them from being removed
   const sidebarFilesRef = useRef<Set<string>>(new Set());
@@ -197,9 +200,24 @@ function ChatApp() {
   const handleStatusUpdate = useCallback((status: string, progress: number, userMessage?: string, isPromptMessage: boolean = false) => {
     console.log(`Status update: ${status}, progress: ${progress}, isPromptMessage: ${isPromptMessage}`);
 
+    // Convert string status to ProcessingStatus enum if valid
+    const statusEnum = Object.values(ProcessingStatus).includes(status as ProcessingStatus)
+      ? status as ProcessingStatus
+      : ProcessingStatus.PROCESSING;
+
+    // Update the centralized status store
+    updateStatus(statusEnum, progress, {
+      message: userMessage,
+      isPromptMessage
+    });
+
+    // Also update local state for backward compatibility
+    setLocalProcessingStatus(statusEnum);
+    setLocalProcessingProgress(progress);
+
     // If this is a prompt message and we're just starting, we need to update the UI
     // but NOT send a duplicate message since the API call is already being made by usePromptFileHandler
-    if (isPromptMessage && status === 'STARTED' && userMessage) {
+    if (isPromptMessage && statusEnum === ProcessingStatus.STARTED && userMessage) {
       console.log('Received prompt message status update:', userMessage);
 
       // Instead of setting triggerMessage, we'll manually add a user message to the chat
@@ -219,28 +237,13 @@ function ChatApp() {
         updateChatMessages(updatedMessages);
       }
 
-      // Update the UI with the processing status
-      setProcessingStatus('PROCESSING');
-      setProcessingProgress(0);
-
-      // Set the async processing state to show the typing indicator and AseekBot is thinking UI
-      setIsAsyncProcessing(true);
-      setAsyncStatus('PROCESSING');
+      // Update the centralized status store
+      updateStatus(ProcessingStatus.PROCESSING, 0);
       return;
     }
 
-    // Update the UI with the processing status
-    setProcessingStatus(status);
-    setProcessingProgress(progress);
-
-    // Update the async processing state based on the status
-    if (status === 'PROCESSING') {
-      setIsAsyncProcessing(true);
-      setAsyncStatus('PROCESSING');
-    }
-
     // If we have a completed status, show a notification or update the UI
-    if (status === 'COMPLETED') {
+    if (statusEnum === ProcessingStatus.COMPLETED) {
       console.log('Processing completed successfully!');
 
       // If we have a response message and active chat, add it to the chat
@@ -294,27 +297,10 @@ function ChatApp() {
         updateChatMessages(updatedMessages);
       }
 
-      // Reset the async processing state
-      setIsAsyncProcessing(false);
-      setAsyncStatus('');
-
-      // Clear the processing status after a delay
-      setTimeout(() => {
-        setProcessingStatus('');
-        setProcessingProgress(0);
-      }, 2000);
-    } else if (status === 'FAILED' || status === 'ERROR') {
-      console.error('Processing failed:', status);
-
-      // Reset the async processing state
-      setIsAsyncProcessing(false);
-      setAsyncStatus('');
-
-      // Clear the processing status after a delay
-      setTimeout(() => {
-        setProcessingStatus('');
-        setProcessingProgress(0);
-      }, 5000);
+      // Status store will automatically reset after a delay
+    } else if (statusEnum === ProcessingStatus.FAILED || statusEnum === ProcessingStatus.ERROR) {
+      console.error('Processing failed:', statusEnum);
+      // Status store will automatically reset after a delay
     }
   }, [activeChat, updateChatMessages]);
 
@@ -492,18 +478,15 @@ function ChatApp() {
             externalFileToAdd={preselectedFile} // New prop for adding files from sidebar
             // Pass the async processing state to show the typing indicator
             externalAsyncProcessing={isAsyncProcessing}
-            externalAsyncStatus={asyncStatus}
+            externalAsyncStatus={processingStatus}
             externalAsyncProgress={processingProgress}
             onRefreshStatus={() => {
               // Implement refresh functionality if needed
               console.log('Refresh status requested');
             }}
             onCancelRequest={() => {
-              // Reset the async processing state
-              setIsAsyncProcessing(false);
-              setAsyncStatus('');
-              setProcessingStatus('');
-              setProcessingProgress(0);
+              // Reset the status store
+              useStatusStore.getState().resetStatus();
               console.log('Cancel request called');
             }}
           />

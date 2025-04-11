@@ -1,16 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../utils/apiService';
+import {
+  ProcessingStatus,
+  WorkflowType,
+  isStatusAdvanced as isStatusAdvancedUtil,
+  isTerminalStatus
+} from '../types/status';
 
 // Define the UnifiedApiResponse interface
 interface UnifiedApiResponse {
   requestId?: string;
-  status?: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status?: string; // Will be converted to ProcessingStatus
   progress?: number;
   result?: any;
   error?: string | { message?: string; name?: string };
   message?: string;
   timestamp?: string;
-  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+  workflowType?: string; // Will be converted to WorkflowType
   updatedAt?: string;
 }
 
@@ -18,19 +24,20 @@ interface UnifiedApiResponse {
 const isStatusAdvanced = (currentStatus: string, newStatus: string | undefined): boolean => {
   if (!newStatus) return false;
 
-  const statusOrder = {
-    'QUEUED': 0,
-    'PROCESSING': 1,
-    'COMPLETED': 2,
-    'FAILED': 2 // Same level as COMPLETED since both are terminal states
-  };
+  // Convert string statuses to ProcessingStatus enum values if they're valid
+  const currentEnum = Object.values(ProcessingStatus).includes(currentStatus as ProcessingStatus)
+    ? currentStatus as ProcessingStatus
+    : ProcessingStatus.QUEUED;
 
-  return (statusOrder[currentStatus as keyof typeof statusOrder] || 0) >=
-    (statusOrder[newStatus as keyof typeof statusOrder] || 0);
+  const newEnum = Object.values(ProcessingStatus).includes(newStatus as ProcessingStatus)
+    ? newStatus as ProcessingStatus
+    : undefined;
+
+  return isStatusAdvancedUtil(currentEnum, newEnum);
 };
 
 export interface AsyncProcessingResult {
-  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: ProcessingStatus;
   requestId: string;
   progress: number;
   result?: any;
@@ -41,7 +48,7 @@ export interface AsyncProcessingResult {
   message?: string;
   timestamp?: string;
   updatedAt?: string;
-  workflowType?: 'CHAT' | 'DOCUMENT_ANALYSIS' | 'DATA_ANALYSIS';
+  workflowType?: WorkflowType;
 }
 
 interface UseAsyncProcessingOptions {
@@ -52,7 +59,15 @@ interface UseAsyncProcessingOptions {
 
 // Helper function to convert UnifiedApiResponse to AsyncProcessingResult
 const convertToAsyncProcessingResult = (response: UnifiedApiResponse): AsyncProcessingResult => {
-  const status = response.status as AsyncProcessingResult['status'] || 'QUEUED';
+  // Convert string status to ProcessingStatus enum
+  const status = response.status && Object.values(ProcessingStatus).includes(response.status as ProcessingStatus)
+    ? response.status as ProcessingStatus
+    : ProcessingStatus.QUEUED;
+
+  // Convert string workflowType to WorkflowType enum
+  const workflowType = response.workflowType && Object.values(WorkflowType).includes(response.workflowType as WorkflowType)
+    ? response.workflowType as WorkflowType
+    : undefined;
 
   return {
     status,
@@ -63,7 +78,7 @@ const convertToAsyncProcessingResult = (response: UnifiedApiResponse): AsyncProc
     message: response.message,
     timestamp: response.timestamp,
     updatedAt: (response as any).updatedAt,
-    workflowType: response.workflowType as AsyncProcessingResult['workflowType']
+    workflowType
   };
 };
 
@@ -72,13 +87,13 @@ export function useAsyncProcessing(
   options: UseAsyncProcessingOptions = {}
 ) {
   const [result, setResult] = useState<any>(null);
-  const [status, setStatus] = useState<AsyncProcessingResult['status']>('QUEUED');
+  const [status, setStatus] = useState<ProcessingStatus>(ProcessingStatus.QUEUED);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<any>(null);
   const [lastStatusResponse, setLastStatusResponse] = useState<AsyncProcessingResult | null>(null);
   const [hasErrored, setHasErrored] = useState<boolean>(false);
-  const [workflowType, setWorkflowType] = useState<string | undefined>(undefined);
+  const [workflowType, setWorkflowType] = useState<WorkflowType | undefined>(undefined);
 
   // Tracking interval and polling state
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
@@ -136,7 +151,7 @@ export function useAsyncProcessing(
       setProgress(response.progress || 0);
 
       // Persist to localStorage if still in progress
-      if (response.status === 'QUEUED' || response.status === 'PROCESSING') {
+      if (response.status === ProcessingStatus.QUEUED || response.status === ProcessingStatus.PROCESSING) {
         try {
           const stored = localStorage.getItem('pendingRequests') || '{}';
           const pending = JSON.parse(stored);
@@ -149,7 +164,7 @@ export function useAsyncProcessing(
         } catch (e) {
           console.error('Error saving pending request to localStorage:', e);
         }
-      } else if (response.status === 'COMPLETED' || response.status === 'FAILED') {
+      } else if (response.status === ProcessingStatus.COMPLETED || response.status === ProcessingStatus.FAILED) {
         // Remove from localStorage if completed or failed
         try {
           const stored = localStorage.getItem('pendingRequests');
@@ -165,11 +180,11 @@ export function useAsyncProcessing(
         }
       }
 
-      if (response.status === 'COMPLETED' && response.result) {
+      if (response.status === ProcessingStatus.COMPLETED && response.result) {
         setResult(response.result);
         setIsLoading(false);
         clearPollingInterval();
-      } else if (response.status === 'FAILED') {
+      } else if (response.status === ProcessingStatus.FAILED) {
         let errorMsg = 'Unknown error occurred';
         if (typeof response.error === 'string') {
           errorMsg = response.error;
@@ -220,7 +235,10 @@ export function useAsyncProcessing(
       const stored = localStorage.getItem('pendingRequests');
       if (stored) {
         const pending = JSON.parse(stored);
-        if (pending[requestId] && (pending[requestId].status === 'QUEUED' || pending[requestId].status === 'PROCESSING')) {
+        if (pending[requestId] && (
+          pending[requestId].status === ProcessingStatus.QUEUED ||
+          pending[requestId].status === ProcessingStatus.PROCESSING
+        )) {
           // Optionally, update state with the persisted progress before starting polling
           const persisted = pending[requestId];
           setStatus(persisted.status);
@@ -238,8 +256,8 @@ export function useAsyncProcessing(
     pollingAttemptsRef.current = 0;
     setIsLoading(true);
     setResult(null);
-    if (!status || status === 'COMPLETED' || status === 'FAILED') {
-      setStatus('QUEUED');
+    if (!status || status === ProcessingStatus.COMPLETED || status === ProcessingStatus.FAILED) {
+      setStatus(ProcessingStatus.QUEUED);
     }
     setProgress(0);
 
@@ -248,7 +266,7 @@ export function useAsyncProcessing(
       if (!initialResponse) return;
 
       // If it's already completed or failed, don't start polling
-      if (initialResponse.status === 'COMPLETED' || initialResponse.status === 'FAILED') {
+      if (initialResponse.status === ProcessingStatus.COMPLETED || initialResponse.status === ProcessingStatus.FAILED) {
         return;
       }
 
@@ -270,7 +288,7 @@ export function useAsyncProcessing(
         const apiResponse = await fetchStatus();
 
         // Stop polling if completed, failed, or errored
-        if (hasErrored || (apiResponse && (apiResponse.status === 'COMPLETED' || apiResponse.status === 'FAILED'))) {
+        if (hasErrored || (apiResponse && isTerminalStatus(apiResponse.status))) {
           clearPollingInterval();
         }
       }, pollingInterval);

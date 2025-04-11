@@ -5,6 +5,7 @@ import { stripIndent } from '../utils/helpers';
 import { apiService } from '../utils/apiService';
 import { MessageType, MultimediaData } from '../types/shared';
 import { createDocumentAnalysisMessage } from '../utils/documentAnalysisUtils';
+import { ProcessingStatus, WorkflowType } from '../types/status';
 
 interface ChatHistoryItem {
   role: 'user' | 'assistant' | 'system';
@@ -64,7 +65,7 @@ export default function useChatMessages({
   const [ticketTriggerContext, setTicketTriggerContext] = useState<string | null>(null);
 
   const [isAsyncProcessing, setIsAsyncProcessing] = useState(false);
-  const [asyncStatus, setAsyncStatus] = useState<string>('');
+  const [asyncStatus, setAsyncStatus] = useState<ProcessingStatus | ''>('');
   const [asyncProgress, setAsyncProgress] = useState<number>(0);
   const [processingError, setProcessingError] = useState<Error | null>(null);
 
@@ -160,9 +161,16 @@ export default function useChatMessages({
         hasFormattedMessage: !!statusResponse.formattedMessage,
         hasAggregatedResults: !!statusResponse.aggregatedResults
       });
-      setAsyncStatus(statusResponse.status || 'PROCESSING');
+
+      // Convert string status to ProcessingStatus enum if valid
+      const status = statusResponse.status &&
+        Object.values(ProcessingStatus).includes(statusResponse.status as ProcessingStatus)
+        ? statusResponse.status as ProcessingStatus
+        : ProcessingStatus.PROCESSING;
+
+      setAsyncStatus(status);
       setAsyncProgress(statusResponse.progress || 0);
-      if (statusResponse.status === 'COMPLETED') {
+      if (status === ProcessingStatus.COMPLETED) {
         if (processedRequestIdsRef.current.has(requestId)) {
           console.log(`Request ${requestId} already processed, skipping duplicate message`);
           return;
@@ -353,10 +361,17 @@ export default function useChatMessages({
       }, 500);
       const apiSendMessage = apiService.sendMessage;
       const response = await apiSendMessage(text, chatSessionId, attachments);
-      if (response.requestId && (response.status === 'QUEUED' || response.status === 'PROCESSING')) {
+
+      // Convert string status to ProcessingStatus enum if valid
+      const status = response.status &&
+        Object.values(ProcessingStatus).includes(response.status as ProcessingStatus)
+        ? response.status as ProcessingStatus
+        : ProcessingStatus.QUEUED;
+
+      if (response.requestId && (status === ProcessingStatus.QUEUED || status === ProcessingStatus.PROCESSING)) {
         activeRequestIdsRef.current.add(response.requestId);
         setIsAsyncProcessing(true);
-        setAsyncStatus(response.status);
+        setAsyncStatus(status);
         setAsyncProgress(response.progress || 0);
         const intervalId = setInterval(() => {
           if (response.requestId) {
@@ -596,7 +611,7 @@ export default function useChatMessages({
         if (pendingRequestIds.length > 0) {
           setIsThinking(true);
           setIsAsyncProcessing(true);
-          setAsyncStatus('PROCESSING'); // Ensure status is set to show loading state
+          setAsyncStatus(ProcessingStatus.PROCESSING); // Ensure status is set to show loading state
           console.log(`Found ${pendingRequestIds.length} pending requests, updating UI state`);
         }
       }

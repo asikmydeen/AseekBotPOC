@@ -7,6 +7,7 @@ import { FaRobot, FaUser } from 'react-icons/fa';
 import Message from '../message/Message';
 import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
+import { ProcessingStatus, getStatusMessage } from '../../types/status';
 
 // Enhanced Empty State Component
 const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (
@@ -63,7 +64,7 @@ const EnhancedAsyncStatusIndicator = ({
   onRefresh,
   onCancel
 }: {
-  status: string,
+  status: ProcessingStatus | string,
   progress: number,
   isDarkMode: boolean,
   onRefresh: () => void,
@@ -71,6 +72,12 @@ const EnhancedAsyncStatusIndicator = ({
 }) => {
   // Log when the component renders with its props
   console.log('Rendering EnhancedAsyncStatusIndicator with:', { status, progress });
+
+  // Get a human-readable status message if it's a ProcessingStatus enum value
+  const displayStatus = typeof status === 'string' && Object.values(ProcessingStatus).includes(status as ProcessingStatus)
+    ? getStatusMessage(status as ProcessingStatus)
+    : status;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 5 }}
@@ -81,7 +88,7 @@ const EnhancedAsyncStatusIndicator = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center">
           <span className={`text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            Status: <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{status}</span>
+            Status: <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{displayStatus}</span>
           </span>
         </div>
         <div className="flex space-x-2 self-end sm:self-auto">
@@ -124,7 +131,7 @@ interface MessageListProps {
   // New async props
   isAsyncProcessing?: boolean;
   asyncProgress?: number;
-  asyncStatus?: string;
+  asyncStatus?: ProcessingStatus | string;
   onRefreshStatus?: () => void;
   onCancelRequest?: () => void;
 }

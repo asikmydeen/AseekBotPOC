@@ -21,6 +21,7 @@ import useFileActions from '../../hooks/useFileActions';
 import { MessageType, TicketDetails, UploadedFile } from '../../types/shared';
 import useMessageArtifacts from '../../hooks/useMessageArtifacts';
 import ArtifactPanel from '../ArtifactPanel';
+import { ProcessingStatus } from '../../types/status';
 
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
@@ -42,7 +43,7 @@ interface ChatInterfaceProps {
     externalFileToAdd?: UploadedFile | null;
     // External async processing state
     externalAsyncProcessing?: boolean;
-    externalAsyncStatus?: string;
+    externalAsyncStatus?: ProcessingStatus | string;
     externalAsyncProgress?: number;
     onRefreshStatus?: () => void;
     onCancelRequest?: () => void;
@@ -59,7 +60,7 @@ function ChatInterfaceComponent({
     externalFileToAdd = null,
     // External async processing state
     externalAsyncProcessing = false,
-    externalAsyncStatus = '',
+    externalAsyncStatus = '' as ProcessingStatus | string,
     externalAsyncProgress = 0,
     onRefreshStatus = () => console.log('Refresh status called'),
     onCancelRequest = () => console.log('Cancel request called')

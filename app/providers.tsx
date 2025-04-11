@@ -16,6 +16,7 @@ import './store/promptsStore';
 import './store/chatStore';
 import './store/userStore';
 import './store/modalStore';
+import './store/statusStore';
 
 interface ProviderProps {
     children: React.ReactNode;
