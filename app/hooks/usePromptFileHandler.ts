@@ -145,10 +145,10 @@ const usePromptFileHandler = ({
               type = 'number';
             } else if (promptVar.sourceDetails?.type === 'date') {
               type = 'date';
-            } else if (promptVar.sourceDetails?.type === 'select' && promptVar.sourceDetails?.options) {
+            } else if (promptVar.sourceDetails?.type === 'select' && promptVar.sourceDetails?.format) {
               detectedTypes[variable] = {
                 type: 'select',
-                options: promptVar.sourceDetails.options.split(',').map(o => o.trim())
+                options: promptVar.sourceDetails.format.split(',').map((o: string) => o.trim())
               };
               return; // Skip the default assignment below
             }
