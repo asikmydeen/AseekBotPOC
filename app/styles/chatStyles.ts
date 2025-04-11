@@ -664,7 +664,7 @@ export const messageAnimations = {
         y: {
           repeat: Infinity,
           duration: 0.6,
-          ease: "easeInOut",
+          ease: "easeInOut" as const,
           repeatDelay: 0.2,
         }
       }
@@ -675,7 +675,7 @@ export const messageAnimations = {
         y: {
           repeat: Infinity,
           duration: 0.6,
-          ease: "easeInOut",
+          ease: "easeInOut" as const,
           repeatDelay: 0.2,
           delay: 0.2
         }
@@ -687,7 +687,7 @@ export const messageAnimations = {
         y: {
           repeat: Infinity,
           duration: 0.6,
-          ease: "easeInOut",
+          ease: "easeInOut" as const,
           repeatDelay: 0.2,
           delay: 0.4
         }
