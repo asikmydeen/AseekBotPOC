@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaTimes, FaFileUpload } from 'react-icons/fa';
 import { getDocumentAnalysisPromptStyles } from '../../styles/chatStyles';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface DocumentAnalysisPromptProps {
   isDarkMode: boolean;
@@ -53,10 +54,10 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
       <div className={styles.contentWrapper}>
         <div className="flex-1">
           <h3 className={styles.title}>
-            Document Analysis
+            {CHAT_UI_TEXT.DOCUMENT_ANALYSIS_TITLE}
           </h3>
           <p className={styles.description}>
-            Upload documents for analysis. I can extract information, summarize content, and answer questions about your documents.
+            {CHAT_UI_TEXT.DOCUMENT_ANALYSIS_DESCRIPTION}
           </p>
 
           <div className={styles.buttonsContainer}>
@@ -65,14 +66,14 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
               className={styles.analyzeButton}
             >
               <FaFileUpload className="mr-1.5" />
-              Upload Files
+              {CHAT_UI_TEXT.DOCUMENT_ANALYSIS_ANALYZE_BUTTON}
             </button>
 
             <button
               onClick={handleDismiss}
               className={styles.analyzeButton}
             >
-              Not Now
+              {CHAT_UI_TEXT.DOCUMENT_ANALYSIS_CANCEL_BUTTON}
             </button>
           </div>
         </div>
@@ -80,7 +81,7 @@ const DocumentAnalysisPrompt: React.FC<DocumentAnalysisPromptProps> = ({
         <button
           onClick={handleDismiss}
           className={styles.closeButton}
-          aria-label="Close"
+          aria-label={CHAT_UI_TEXT.FILE_UPLOAD_CANCEL_BUTTON}
         >
           <FaTimes className={isDarkMode ? 'text-gray-300' : 'text-gray-500'} />
         </button>

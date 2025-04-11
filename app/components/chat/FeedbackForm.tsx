@@ -5,6 +5,7 @@ import { FaStar } from 'react-icons/fa';
 import { MdClose } from 'react-icons/md';
 import { FeedbackData, FeedbackRating } from '../../types/index';
 import { getFeedbackFormStyles } from '../../styles/chatStyles';
+import { CHAT_UI_TEXT } from '../../constants/chatConstants';
 
 interface FeedbackFormProps {
   isDarkMode: boolean;
@@ -40,7 +41,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
       className={styles.container}
     >
       <div className={styles.header}>
-        <h3 className={styles.title}>Share Your Feedback</h3>
+        <h3 className={styles.title}>{CHAT_UI_TEXT.FEEDBACK_FORM_TITLE}</h3>
         <button
           onClick={closeFeedbackForm}
           className={styles.closeButton}
@@ -50,7 +51,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
       </div>
 
       <div className={styles.ratingContainer}>
-        <p className={styles.ratingLabel}>How would you rate your experience?</p>
+        <p className={styles.ratingLabel}>{CHAT_UI_TEXT.FEEDBACK_FORM_RATING_LABEL}</p>
         <div className={styles.starsContainer}>
           {[1, 2, 3, 4, 5].map((star) => (
             <button key={star} onClick={() => handleRatingChange(star)} className={styles.starButton}>
@@ -76,7 +77,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
           rows={4}
           value={feedback.comment}
           onChange={handleCommentChange}
-          placeholder="Tell us what you think..."
+          placeholder={CHAT_UI_TEXT.FEEDBACK_FORM_COMMENT_PLACEHOLDER}
           className={styles.commentTextarea}
         ></textarea>
       </div>
@@ -86,14 +87,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
           onClick={closeFeedbackForm}
           className={styles.cancelButton}
         >
-          Cancel
+          {CHAT_UI_TEXT.FEEDBACK_FORM_CANCEL_BUTTON}
         </button>
         <button
           onClick={submitFeedback}
           disabled={!feedback.rating}
           className={!feedback.rating ? styles.submitButtonDisabled : styles.submitButton}
         >
-          Submit Feedback
+          {CHAT_UI_TEXT.FEEDBACK_FORM_SUBMIT_BUTTON}
         </button>
       </div>
     </motion.div>

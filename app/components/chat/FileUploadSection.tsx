@@ -89,7 +89,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <div className="flex flex-col">
               <div className={styles.fileListHeader}>
                 <h3 className={styles.fileListTitle}>
-                  {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} ready
+                  {uploadedFiles.length} {uploadedFiles.length === 1 ? CHAT_UI_TEXT.FILE_READY_SINGULAR : CHAT_UI_TEXT.FILE_READY_PLURAL}
                 </h3>
 
                 {/* Progress bar for uploading */}
@@ -107,7 +107,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
               <div className={styles.fileList}>
                 {uploadedFiles.map((file, index) => {
                   // Ensure file has all required properties with defaults
-                  const safeFileName = file.name || 'Unnamed File';
+                  const safeFileName = file.name || CHAT_UI_TEXT.FILE_UNNAMED;
                   const safeFileSize = typeof file.size === 'number' ? file.size : 0;
                   const safeFileType = file.type || 'application/octet-stream';
 
@@ -130,7 +130,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                       <button
                         onClick={() => removeFile(index)}
                         className={styles.removeButton}
-                        aria-label="Remove file"
+                        aria-label={CHAT_UI_TEXT.ARIA_REMOVE_FILE}
                       >
                         <FiX className={isDarkMode ? 'text-gray-300' : 'text-gray-500'} />
                       </button>

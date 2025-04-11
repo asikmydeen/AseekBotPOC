@@ -83,7 +83,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={isThinking ? `${CHAT_UI_TEXT.TYPING_INDICATOR}...` : "Type your message here..."}
+            placeholder={isThinking ? `${CHAT_UI_TEXT.TYPING_INDICATOR}...` : CHAT_UI_TEXT.TYPING_PLACEHOLDER}
             disabled={isThinking}
             className={`${styles.textarea} ${isFocused ? 'border-transparent' : 'border'} ${isThinking ? 'opacity-70' : 'opacity-100'}`}
             minRows={1}
@@ -100,7 +100,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={onFileUploadClick}
               className={showFileDropzone ? styles.fileButtonActive : styles.fileButton}
-              aria-label="Attach files"
+              aria-label={CHAT_UI_TEXT.ARIA_ATTACH_FILES}
               disabled={isThinking}
             >
               <FiPaperclip size={20} />
@@ -114,7 +114,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               whileHover={{ scale: inputValue.trim() && !isThinking ? 1.05 : 1 }}
               whileTap={{ scale: inputValue.trim() && !isThinking ? 0.95 : 1 }}
               className={styles.sendButton(!inputValue.trim() || isThinking, isDarkMode)}
-              aria-label="Send message"
+              aria-label={CHAT_UI_TEXT.ARIA_SEND_MESSAGE}
             >
               <FiSend size={20} />
             </motion.button>
@@ -236,7 +236,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
                         <div className="flex items-center ml-2">
                           <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin mr-1 border-blue-500" />
                           <span className={styles.fileStatus}>
-                            {file.progress ? `${Math.round(file.progress)}%` : 'Uploading...'}
+                            {file.progress ? `${Math.round(file.progress)}%` : CHAT_UI_TEXT.FILE_UPLOADING}
                           </span>
                         </div>
                       )}
@@ -248,7 +248,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
                   whileTap={{ scale: 0.9 }}
                   onClick={() => removeFile(index)}
                   className={styles.fileRemoveButton}
-                  aria-label="Remove file"
+                  aria-label={CHAT_UI_TEXT.ARIA_REMOVE_FILE}
                 >
                   <FiX size={16} />
                 </motion.button>

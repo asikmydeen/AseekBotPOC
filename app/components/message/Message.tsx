@@ -18,8 +18,8 @@ import ImageDialog from './ImageDialog';
 
 // Import types
 import { MessageType, MultimediaData } from '../../types/shared';
-import { SenderType, ReactionType } from '../../constants';
-import { CHAT_UI_TEXT } from '../../constants/chatConstants';
+import { ReactionType } from '../../constants';
+import { CHAT_UI_TEXT, SENDER_TYPES } from '../../constants/chatConstants';
 
 interface MessageProps {
   message: MessageType;
@@ -91,7 +91,7 @@ function Message({
 
     // Handle empty content case
     if (!messageContent) {
-      const errorMessage = message.sender === SenderType.BOT
+      const errorMessage = message.sender === SENDER_TYPES.BOT
         ? CHAT_UI_TEXT.ERROR_NO_CONTENT
         : "";
       setDisplayedText(errorMessage);
@@ -212,7 +212,7 @@ function Message({
           )}
 
           {/* Message Actions */}
-          {message.sender === SenderType.BOT && (
+          {message.sender === SENDER_TYPES.BOT && (
             <MessageActions
               reaction={message.reaction === ReactionType.THUMBS_UP ? true : message.reaction === ReactionType.THUMBS_DOWN ? false : null}
               isPinned={!!message.pinned}

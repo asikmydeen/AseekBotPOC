@@ -93,7 +93,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   : 'bg-blue-500 text-white'
                 : ''
               } relative`}
-            aria-label="Toggle artifacts panel"
+            aria-label={CHAT_UI_TEXT.ARIA_TOGGLE_ARTIFACTS}
           >
             <FiCode className="h-4 w-4 sm:h-5 sm:w-5" />
             {/* Notification badge */}
@@ -108,7 +108,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={createChat}
           className={`${styles.actionButton} flex items-center`}
-          aria-label="Start new chat"
+          aria-label={CHAT_UI_TEXT.ARIA_START_NEW_CHAT}
         >
           <MdAdd className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
           <span className="hidden sm:inline">{CHAT_UI_TEXT.CHAT_HEADER_NEW_CHAT}</span>
@@ -118,7 +118,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           onClick={toggleTheme}
           className={styles.actionButton}
-          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDarkMode ? CHAT_UI_TEXT.ARIA_TOGGLE_THEME.replace('{0}', 'light') : CHAT_UI_TEXT.ARIA_TOGGLE_THEME.replace('{0}', 'dark')}
         >
           {isDarkMode ? <MdLightMode className="h-4 w-4 sm:h-5 sm:w-5" /> : <MdDarkMode className="h-4 w-4 sm:h-5 sm:w-5" />}
         </button>
@@ -127,7 +127,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <Link
           href="/userguide"
           className={styles.actionButton}
-          aria-label="User Guide"
+          aria-label={CHAT_UI_TEXT.ARIA_USER_GUIDE}
         >
           <FiHelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
@@ -137,7 +137,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={exportChat}
             className={styles.actionButton}
-            aria-label="Export conversation"
+            aria-label={CHAT_UI_TEXT.ARIA_EXPORT_CONVERSATION}
           >
             <MdDownload className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
@@ -148,7 +148,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowFeedbackForm}
             className={styles.actionButton}
-            aria-label="Provide feedback"
+            aria-label={CHAT_UI_TEXT.ARIA_PROVIDE_FEEDBACK}
           >
             <MdFeedback className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
@@ -159,7 +159,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             onClick={setShowTicketForm}
             className={styles.actionButton}
-            aria-label="Create a ticket"
+            aria-label={CHAT_UI_TEXT.ARIA_CREATE_TICKET}
           >
             <TicketIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
@@ -168,7 +168,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Mobile Search Button */}
         <button
           className={`${styles.actionButton} sm:hidden`}
-          aria-label="Search"
+          aria-label={CHAT_UI_TEXT.ARIA_SEARCH}
         >
           <MdSearch className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>

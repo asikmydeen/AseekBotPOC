@@ -9,7 +9,7 @@ import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 import { ProcessingStatus, getStatusMessage } from '../../types/status';
 import { MultimediaType, ReactionType } from '../../constants';
-import { CHAT_UI_TEXT } from '../../constants/chatConstants';
+import { CHAT_UI_TEXT, SENDER_TYPES } from '../../constants/chatConstants';
 import { getMessageListStyles } from '../../styles/chatStyles';
 
 // Enhanced Empty State Component
@@ -27,8 +27,8 @@ const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => {
       <div className={styles.emptyState.iconContainer}>
         <FaRobot className={styles.emptyState.icon} />
       </div>
-      <h2 className={styles.emptyState.title}>{CHAT_UI_TEXT.EMPTY_STATE_TITLE}</h2>
-      <p className={styles.emptyState.description}>{CHAT_UI_TEXT.EMPTY_STATE_DESCRIPTION}</p>
+      <h2 className={styles.emptyState.title}>{CHAT_UI_TEXT.WELCOME_TITLE}</h2>
+      <p className={styles.emptyState.description}>{CHAT_UI_TEXT.WELCOME_DESCRIPTION}</p>
       <motion.div
         initial={{ scale: 1 }}
         animate={{
@@ -100,7 +100,7 @@ const EnhancedAsyncStatusIndicator = ({
       <div className={styles.statusIndicator.statusWrapper}>
         <div className="flex items-center">
           <span className={styles.statusIndicator.statusLabel}>
-            Status: <span className={styles.statusIndicator.statusValue}>{displayStatus}</span>
+            {CHAT_UI_TEXT.STATUS_LABEL} <span className={styles.statusIndicator.statusValue}>{displayStatus}</span>
           </span>
         </div>
         <div className={styles.statusIndicator.buttonsContainer}>
@@ -209,7 +209,7 @@ const MessageList: React.FC<MessageListProps> = ({
             <motion.div
               key={`${message.timestamp}-${index}`}
               id={`message-${message.timestamp}`}
-              initial={{ opacity: 0, y: 20, x: message.sender === 'user' ? 5 : -5 }}
+              initial={{ opacity: 0, y: 20, x: message.sender === SENDER_TYPES.USER ? 5 : -5 }}
               animate={{ opacity: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{
