@@ -13,7 +13,7 @@ interface ModalContextType {
     prompt: Prompt,
     requiredFileCount: number,
     requiredVariables: string[],
-    onSubmit: (files: UploadedFile[], variables: Record<string, string>) => void,
+    onSubmit: (files: UploadedFile[], variables: Record<string, string>, prompt: Prompt) => void,
     variableTypes?: Record<string, VariableType>
   ) => void;
   closeFileSelectionDialog: () => void;
