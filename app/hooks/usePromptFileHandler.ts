@@ -323,26 +323,26 @@ const usePromptFileHandler = ({
       }
 
       if (currentStatusCallback) {
-          // Update status to show processing in the chat interface
-          // This will trigger the typing indicator and progress bar
-          currentStatusCallback('PROCESSING', 10);
+        // Update status to show processing in the chat interface
+        // This will trigger the typing indicator and progress bar
+        currentStatusCallback('PROCESSING', 10);
 
-          // Store the request ID in localStorage to ensure it's tracked across page refreshes
-          if (apiResponse && apiResponse.requestId) {
-            try {
-              let pending: Record<string, { status: string }> = {};
-              const stored = localStorage.getItem('pendingRequests');
-              if (stored) {
-                pending = JSON.parse(stored);
-              }
-              pending[apiResponse.requestId] = { status: 'PROCESSING' };
-              localStorage.setItem('pendingRequests', JSON.stringify(pending));
-              console.log('Stored request ID in localStorage:', apiResponse.requestId);
-            } catch (e) {
-              console.error('Error storing request ID in localStorage:', e);
+        // Store the request ID in localStorage to ensure it's tracked across page refreshes
+        if (apiResponse && apiResponse.requestId) {
+          try {
+            let pending: Record<string, { status: string }> = {};
+            const stored = localStorage.getItem('pendingRequests');
+            if (stored) {
+              pending = JSON.parse(stored);
             }
+            pending[apiResponse.requestId] = { status: 'PROCESSING' };
+            localStorage.setItem('pendingRequests', JSON.stringify(pending));
+            console.log('Stored request ID in localStorage:', apiResponse.requestId);
+          } catch (e) {
+            console.error('Error storing request ID in localStorage:', e);
           }
         }
+      }
 
       // Reset state after successful submission
       resetState();
