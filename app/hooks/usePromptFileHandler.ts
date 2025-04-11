@@ -36,7 +36,7 @@ const usePromptFileHandler = ({
   const [error, setError] = useState<Error | null>(null);
   const [requiredFileCount, setRequiredFileCount] = useState<number>(0);
   const [requiredVariables, setRequiredVariables] = useState<string[]>([]);
-  const [variableTypes, setVariableTypes] = useState<Record<string, { type: string; options?: string[] }>>({});
+  const [variableTypes, setVariableTypes] = useState<Record<string, VariableType>>({});
 
   // Parse prompt content to extract required files and variables
   const parsePromptRequirements = useCallback((prompt: Prompt) => {
