@@ -125,6 +125,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 };
 // Enhanced File Dropzone Component
 import { FiUploadCloud, FiX, FiFile } from 'react-icons/fi';
+import { getEnhancedFileDropzoneStyles } from '../../styles/chatStyles';
 
 interface EnhancedFileDropzoneProps {
   getRootProps: any;
@@ -157,26 +158,21 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Get centralized styles
+  const styles = getEnhancedFileDropzoneStyles(isDarkMode);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="w-full max-w-full mb-4 px-2 sm:px-0"
+      className={styles.container}
     >
       {uploadedFiles.length === 0 ? (
         <div
           {...getRootProps()}
-          className={`border-3 border-dashed rounded-2xl p-4 sm:p-6 md:p-8 mb-4 text-center cursor-pointer transition-all duration-300
-            ${isDarkMode
-              ? isDragActive
-                ? 'border-blue-400 bg-blue-900/20 shadow-inner shadow-blue-900/20'
-                : 'border-gray-600 hover:border-blue-400 shadow-lg'
-              : isDragActive
-                ? 'border-blue-400 bg-blue-50 shadow-inner shadow-blue-500/10'
-                : 'border-gray-300 hover:border-blue-400 shadow-md'
-            }`}
+          className={styles.dropzoneContainer(isDragActive)}
         >
           <input {...getInputProps()} />
           <motion.div
@@ -184,31 +180,31 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             animate={isDragActive ? { scale: [1, 1.05, 1] } : { scale: 1 }}
             transition={{ duration: 0.5, repeat: isDragActive ? Infinity : 0 }}
           >
-            <FiUploadCloud className={`mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-2 sm:mb-4 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            <p className={`text-base sm:text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            <FiUploadCloud className={styles.uploadIcon(isDragActive)} />
+            <p className={styles.dropzoneText}>
               {isDragActive ? 'Drop files here...' : 'Drag and drop files here, or click to select files'}
             </p>
-            <p className={`text-xs sm:text-sm mt-1 sm:mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className={styles.dropzoneSubtext}>
               Supported formats: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG
             </p>
           </motion.div>
         </div>
       ) : (
         <motion.div
-          className={`rounded-2xl p-3 sm:p-4 md:p-6 mb-4 ${isDarkMode ? 'bg-gray-750 shadow-xl' : 'bg-gray-50 shadow-lg'}`}
+          className={styles.fileContainer}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+          <div className={styles.fileHeader}>
+            <h3 className={styles.fileTitle}>
               {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected
             </h3>
 
             {isUploading && (
-              <div className="w-full max-w-xs mx-auto h-2 bg-gray-300 rounded-full overflow-hidden mt-2 mb-3">
+              <div className={styles.progressBar}>
                 <motion.div
-                  className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+                  className={styles.progressBarFill}
                   initial={{ width: '0%' }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.3 }}
@@ -217,31 +213,29 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             )}
           </div>
 
-          <div className="grid gap-2 sm:gap-3 mb-3 sm:mb-4 max-h-40 sm:max-h-60 overflow-y-auto pr-1 sm:pr-2">
+          <div className={styles.fileGrid}>
             {uploadedFiles.map((file, index) => (
               <motion.div
                 key={`${file.name}-${index}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
-                className={`flex items-center justify-between p-2 sm:p-3 rounded-xl ${
-                  isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50'
-                } shadow-md transition-all duration-200`}
+                className={styles.fileItem}
               >
                 <div className="flex items-center">
-                  <FiFile className={`mr-2 sm:mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} size={20} />
-                  <div>
-                    <p className={`font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-xs text-sm sm:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <FiFile className={styles.fileIcon} size={20} />
+                  <div className={styles.fileDetails}>
+                    <p className={styles.fileName}>
                       {file.name}
                     </p>
                     <div className="flex items-center">
-                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p className={styles.fileSize}>
                         {formatFileSize(file.size)}
                       </p>
                       {file.status === 'uploading' && (
                         <div className="flex items-center ml-2">
                           <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin mr-1 border-blue-500" />
-                          <span className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>
+                          <span className={styles.fileStatus}>
                             {file.progress ? `${Math.round(file.progress)}%` : 'Uploading...'}
                           </span>
                         </div>
@@ -253,9 +247,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => removeFile(index)}
-                  className={`p-2 rounded-full ${
-                    isDarkMode ? 'bg-gray-600 hover:bg-red-900 text-gray-300 hover:text-red-200' : 'bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-500'
-                  } transition-colors`}
+                  className={styles.fileRemoveButton}
                   aria-label="Remove file"
                 >
                   <FiX size={16} />
@@ -264,16 +256,12 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+          <div className={styles.actionsContainer}>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('analyze')}
-              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
-                isDarkMode
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              } transition-colors`}
+              className={styles.actionButton('analyze', isDarkMode)}
               disabled={isUploading}
             >
               Analyze Files
@@ -283,11 +271,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('send')}
-              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
-                isDarkMode
-                  ? 'bg-green-600 hover:bg-green-500 text-white'
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              } transition-colors`}
+              className={styles.actionButton('send', isDarkMode)}
               disabled={isUploading}
             >
               Send with Message
@@ -297,11 +281,7 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleFileAction('cancel')}
-              className={`py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${
-                isDarkMode
-                  ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
-                  : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-              } transition-colors`}
+              className={styles.actionButton('cancel', isDarkMode)}
               disabled={isUploading}
             >
               Cancel

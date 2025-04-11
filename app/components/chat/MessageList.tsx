@@ -12,44 +12,50 @@ import { MultimediaType, ReactionType } from '../../constants';
 import { getMessageListStyles } from '../../styles/chatStyles';
 
 // Enhanced Empty State Component
-const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className={`flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 rounded-xl shadow-lg mx-auto my-6 sm:my-8 md:my-12 max-w-md w-full
-      ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'}`}
-  >
-    <div className={`p-4 rounded-full mb-4 ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-      <FaRobot className={`text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-    </div>
-    <h2 className="text-2xl font-bold mb-3">Welcome to AseekBot!</h2>
-    <p className="text-center mb-6">I'm your AI assistant for data center procurement. How can I help you today?</p>
+const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => {
+  // Get centralized styles
+  const styles = getMessageListStyles(isDarkMode);
+
+  return (
     <motion.div
-      initial={{ scale: 1 }}
-      animate={{
-        scale: [1, 1.03, 1],
-        transition: {
-          repeat: Infinity,
-          repeatType: "mirror",
-          duration: 2,
-          ease: "easeInOut"
-        }
-      }}
-      className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-200 text-blue-800'}
-        font-medium text-sm`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={styles.emptyState.container}
     >
-      Try asking me a question to get started
+      <div className={styles.emptyState.iconContainer}>
+        <FaRobot className={styles.emptyState.icon} />
+      </div>
+      <h2 className={styles.emptyState.title}>Welcome to AseekBot!</h2>
+      <p className={styles.emptyState.description}>I'm your AI assistant for data center procurement. How can I help you today?</p>
+      <motion.div
+        initial={{ scale: 1 }}
+        animate={{
+          scale: [1, 1.03, 1],
+          transition: {
+            repeat: Infinity,
+            repeatType: "mirror",
+            duration: 2,
+            ease: "easeInOut"
+          }
+        }}
+        className={styles.emptyState.promptBox}
+      >
+        Try asking me a question to get started
+      </motion.div>
     </motion.div>
-  </motion.div>
-);
+  );
+};
 
 // Enhanced Progress Bar with animation
 const EnhancedProgressBar = ({ progress, isDarkMode }: { progress: number; isDarkMode: boolean }) => {
+  // Get centralized styles
+  const styles = getMessageListStyles(isDarkMode);
+
   return (
-    <div className="w-full max-w-[200px] sm:max-w-[250px] h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden mt-2 shadow-inner">
+    <div className={styles.progressBar.container}>
       <motion.div
-        className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+        className={styles.progressBar.fill}
         initial={{ width: 0 }}
         animate={{ width: `${progress}%` }}
         transition={{ duration: 0.5 }}
@@ -72,6 +78,9 @@ const EnhancedAsyncStatusIndicator = ({
   onRefresh: () => void,
   onCancel: () => void
 }) => {
+  // Get centralized styles
+  const styles = getMessageListStyles(isDarkMode);
+
   // Log when the component renders with its props
   console.log('Rendering EnhancedAsyncStatusIndicator with:', { status, progress });
 
@@ -85,20 +94,20 @@ const EnhancedAsyncStatusIndicator = ({
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex flex-col rounded-xl ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'} p-2 sm:p-3 shadow-md mt-2 w-full max-w-full`}
+      className={styles.statusIndicator.container}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className={styles.statusIndicator.statusWrapper}>
         <div className="flex items-center">
-          <span className={`text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            Status: <span className={`font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{displayStatus}</span>
+          <span className={styles.statusIndicator.statusLabel}>
+            Status: <span className={styles.statusIndicator.statusValue}>{displayStatus}</span>
           </span>
         </div>
-        <div className="flex space-x-2 self-end sm:self-auto">
+        <div className={styles.statusIndicator.buttonsContainer}>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onRefresh}
-            className={`text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-blue-800 text-blue-200 hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+            className={styles.statusIndicator.refreshButton}
           >
             <FiRefreshCw className="mr-1.5" size={14} />
             Refresh
@@ -107,7 +116,7 @@ const EnhancedAsyncStatusIndicator = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onCancel}
-            className={`text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+            className={styles.statusIndicator.cancelButton}
           >
             <FiXCircle className="mr-1.5" size={14} />
             Cancel
@@ -182,7 +191,7 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   // Get centralized styles
-  const styles = getMessageListStyles();
+  const styles = getMessageListStyles(isDarkMode);
 
   return (
     <motion.div
@@ -230,10 +239,10 @@ const MessageList: React.FC<MessageListProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className={`flex items-start space-x-2 sm:space-x-3 w-full max-w-full ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+          className={styles.typingContainer}
         >
-          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-            <FaRobot className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+          <div className={styles.botIconContainer}>
+            <FaRobot className={styles.botIcon} />
           </div>
 
           <div className="flex flex-col w-full max-w-full">

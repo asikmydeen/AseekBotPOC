@@ -93,31 +93,25 @@ export interface EnhancedChatInputStyles {
 
 export interface EnhancedFileDropzoneStyles {
   container: string;
-  header: string;
-  title: string;
-  closeButton: string;
-  dropArea: string;
-  dropAreaActive: string;
-  uploadingText: string;
-  dragPrompt: string;
-  fileList: string;
+  dropzoneContainer: (isDragActive: boolean) => string;
+  uploadIcon: (isDragActive: boolean) => string;
+  dropzoneText: string;
+  dropzoneSubtext: string;
+  fileContainer: string;
+  fileHeader: string;
+  fileTitle: string;
+  progressBar: string;
+  progressBarFill: string;
+  fileGrid: string;
   fileItem: string;
-  fileIcon: {
-    container: string;
-    pdf: string;
-    word: string;
-    text: string;
-    csv: string;
-    excel: string;
-    image: string;
-    default: string;
-  };
+  fileIcon: string;
+  fileDetails: string;
   fileName: string;
   fileSize: string;
+  fileStatus: string;
   fileRemoveButton: string;
-  progressContainer: string;
-  progressBar: string;
-  progressText: string;
+  actionsContainer: string;
+  actionButton: (type: 'analyze' | 'send' | 'cancel', isDarkMode: boolean) => string;
 }
 
 export interface EnhancedTypingIndicatorStyles {
@@ -130,6 +124,30 @@ export interface EnhancedTypingIndicatorStyles {
 export interface MessageListStyles {
   container: string;
   messageItem: string;
+  emptyState: {
+    container: string;
+    iconContainer: string;
+    icon: string;
+    title: string;
+    description: string;
+    promptBox: string;
+  };
+  typingContainer: string;
+  botIconContainer: string;
+  botIcon: string;
+  progressBar: {
+    container: string;
+    fill: string;
+  };
+  statusIndicator: {
+    container: string;
+    statusWrapper: string;
+    statusLabel: string;
+    statusValue: string;
+    buttonsContainer: string;
+    refreshButton: string;
+    cancelButton: string;
+  };
 }
 
 export interface DocumentAnalysisPromptStyles {
@@ -543,6 +561,84 @@ export const getMessageListItemClass = (): string => {
   return 'message-container w-full max-w-full';
 };
 
+// Empty State Component
+export const getMessageListEmptyStateContainerClass = (isDarkMode: boolean): string => {
+  return `flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 rounded-xl shadow-lg mx-auto my-6 sm:my-8 md:my-12 max-w-md w-full
+    ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'}`;
+};
+
+export const getMessageListEmptyStateIconContainerClass = (isDarkMode: boolean): string => {
+  return `p-4 rounded-full mb-4 ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`;
+};
+
+export const getMessageListEmptyStateIconClass = (isDarkMode: boolean): string => {
+  return `text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`;
+};
+
+export const getMessageListEmptyStateTitleClass = (): string => {
+  return 'text-2xl font-bold mb-3';
+};
+
+export const getMessageListEmptyStateDescriptionClass = (): string => {
+  return 'text-center mb-6';
+};
+
+export const getMessageListEmptyStatePromptBoxClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-lg ${isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-200 text-blue-800'}
+    font-medium text-sm`;
+};
+
+// Typing Container
+export const getMessageListTypingContainerClass = (isDarkMode: boolean): string => {
+  return `flex items-start space-x-2 sm:space-x-3 w-full max-w-full ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
+};
+
+export const getMessageListBotIconContainerClass = (isDarkMode: boolean): string => {
+  return `w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`;
+};
+
+export const getMessageListBotIconClass = (isDarkMode: boolean): string => {
+  return `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`;
+};
+
+// Progress Bar
+export const getMessageListProgressBarContainerClass = (): string => {
+  return 'w-full max-w-[200px] sm:max-w-[250px] h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden mt-2 shadow-inner';
+};
+
+export const getMessageListProgressBarFillClass = (isDarkMode: boolean): string => {
+  return `h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`;
+};
+
+// Status Indicator
+export const getMessageListStatusIndicatorContainerClass = (isDarkMode: boolean): string => {
+  return `flex flex-col rounded-xl ${isDarkMode ? 'bg-gray-750' : 'bg-gray-100'} p-2 sm:p-3 shadow-md mt-2 w-full max-w-full`;
+};
+
+export const getMessageListStatusWrapperClass = (): string => {
+  return 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2';
+};
+
+export const getMessageListStatusLabelClass = (isDarkMode: boolean): string => {
+  return `text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`;
+};
+
+export const getMessageListStatusValueClass = (isDarkMode: boolean): string => {
+  return `font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`;
+};
+
+export const getMessageListStatusButtonsContainerClass = (): string => {
+  return 'flex space-x-2 self-end sm:self-auto';
+};
+
+export const getMessageListRefreshButtonClass = (isDarkMode: boolean): string => {
+  return `text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-blue-800 text-blue-200 hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`;
+};
+
+export const getMessageListCancelButtonClass = (isDarkMode: boolean): string => {
+  return `text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center ${isDarkMode ? 'bg-red-900 text-red-200 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'}`;
+};
+
 // Utility functions for DocumentAnalysisPrompt
 export const getDocumentAnalysisPromptContainerClass = (isDarkMode: boolean): string => {
   return `mb-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} shadow-md`;
@@ -889,6 +985,115 @@ export const getTicketFormButtonSecondaryClass = (isDarkMode: boolean): string =
   } transition-colors`;
 };
 
+// Utility functions for EnhancedFileDropzone
+export const getEnhancedFileDropzoneContainerClass = (): string => {
+  return 'w-full max-w-full mb-4 px-2 sm:px-0';
+};
+
+export const getEnhancedFileDropzoneDropzoneContainerClass = (isDarkMode: boolean, isDragActive: boolean): string => {
+  return `border-3 border-dashed rounded-2xl p-4 sm:p-6 md:p-8 mb-4 text-center cursor-pointer transition-all duration-300
+    ${isDarkMode
+      ? isDragActive
+        ? 'border-blue-400 bg-blue-900/20 shadow-inner shadow-blue-900/20'
+        : 'border-gray-600 hover:border-blue-400 shadow-lg'
+      : isDragActive
+        ? 'border-blue-400 bg-blue-50 shadow-inner shadow-blue-500/10'
+        : 'border-gray-300 hover:border-blue-400 shadow-md'
+    }`;
+};
+
+export const getEnhancedFileDropzoneUploadIconClass = (isDarkMode: boolean, isDragActive: boolean): string => {
+  return `mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-2 sm:mb-4 ${isDragActive ? 'text-blue-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getEnhancedFileDropzoneDropzoneTextClass = (isDarkMode: boolean): string => {
+  return `text-base sm:text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`;
+};
+
+export const getEnhancedFileDropzoneDropzoneSubtextClass = (isDarkMode: boolean): string => {
+  return `text-xs sm:text-sm mt-1 sm:mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getEnhancedFileDropzoneFileContainerClass = (isDarkMode: boolean): string => {
+  return `rounded-2xl p-3 sm:p-4 md:p-6 mb-4 ${isDarkMode ? 'bg-gray-750 shadow-xl' : 'bg-gray-50 shadow-lg'}`;
+};
+
+export const getEnhancedFileDropzoneFileHeaderClass = (): string => {
+  return 'flex justify-between items-center mb-4';
+};
+
+export const getEnhancedFileDropzoneFileTitleClass = (isDarkMode: boolean): string => {
+  return `text-base sm:text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`;
+};
+
+export const getEnhancedFileDropzoneProgressBarClass = (): string => {
+  return 'w-full max-w-xs mx-auto h-2 bg-gray-300 rounded-full overflow-hidden mt-2 mb-3';
+};
+
+export const getEnhancedFileDropzoneProgressBarFillClass = (isDarkMode: boolean): string => {
+  return `h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`;
+};
+
+export const getEnhancedFileDropzoneFileGridClass = (): string => {
+  return 'grid gap-2 sm:gap-3 mb-3 sm:mb-4 max-h-40 sm:max-h-60 overflow-y-auto pr-1 sm:pr-2';
+};
+
+export const getEnhancedFileDropzoneFileItemClass = (isDarkMode: boolean): string => {
+  return `flex items-center justify-between p-2 sm:p-3 rounded-xl ${isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50'} shadow-md transition-all duration-200`;
+};
+
+export const getEnhancedFileDropzoneFileIconClass = (isDarkMode: boolean): string => {
+  return `mr-2 sm:mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`;
+};
+
+export const getEnhancedFileDropzoneFileDetailsClass = (): string => {
+  return '';
+};
+
+export const getEnhancedFileDropzoneFileNameClass = (isDarkMode: boolean): string => {
+  return `font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-xs text-sm sm:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+};
+
+export const getEnhancedFileDropzoneFileSizeClass = (isDarkMode: boolean): string => {
+  return `text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getEnhancedFileDropzoneFileStatusClass = (isDarkMode: boolean): string => {
+  return `text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`;
+};
+
+export const getEnhancedFileDropzoneFileRemoveButtonClass = (isDarkMode: boolean): string => {
+  return `p-2 rounded-full ${isDarkMode ? 'bg-gray-600 hover:bg-red-900 text-gray-300 hover:text-red-200' : 'bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-500'} transition-colors`;
+};
+
+export const getEnhancedFileDropzoneActionsContainerClass = (): string => {
+  return 'flex flex-wrap gap-2 sm:gap-3 justify-center';
+};
+
+export const getEnhancedFileDropzoneActionButtonClass = (type: 'analyze' | 'send' | 'cancel', isDarkMode: boolean): string => {
+  let colorClasses = '';
+
+  switch (type) {
+    case 'analyze':
+      colorClasses = isDarkMode
+        ? 'bg-blue-600 hover:bg-blue-500 text-white'
+        : 'bg-blue-500 hover:bg-blue-600 text-white';
+      break;
+    case 'send':
+      colorClasses = isDarkMode
+        ? 'bg-green-600 hover:bg-green-500 text-white'
+        : 'bg-green-500 hover:bg-green-600 text-white';
+      break;
+    case 'cancel':
+      colorClasses = isDarkMode
+        ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+        : 'bg-gray-300 hover:bg-gray-400 text-gray-700';
+      break;
+  }
+
+  return `py-2 sm:py-2.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-medium shadow-md ${colorClasses} transition-colors`;
+};
+
 // Get all styles for each component
 export const getChatHeaderStyles = (isDarkMode: boolean): ChatHeaderStyles => {
   return {
@@ -985,10 +1190,59 @@ export const getEnhancedTypingIndicatorStyles = (isDarkMode: boolean): EnhancedT
   };
 };
 
-export const getMessageListStyles = (): MessageListStyles => {
+export const getEnhancedFileDropzoneStyles = (isDarkMode: boolean): EnhancedFileDropzoneStyles => {
+  return {
+    container: getEnhancedFileDropzoneContainerClass(),
+    dropzoneContainer: (isDragActive: boolean) => getEnhancedFileDropzoneDropzoneContainerClass(isDarkMode, isDragActive),
+    uploadIcon: (isDragActive: boolean) => getEnhancedFileDropzoneUploadIconClass(isDarkMode, isDragActive),
+    dropzoneText: getEnhancedFileDropzoneDropzoneTextClass(isDarkMode),
+    dropzoneSubtext: getEnhancedFileDropzoneDropzoneSubtextClass(isDarkMode),
+    fileContainer: getEnhancedFileDropzoneFileContainerClass(isDarkMode),
+    fileHeader: getEnhancedFileDropzoneFileHeaderClass(),
+    fileTitle: getEnhancedFileDropzoneFileTitleClass(isDarkMode),
+    progressBar: getEnhancedFileDropzoneProgressBarClass(),
+    progressBarFill: getEnhancedFileDropzoneProgressBarFillClass(isDarkMode),
+    fileGrid: getEnhancedFileDropzoneFileGridClass(),
+    fileItem: getEnhancedFileDropzoneFileItemClass(isDarkMode),
+    fileIcon: getEnhancedFileDropzoneFileIconClass(isDarkMode),
+    fileDetails: getEnhancedFileDropzoneFileDetailsClass(),
+    fileName: getEnhancedFileDropzoneFileNameClass(isDarkMode),
+    fileSize: getEnhancedFileDropzoneFileSizeClass(isDarkMode),
+    fileStatus: getEnhancedFileDropzoneFileStatusClass(isDarkMode),
+    fileRemoveButton: getEnhancedFileDropzoneFileRemoveButtonClass(isDarkMode),
+    actionsContainer: getEnhancedFileDropzoneActionsContainerClass(),
+    actionButton: getEnhancedFileDropzoneActionButtonClass,
+  };
+};
+
+export const getMessageListStyles = (isDarkMode: boolean): MessageListStyles => {
   return {
     container: getMessageListContainerClass(),
     messageItem: getMessageListItemClass(),
+    emptyState: {
+      container: getMessageListEmptyStateContainerClass(isDarkMode),
+      iconContainer: getMessageListEmptyStateIconContainerClass(isDarkMode),
+      icon: getMessageListEmptyStateIconClass(isDarkMode),
+      title: getMessageListEmptyStateTitleClass(),
+      description: getMessageListEmptyStateDescriptionClass(),
+      promptBox: getMessageListEmptyStatePromptBoxClass(isDarkMode),
+    },
+    typingContainer: getMessageListTypingContainerClass(isDarkMode),
+    botIconContainer: getMessageListBotIconContainerClass(isDarkMode),
+    botIcon: getMessageListBotIconClass(isDarkMode),
+    progressBar: {
+      container: getMessageListProgressBarContainerClass(),
+      fill: getMessageListProgressBarFillClass(isDarkMode),
+    },
+    statusIndicator: {
+      container: getMessageListStatusIndicatorContainerClass(isDarkMode),
+      statusWrapper: getMessageListStatusWrapperClass(),
+      statusLabel: getMessageListStatusLabelClass(isDarkMode),
+      statusValue: getMessageListStatusValueClass(isDarkMode),
+      buttonsContainer: getMessageListStatusButtonsContainerClass(),
+      refreshButton: getMessageListRefreshButtonClass(isDarkMode),
+      cancelButton: getMessageListCancelButtonClass(isDarkMode),
+    },
   };
 };
 
