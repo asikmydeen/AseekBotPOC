@@ -9,6 +9,7 @@ import { UploadedFile, MessageType } from './types/shared';
 import { getCurrentUserId } from './store/userStore';
 import { ProcessingStatus, StatusUpdatePayload } from './types/status';
 import { useStatusStore, updateStatus } from './store/statusStore';
+import { SenderType } from './constants';
 
 
 // Dynamically import ChatInterface with SSR disabled
