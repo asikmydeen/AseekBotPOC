@@ -52,7 +52,11 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     console.log('ModalContext: Required file count:', fileCount);
     console.log('ModalContext: Required variables:', variables);
 
+    // Set the current prompt - this is critical for the handleFileSelection callback
     setCurrentPrompt(prompt);
+    console.log('ModalContext: Set currentPrompt state to:', prompt.title);
+
+    // Set other dialog properties
     setRequiredFileCount(fileCount);
     setRequiredVariables(variables);
     setVariableTypes(types);
