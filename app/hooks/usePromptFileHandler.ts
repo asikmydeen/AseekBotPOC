@@ -265,12 +265,18 @@ const usePromptFileHandler = ({
           type: file.type
         });
 
+        // Ensure all required properties are set
+        if (!file.name) file.name = file.fileName || 'Unnamed file';
+        if (!file.fileName) file.fileName = file.name || 'Unnamed file';
+        if (!file.s3Url) file.s3Url = file.url || '';
+        if (!file.type) file.type = 'application/octet-stream';
+
         return {
-          name: file.name || file.fileName || 'Unnamed file',
-          fileName: file.fileName || file.name || 'Unnamed file',
+          name: file.name,
+          fileName: file.fileName,
           // Use clean URL without query parameters
-          s3Url: file.s3Url || file.url || '',
-          mimeType: file.type || 'application/octet-stream'
+          s3Url: file.s3Url,
+          mimeType: file.type
         };
       });
       console.log('usePromptFileHandler: Formatted s3Files for API:', s3Files);
