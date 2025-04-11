@@ -1,14 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiService } from '../utils/apiService';
 import { UploadedFile, Prompt, PromptVariable } from '../types/shared';
-import { useModal } from '../contexts/ModalContext';
+import { useModal } from '../hooks/useModal';
 import { getCurrentUserId } from '../store/userStore';
-
-// Import the VariableType interface from ModalContext
-interface VariableType {
-  type: 'text' | 'file' | 'number' | 'date' | 'select';
-  options?: string[];
-}
+import { VariableType } from '../store/modalStore';
 
 interface UsePromptFileHandlerProps {
   onStatusUpdate?: (status: string, progress: number, userMessage?: string, isPromptMessage?: boolean) => void;

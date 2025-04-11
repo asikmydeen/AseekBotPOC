@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 // Import ThemeInitializer to handle theme initialization
 import ThemeInitializer from './utils/ThemeInitializer';
-import { ModalProvider } from './contexts/ModalContext';
+import ModalProvider from './components/providers/ModalProvider';
 
 // Initialize Zustand stores
 import './store/themeStore';
@@ -15,6 +15,7 @@ import './store/apiStore';
 import './store/promptsStore';
 import './store/chatStore';
 import './store/userStore';
+import './store/modalStore';
 
 interface ProviderProps {
     children: React.ReactNode;
