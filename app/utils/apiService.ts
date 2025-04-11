@@ -289,7 +289,9 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.deleteFile, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ s3Key, userId: getCurrentUserId() })
+        body: JSON.stringify({ s3Key, userId: getCurrentUserId() }),
+        mode: 'cors',
+        credentials: 'include',
       });
 
       if (!response.ok) {
