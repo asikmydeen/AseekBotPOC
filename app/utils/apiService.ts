@@ -353,7 +353,9 @@ export const apiService = {
       const response = await fetch(LAMBDA_ENDPOINTS.getUserFiles, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId }),
+        mode: 'cors',
+        credentials: 'include',
       });
 
       if (!response.ok) {
