@@ -212,7 +212,7 @@ const usePromptFileHandler = ({
       console.error('usePromptFileHandler: This is likely because the prompt was not properly set when opening the dialog.');
       console.error('usePromptFileHandler: Please make sure to call openFileDialog with a valid prompt before submitting files.');
     }
-  }, [requiredVariables, selectedPrompt]);
+  }, [requiredVariables, selectedPrompt, handleSubmitPrompt]);
 
   // Submit prompt with files and variables
   const handleSubmitPrompt = useCallback(async (
