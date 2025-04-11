@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPushed, FaTrash, FaPen, FaEllipsisV, FaClock, FaStar } from 'react-icons/fa';
 import { useChatHistory } from '../../hooks/useChatHistory';
+import { getHistoryListStyles } from '../../styles/chatStyles';
 
 interface HistoryItemProps {
     id: string;
@@ -32,34 +33,29 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 }) => {
     const [showOptions, setShowOptions] = useState(false);
 
+    // Get centralized styles
+    const styles = getHistoryListStyles(isDarkMode);
+
     return (
         <div
-            className={`p-3 rounded-lg cursor-pointer transition-all duration-200 relative mb-2 ${isActive
-                ? isDarkMode
-                    ? 'bg-gray-700 border-l-4 border-blue-500'
-                    : 'bg-gray-200 border-l-4 border-blue-500'
-                : isDarkMode
-                    ? 'bg-gray-800 hover:bg-gray-700'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}
+            className={styles.historyItem.container(isActive, isDarkMode)}
         >
-            <div className="flex items-center" onClick={onClick}>
+            <div className={styles.historyItem.content} onClick={onClick}>
                 <div className="flex-shrink-0 mr-3">
                     {isPinned ? (
-                        <FaStar className={isDarkMode ? 'text-yellow-400' : 'text-yellow-500'} />
+                        <FaStar className={styles.historyItem.icon.pinned} />
                     ) : (
-                        <FaClock className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+                        <FaClock className={styles.historyItem.icon.recent} />
                     )}
                 </div>
                 <div className="flex-1 truncate">
-                    <p className="text-sm font-medium truncate">{title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className={styles.historyItem.title}>{title}</p>
+                    <p className={styles.historyItem.date}>
                         {new Date(updatedAt).toLocaleDateString()} {new Date(updatedAt).toLocaleTimeString()}
                     </p>
                 </div>
                 <button
-                    className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'
-                        }`}
+                    className={styles.historyItem.optionsButton}
                     onClick={(e) => {
                         e.stopPropagation();
                         setShowOptions(!showOptions);
@@ -76,14 +72,12 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className={`absolute right-0 top-full mt-1 z-10 w-48 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'
-                            } ring-1 ring-black ring-opacity-5`}
+                        className={styles.historyItem.optionsMenu.container}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="py-1" role="menu" aria-orientation="vertical">
                             <button
-                                className={`w-full text-left block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
+                                className={styles.historyItem.optionsMenu.menuItem}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onRename();
@@ -93,8 +87,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
                                 <FaPen className="inline mr-2" /> Rename
                             </button>
                             <button
-                                className={`w-full text-left block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
+                                className={styles.historyItem.optionsMenu.menuItem}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onTogglePin();
@@ -104,10 +97,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
                                 <FaPushed className="inline mr-2" /> {isPinned ? 'Unpin' : 'Pin'}
                             </button>
                             <button
-                                className={`w-full text-left block px-4 py-2 text-sm ${isDarkMode
-                                    ? 'text-red-400 hover:bg-gray-700'
-                                    : 'text-red-600 hover:bg-gray-100'
-                                    }`}
+                                className={styles.historyItem.optionsMenu.deleteItem}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onDelete();
@@ -143,40 +133,33 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
     if (!isOpen) return null;
 
+    // Get centralized styles
+    const styles = getHistoryListStyles(isDarkMode);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className={styles.dialog.overlay}>
             <div
-                className={`w-full max-w-md p-6 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'
-                    }`}
+                className={styles.dialog.container}
             >
-                <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className={styles.dialog.title}>
                     Rename Chat
                 </h3>
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className={`w-full p-2 mb-4 border rounded-md ${isDarkMode
-                        ? 'bg-gray-700 text-white border-gray-600'
-                        : 'bg-white text-gray-900 border-gray-300'
-                        }`}
+                    className={styles.dialog.input}
                     placeholder="Enter a new title"
                 />
-                <div className="flex justify-end space-x-3">
+                <div className={styles.dialog.buttonContainer}>
                     <button
-                        className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                            }`}
+                        className={styles.dialog.cancelButton}
                         onClick={onClose}
                     >
                         Cancel
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-md ${!title.trim()
-                            ? 'bg-gray-500 cursor-not-allowed'
-                            : isDarkMode
-                                ? 'bg-blue-600 hover:bg-blue-700'
-                                : 'bg-blue-500 hover:bg-blue-600'
-                            } text-white`}
+                        className={styles.dialog.actionButton(!title.trim(), isDarkMode)}
                         disabled={!title.trim()}
                         onClick={() => {
                             if (title.trim()) {
@@ -210,29 +193,29 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
 }) => {
     if (!isOpen) return null;
 
+    // Get centralized styles
+    const styles = getHistoryListStyles(isDarkMode);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className={styles.dialog.overlay}>
             <div
-                className={`w-full max-w-md p-6 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'
-                    }`}
+                className={styles.dialog.container}
             >
-                <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className={styles.dialog.title}>
                     Delete Chat History
                 </h3>
-                <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className={styles.dialog.content}>
                     Are you sure you want to delete "{chatTitle}"? This action cannot be undone.
                 </p>
-                <div className="flex justify-end space-x-3">
+                <div className={styles.dialog.buttonContainer}>
                     <button
-                        className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                            }`}
+                        className={styles.dialog.cancelButton}
                         onClick={onClose}
                     >
                         Cancel
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'
-                            } text-white`}
+                        className={styles.dialog.deleteButton}
                         onClick={() => {
                             onConfirm();
                             onClose();
@@ -274,13 +257,15 @@ const HistoryList: React.FC<HistoryListProps> = ({ isDarkMode }) => {
         title: string;
     } | null>(null);
 
+    // Get centralized styles
+    const styles = getHistoryListStyles(isDarkMode);
+
     return (
-        <div className="h-full pb-4">
+        <div className={styles.container}>
             {/* Pinned Chats Section */}
             {pinnedChats.length > 0 && (
                 <div className="mb-4">
-                    <h3 className={`font-semibold text-sm mb-2 px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
+                    <h3 className={styles.sectionTitle}>
                         PINNED CHATS
                     </h3>
                     {pinnedChats.map((chat) => (
@@ -303,8 +288,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ isDarkMode }) => {
 
             {/* Recent Chats Section */}
             <div>
-                <h3 className={`font-semibold text-sm mb-2 px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
+                <h3 className={styles.sectionTitle}>
                     RECENT CHATS
                 </h3>
                 {recentChats.length > 0 ? (
@@ -324,7 +308,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ isDarkMode }) => {
                         />
                     ))
                 ) : (
-                    <p className={`text-sm px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={styles.emptyText}>
                         No recent chats
                     </p>
                 )}

@@ -223,6 +223,39 @@ export interface ChatInterfaceStyles {
   messageContainer: string;
 }
 
+export interface HistoryListStyles {
+  container: string;
+  sectionTitle: string;
+  emptyText: string;
+  historyItem: {
+    container: (isActive: boolean, isDarkMode: boolean) => string;
+    content: string;
+    icon: {
+      pinned: string;
+      recent: string;
+    };
+    title: string;
+    date: string;
+    optionsButton: string;
+    optionsMenu: {
+      container: string;
+      menuItem: string;
+      deleteItem: string;
+    };
+  };
+  dialog: {
+    overlay: string;
+    container: string;
+    title: string;
+    content: string;
+    input: string;
+    buttonContainer: string;
+    cancelButton: string;
+    actionButton: (isDisabled: boolean, isDarkMode: boolean) => string;
+    deleteButton: string;
+  };
+}
+
 export interface TicketFormStyles {
   container: string;
   title: string;
@@ -922,6 +955,109 @@ export const getChatInterfaceMessageContainerClass = (isDarkMode: boolean): stri
   return `flex-1 overflow-y-auto overscroll-contain p-6 ${isDarkMode ? 'dark-card-bg' : 'bg-gray-50'} rounded-lg shadow-inner mx-2 my-2`;
 };
 
+// Utility functions for HistoryList
+export const getHistoryListContainerClass = (): string => {
+  return 'h-full pb-4';
+};
+
+export const getHistoryListSectionTitleClass = (isDarkMode: boolean): string => {
+  return `font-semibold text-sm mb-2 px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+export const getHistoryListEmptyTextClass = (isDarkMode: boolean): string => {
+  return `text-sm px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
+};
+
+// History Item
+export const getHistoryItemContainerClass = (isActive: boolean, isDarkMode: boolean): string => {
+  return `p-3 rounded-lg cursor-pointer transition-all duration-200 relative mb-2 ${isActive
+    ? isDarkMode
+      ? 'bg-gray-700 border-l-4 border-blue-500'
+      : 'bg-gray-200 border-l-4 border-blue-500'
+    : isDarkMode
+      ? 'bg-gray-800 hover:bg-gray-700'
+      : 'bg-gray-100 hover:bg-gray-200'
+    }`;
+};
+
+export const getHistoryItemContentClass = (): string => {
+  return 'flex items-center';
+};
+
+export const getHistoryItemPinnedIconClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'text-yellow-400' : 'text-yellow-500';
+};
+
+export const getHistoryItemRecentIconClass = (isDarkMode: boolean): string => {
+  return isDarkMode ? 'text-gray-400' : 'text-gray-500';
+};
+
+export const getHistoryItemTitleClass = (): string => {
+  return 'text-sm font-medium truncate';
+};
+
+export const getHistoryItemDateClass = (): string => {
+  return 'text-xs text-gray-500';
+};
+
+export const getHistoryItemOptionsButtonClass = (isDarkMode: boolean): string => {
+  return `p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'}`;
+};
+
+export const getHistoryItemOptionsMenuContainerClass = (isDarkMode: boolean): string => {
+  return `absolute right-0 top-full mt-1 z-10 w-48 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} ring-1 ring-black ring-opacity-5`;
+};
+
+export const getHistoryItemOptionsMenuItemClass = (isDarkMode: boolean): string => {
+  return `w-full text-left block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`;
+};
+
+export const getHistoryItemOptionsMenuDeleteItemClass = (isDarkMode: boolean): string => {
+  return `w-full text-left block px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`;
+};
+
+// Dialog
+export const getHistoryDialogOverlayClass = (): string => {
+  return 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+};
+
+export const getHistoryDialogContainerClass = (isDarkMode: boolean): string => {
+  return `w-full max-w-md p-6 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`;
+};
+
+export const getHistoryDialogTitleClass = (isDarkMode: boolean): string => {
+  return `text-lg font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`;
+};
+
+export const getHistoryDialogContentClass = (isDarkMode: boolean): string => {
+  return `mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`;
+};
+
+export const getHistoryDialogInputClass = (isDarkMode: boolean): string => {
+  return `w-full p-2 mb-4 border rounded-md ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}`;
+};
+
+export const getHistoryDialogButtonContainerClass = (): string => {
+  return 'flex justify-end space-x-3';
+};
+
+export const getHistoryDialogCancelButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`;
+};
+
+export const getHistoryDialogActionButtonClass = (isDisabled: boolean, isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDisabled
+    ? 'bg-gray-500 cursor-not-allowed'
+    : isDarkMode
+      ? 'bg-blue-600 hover:bg-blue-700'
+      : 'bg-blue-500 hover:bg-blue-600'
+    } text-white`;
+};
+
+export const getHistoryDialogDeleteButtonClass = (isDarkMode: boolean): string => {
+  return `px-4 py-2 rounded-md ${isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white`;
+};
+
 // Utility functions for TicketForm
 export const getTicketFormContainerClass = (isDarkMode: boolean): string => {
   return `mb-6 p-4 rounded-lg shadow-lg ${
@@ -1326,6 +1462,41 @@ export const getChatInterfaceStyles = (isDarkMode: boolean, isArtifactPanelOpen:
     },
     mainContent: getChatInterfaceMainContentClass(isArtifactPanelOpen),
     messageContainer: getChatInterfaceMessageContainerClass(isDarkMode),
+  };
+};
+
+export const getHistoryListStyles = (isDarkMode: boolean): HistoryListStyles => {
+  return {
+    container: getHistoryListContainerClass(),
+    sectionTitle: getHistoryListSectionTitleClass(isDarkMode),
+    emptyText: getHistoryListEmptyTextClass(isDarkMode),
+    historyItem: {
+      container: getHistoryItemContainerClass,
+      content: getHistoryItemContentClass(),
+      icon: {
+        pinned: getHistoryItemPinnedIconClass(isDarkMode),
+        recent: getHistoryItemRecentIconClass(isDarkMode),
+      },
+      title: getHistoryItemTitleClass(),
+      date: getHistoryItemDateClass(),
+      optionsButton: getHistoryItemOptionsButtonClass(isDarkMode),
+      optionsMenu: {
+        container: getHistoryItemOptionsMenuContainerClass(isDarkMode),
+        menuItem: getHistoryItemOptionsMenuItemClass(isDarkMode),
+        deleteItem: getHistoryItemOptionsMenuDeleteItemClass(isDarkMode),
+      },
+    },
+    dialog: {
+      overlay: getHistoryDialogOverlayClass(),
+      container: getHistoryDialogContainerClass(isDarkMode),
+      title: getHistoryDialogTitleClass(isDarkMode),
+      content: getHistoryDialogContentClass(isDarkMode),
+      input: getHistoryDialogInputClass(isDarkMode),
+      buttonContainer: getHistoryDialogButtonContainerClass(),
+      cancelButton: getHistoryDialogCancelButtonClass(isDarkMode),
+      actionButton: getHistoryDialogActionButtonClass,
+      deleteButton: getHistoryDialogDeleteButtonClass(isDarkMode),
+    },
   };
 };
 

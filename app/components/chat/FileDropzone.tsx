@@ -82,14 +82,14 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
   };
 
   const getFileIcon = (fileType: string) => {
-    if (!fileType) return <FaFile className="text-gray-500" size={16} />;
-    if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500" size={16} />;
-    if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className="text-blue-500" size={16} />;
-    if (fileType.includes('text') || fileType.includes('txt')) return <FaFileAlt className="text-yellow-500" size={16} />;
-    if (fileType.includes('csv')) return <FaFileCsv className="text-green-500" size={16} />;
-    if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className="text-green-600" size={16} />;
-    if (fileType.includes('image')) return <FaFileImage className="text-purple-500" size={16} />;
-    return <FaFile className="text-gray-500" size={16} />;
+    if (!fileType) return <FaFile className={styles.fileIcon.default} size={16} />;
+    if (fileType.includes('pdf')) return <FaFilePdf className={styles.fileIcon.pdf} size={16} />;
+    if (fileType.includes('word') || fileType.includes('docx')) return <FaFileWord className={styles.fileIcon.word} size={16} />;
+    if (fileType.includes('text') || fileType.includes('txt')) return <FaFileAlt className={styles.fileIcon.text} size={16} />;
+    if (fileType.includes('csv')) return <FaFileCsv className={styles.fileIcon.csv} size={16} />;
+    if (fileType.includes('excel') || fileType.includes('xlsx') || fileType.includes('xls')) return <FaFileExcel className={styles.fileIcon.excel} size={16} />;
+    if (fileType.includes('image')) return <FaFileImage className={styles.fileIcon.image} size={16} />;
+    return <FaFile className={styles.fileIcon.default} size={16} />;
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -109,13 +109,13 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
     if (file.status === 'uploading' && typeof file.progress === 'number') {
       return (
         <div className="ml-2 text-xs">
-          <div className="w-16 h-1.5 bg-gray-300 rounded-full overflow-hidden">
+          <div className={styles.progressContainer}>
             <div
-              className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+              className={styles.progressBar}
               style={{ width: `${file.progress}%` }}
             />
           </div>
-          <span className="text-xs ml-1">{file.progress}%</span>
+          <span className={styles.progressText}>{file.progress}%</span>
         </div>
       );
     }
@@ -177,8 +177,8 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
           )}
 
           {uploadedFiles.length > 0 && !isUploading && (
-            <div className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <h4 className="text-xs font-medium mb-1 text-left">Uploaded Files:</h4>
+            <div className={styles.fileList}>
+              <h4 className={`text-xs font-medium mb-1 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Uploaded Files:</h4>
               <ul className="space-y-1">
                 {uploadedFiles.map((file, index) => {
                   // Ensure file has all required properties with defaults
@@ -249,31 +249,31 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
             </p>
           ) : (
             <div className="py-3">
-              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+              <p className={styles.dragPrompt}>
                 Drag and drop files here, or click to select files
               </p>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={styles.dropzoneSubtext}>
                 Supported formats: PDF, DOCX, TXT, CSV, JPG, PNG, XLS, XLSX
               </p>
 
               <div className="flex flex-wrap justify-center gap-2 mt-2">
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFilePdf className="text-red-500 mr-1" size={16} /> PDF
+                  <FaFilePdf className={styles.fileIcon.pdf} size={16} /> PDF
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFileWord className="text-blue-500 mr-1" size={16} /> DOCX
+                  <FaFileWord className={styles.fileIcon.word} size={16} /> DOCX
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFileAlt className="text-yellow-500 mr-1" size={16} /> TXT
+                  <FaFileAlt className={styles.fileIcon.text} size={16} /> TXT
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFileCsv className="text-green-500 mr-1" size={16} /> CSV
+                  <FaFileCsv className={styles.fileIcon.csv} size={16} /> CSV
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFileImage className="text-purple-500 mr-1" size={16} /> JPG/PNG
+                  <FaFileImage className={styles.fileIcon.image} size={16} /> JPG/PNG
                 </div>
                 <div className={`flex items-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <FaFileExcel className="text-green-600 mr-1" size={16} /> XLS/XLSX
+                  <FaFileExcel className={styles.fileIcon.excel} size={16} /> XLS/XLSX
                 </div>
               </div>
             </div>
