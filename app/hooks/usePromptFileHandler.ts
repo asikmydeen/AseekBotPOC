@@ -169,10 +169,11 @@ const usePromptFileHandler = ({
     setError(null);
   }, []);
 
+  // Get the modal context at the top level of the hook
+  const { currentPrompt: modalPrompt } = useModal();
+
   // Handle file selection - defined first to avoid circular dependency
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
-    // Get the modal context - must be inside the callback to ensure it's up-to-date
-    const { currentPrompt: modalPrompt } = useModal();
     console.log('usePromptFileHandler: handleFileSelection called with', files.length, 'files');
     console.log('usePromptFileHandler: Variables:', inputVariables);
     console.log('usePromptFileHandler: Modal context prompt:', modalPrompt?.title || 'null');
