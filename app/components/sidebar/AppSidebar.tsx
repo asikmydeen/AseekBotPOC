@@ -15,6 +15,7 @@ import {
   sidebarCSSVariables,
   getSidebarStyles
 } from '../../styles/sidebarStyles';
+import { CreatePromptRequest, UpdatePromptRequest } from '../../types/shared';
 
 // Import sub-components
 import {
