@@ -82,7 +82,7 @@ const usePromptFileHandler = ({
       setRequiredVariables(uniqueVariables);
 
       // Detect variable types based on naming patterns
-      const detectedTypes: Record<string, { type: string; options?: string[] }> = {};
+      const detectedTypes: Record<string, VariableType> = {};
 
       uniqueVariables.forEach(variable => {
         // Start with default type
