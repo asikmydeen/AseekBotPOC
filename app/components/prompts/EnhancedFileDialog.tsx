@@ -396,15 +396,19 @@ const EnhancedFileDialog: React.FC<EnhancedFileDialogProps> = ({
       console.log('EnhancedFileDialog: Calling onSubmit function with files and variables');
 
       // Ensure all files have the required properties
-      selectedFiles.forEach(file => {
-        if (!file.name) file.name = file.fileName || 'Unnamed file';
-        if (!file.fileName) file.fileName = file.name;
-        if (!file.s3Url) file.s3Url = file.url || '';
-      });
+      const formattedFiles = selectedFiles.map(file => ({
+        ...file,
+        name: file.name || file.fileName || 'Unnamed file',
+        fileName: file.fileName || file.name || 'Unnamed file',
+        s3Url: file.s3Url || file.url || '',
+        type: file.type || 'application/octet-stream',
+        url: file.url || file.s3Url || ''
+      }));
 
       // Call the onSubmit function with the files and variables
-      console.log('EnhancedFileDialog: Calling onSubmit with files:', selectedFiles.length);
-      onSubmit(selectedFiles, variables);
+      console.log('EnhancedFileDialog: Calling onSubmit with files:', formattedFiles.length);
+      console.log('EnhancedFileDialog: File details:', formattedFiles.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
+      onSubmit(formattedFiles, variables);
 
       console.log('EnhancedFileDialog: onSubmit function called successfully');
     } catch (error) {
