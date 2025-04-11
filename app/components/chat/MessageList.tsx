@@ -8,7 +8,7 @@ import Message from '../message/Message';
 import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 import { ProcessingStatus, getStatusMessage } from '../../types/status';
-import { ReactionType } from '../../constants';
+import { MultimediaType, ReactionType } from '../../constants';
 
 // Enhanced Empty State Component
 const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (

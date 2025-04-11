@@ -463,7 +463,7 @@ export default function useChatMessages({
     }
 
     // Ensure async status is set to show loading state
-    setAsyncStatus('PROCESSING');
+    setAsyncStatus(ProcessingStatus.PROCESSING);
 
     activeRequestIdsRef.current.forEach(requestId => {
       console.log(`Triggering manual refresh for request ${requestId}`);
