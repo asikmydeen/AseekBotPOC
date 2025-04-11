@@ -215,7 +215,7 @@ function ChatApp() {
         };
 
         // Update the active chat with the new user message
-        const updatedMessages = [...(activeChat.messages || []), newUserMessage];
+        const updatedMessages = [...(activeChat.messages || []), newUserMessage as MessageType];
         updateChatMessages(updatedMessages);
       }
 
@@ -290,7 +290,7 @@ function ChatApp() {
         });
 
         // Update the active chat with the new bot message
-        const updatedMessages = [...(activeChat.messages || []), botMessage];
+        const updatedMessages = [...(activeChat.messages || []), botMessage as MessageType];
         updateChatMessages(updatedMessages);
       }
 
