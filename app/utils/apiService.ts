@@ -173,7 +173,7 @@ export const apiService = {
 
         // Ensure userId is set
         if (!payload.userId) {
-<<<<<<< HEAD
+
           payload.userId = getCurrentUserId();
 =======        }
 
