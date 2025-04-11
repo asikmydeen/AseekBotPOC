@@ -50,17 +50,17 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     variableTypes: Record<string, VariableType> = {}
   ) => {
     console.log('ModalContext: openFileSelectionDialog called with prompt:', prompt.title);
-    console.log('ModalContext: Required file count:', fileCount);
-    console.log('ModalContext: Required variables:', variables);
+    console.log('ModalContext: Required file count:', requiredFileCount);
+    console.log('ModalContext: Required variables:', requiredVariables);
 
     // Set the current prompt - this is critical for the handleFileSelection callback
     setCurrentPrompt(prompt);
     console.log('ModalContext: Set currentPrompt state to:', prompt.title);
 
     // Set other dialog properties
-    setRequiredFileCount(fileCount);
-    setRequiredVariables(variables);
-    setVariableTypes(types);
+    setRequiredFileCount(requiredFileCount);
+    setRequiredVariables(requiredVariables);
+    setVariableTypes(variableTypes);
 
     console.log('ModalContext: Setting onFileSubmit callback');
     setOnFileSubmit(() => onSubmit);
