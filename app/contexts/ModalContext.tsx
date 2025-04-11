@@ -17,6 +17,7 @@ interface ModalContextType {
     variableTypes?: Record<string, VariableType>
   ) => void;
   closeFileSelectionDialog: () => void;
+  currentPrompt: Prompt | null;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
@@ -79,9 +80,11 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
 
   const handleSubmit = (files: UploadedFile[], variables: Record<string, string>) => {
     console.log('ModalContext: handleSubmit called with', files.length, 'files and', Object.keys(variables).length, 'variables');
+    console.log('ModalContext: Current prompt:', currentPrompt?.title);
 
     if (onFileSubmit) {
       console.log('ModalContext: Calling onFileSubmit callback');
+      // Pass the files and variables to the callback
       onFileSubmit(files, variables);
       console.log('ModalContext: onFileSubmit callback called successfully');
     } else {

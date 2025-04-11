@@ -169,6 +169,9 @@ const usePromptFileHandler = ({
     setError(null);
   }, []);
 
+  // Get the modal context
+  const { currentPrompt: modalPrompt } = useModal();
+
   // Handle file selection - defined first to avoid circular dependency
   const handleFileSelection = useCallback((files: UploadedFile[], inputVariables: Record<string, string>) => {
     console.log('usePromptFileHandler: handleFileSelection called with', files.length, 'files');
@@ -185,10 +188,19 @@ const usePromptFileHandler = ({
       return;
     }
 
-    // Store the current prompt in a local variable to avoid dependency issues
-    const currentPrompt = selectedPrompt;
-    if (currentPrompt) {
-      console.log('usePromptFileHandler: Current prompt found:', currentPrompt.title);
+    // First try to get the prompt from our local state
+    let promptToUse = selectedPrompt;
+
+    // If not found in local state, try to get it from the ModalContext
+    if (!promptToUse && modalPrompt) {
+      console.log('usePromptFileHandler: Using prompt from ModalContext:', modalPrompt.title);
+      promptToUse = modalPrompt;
+      // Update our local state for future reference
+      setSelectedPrompt(modalPrompt);
+    }
+
+    if (promptToUse) {
+      console.log('usePromptFileHandler: Using prompt:', promptToUse.title);
       // Use setTimeout to break the potential render cycle
       console.log('usePromptFileHandler: Setting timeout to call handleSubmitPrompt');
       setTimeout(() => {
@@ -204,15 +216,15 @@ const usePromptFileHandler = ({
         console.log('usePromptFileHandler: Validated files before submitting:',
           files.map(f => ({ name: f.name, fileName: f.fileName, s3Url: f.s3Url })));
 
-        handleSubmitPrompt(currentPrompt, files, inputVariables);
+        handleSubmitPrompt(promptToUse, files, inputVariables);
       }, 0);
     } else {
-      // If no prompt is found in state, try to get it from the ModalContext
-      console.error('usePromptFileHandler: No current prompt found in state!');
+      // If no prompt is found in state or ModalContext, show an error
+      console.error('usePromptFileHandler: No prompt found in state or ModalContext!');
       console.error('usePromptFileHandler: This is likely because the prompt was not properly set when opening the dialog.');
       console.error('usePromptFileHandler: Please make sure to call openFileDialog with a valid prompt before submitting files.');
     }
-  }, [requiredVariables, selectedPrompt]);
+  }, [requiredVariables, selectedPrompt, modalPrompt]);
 
   // Submit prompt with files and variables
   const handleSubmitPrompt = useCallback(async (
