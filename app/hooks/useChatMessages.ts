@@ -6,9 +6,10 @@ import { apiService } from '../utils/apiService';
 import { MessageType, MultimediaData } from '../types/shared';
 import { createDocumentAnalysisMessage } from '../utils/documentAnalysisUtils';
 import { ProcessingStatus, WorkflowType } from '../types/status';
+import { SenderType, AgentType, ReactionType, MultimediaType, DEFAULT_WELCOME_MESSAGE } from '../constants';
 
 interface ChatHistoryItem {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system'; // Keep these as they're OpenAI API format
   content: string;
   chatId: string;
   chatSessionId?: string;
@@ -45,8 +46,8 @@ export default function useChatMessages({
     }
     return [
       {
-        sender: 'bot',
-        text: 'Hello! I\'m AseekBot, your AI assistant. How can I help you today?',
+        sender: SenderType.BOT,
+        text: DEFAULT_WELCOME_MESSAGE,
         timestamp: new Date().toISOString(),
         suggestions: ['How can you help me?'],
         chatId: Date.now().toString(),
@@ -216,7 +217,7 @@ export default function useChatMessages({
           const messageText = statusResponse.completion || statusResponse.message || 'Processing complete.';
 
           botMessage = {
-            sender: 'bot',
+            sender: SenderType.BOT,
             formattedMessage: statusResponse.formattedMessage,
             text: messageText,
             timestamp: new Date().toISOString(),
@@ -224,7 +225,7 @@ export default function useChatMessages({
             chatSessionId: chatSessionId,
             completion: statusResponse.completion,
             aggregatedResults: statusResponse.aggregatedResults,
-            agentType: 'bid-analysis' // Mark this as a bid analysis message
+            agentType: AgentType.BID_ANALYSIS // Mark this as a bid analysis message
           };
         } else {
           console.log('Standard workflow detected, processing response...');
@@ -236,7 +237,7 @@ export default function useChatMessages({
           const messageText = statusResponse.completion || statusResponse.message || 'Processing complete.';
 
           botMessage = {
-            sender: 'bot',
+            sender: SenderType.BOT,
             formattedMessage: statusResponse.formattedMessage,
             text: messageText,
             timestamp: new Date().toISOString(),
@@ -290,7 +291,7 @@ export default function useChatMessages({
         }
         setProcessingError(new Error(errorMessage));
         const errorBotMessage: MessageType = {
-          sender: 'bot',
+          sender: SenderType.BOT,
           text: `**Error**: ${errorMessage}`,
           timestamp: new Date().toISOString(),
           isError: true,
@@ -335,7 +336,7 @@ export default function useChatMessages({
       }))
       : undefined;
     const userMessage: MessageType = {
-      sender: 'user',
+      sender: SenderType.USER,
       text: userMessageText,
       timestamp: new Date().toISOString(),
       attachments: userAttachments,
@@ -398,7 +399,7 @@ export default function useChatMessages({
           setIsThinking(false);
           setProgress(0);
           const botMessage: MessageType = {
-            sender: 'bot',
+            sender: SenderType.BOT,
             formattedMessage: response.formattedMessage || response.formattedResponse,
             text: response.message || 'No response received',
             timestamp: response.timestamp || new Date().toISOString(),
@@ -443,7 +444,7 @@ export default function useChatMessages({
       }
       const formattedErrorMsg = `**${errorTitle}**: ${errorMsg}`;
       const errorMessage: MessageType = {
-        sender: 'bot',
+        sender: SenderType.BOT,
         text: formattedErrorMsg,
         timestamp: new Date().toISOString(),
         suggestions: errorSuggestions.length > 0 ? errorSuggestions : undefined,
@@ -495,7 +496,7 @@ export default function useChatMessages({
     console.log('Async request cancelled');
   }, []);
 
-  const handleReaction = useCallback((index: number, reaction: 'thumbs-up' | 'thumbs-down') => {
+  const handleReaction = useCallback((index: number, reaction: ReactionType) => {
     safeUpdateMessages(prev =>
       prev.map((msg, i) => i === index ? { ...msg, reaction } : msg)
     );
@@ -511,13 +512,13 @@ export default function useChatMessages({
     sendMessageHandler(suggestion);
   }, [sendMessageHandler]);
 
-  const openMultimedia = useCallback((multimedia: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => {
+  const openMultimedia = useCallback((multimedia: { type: MultimediaType; data: MultimediaData }) => {
     setSelectedMultimedia(multimedia);
   }, []);
 
   const exportChatAsPDF = useCallback(() => {
     const chatContent = messages.map(msg => {
-      const sender = msg.sender === 'user' ? 'You' : 'AseekBot';
+      const sender = msg.sender === SenderType.USER ? 'You' : 'AseekBot';
       const time = new Date(msg.timestamp).toLocaleTimeString();
       const formattedText = marked.parse(msg.text || '');
       let reportContent = '';
@@ -536,7 +537,7 @@ export default function useChatMessages({
         `;
       }
       return stripIndent(`
-        <div class="message ${msg.sender}">
+        <div class="message ${msg.sender === SenderType.USER ? 'user' : 'bot'}">
           <div class="message-header">
             <strong>${sender}</strong>
             <span class="time">${time}</span>

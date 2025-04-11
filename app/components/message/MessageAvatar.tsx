@@ -4,9 +4,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaRobot } from 'react-icons/fa';
 import UserThumbnail from '../UserThumbnail';
+import { SenderType } from '../../constants';
 
 interface MessageAvatarProps {
-  sender: 'user' | 'bot';
+  sender: SenderType;
   isDarkMode: boolean;
   styles: any;
 }
@@ -27,7 +28,7 @@ const MessageAvatar: React.FC<MessageAvatarProps> = ({
         whileHover={{ scale: 1.1 }}
         className={styles.avatar.inner}
       >
-        {sender === 'user' ? (
+        {sender === SenderType.USER ? (
           <UserThumbnail className={styles.avatar.icon} userId={''} size={0} />
         ) : (
           <FaRobot className={styles.avatar.icon} />

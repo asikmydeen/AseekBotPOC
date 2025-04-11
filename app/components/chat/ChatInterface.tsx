@@ -22,6 +22,7 @@ import { MessageType, TicketDetails, UploadedFile } from '../../types/shared';
 import useMessageArtifacts from '../../hooks/useMessageArtifacts';
 import ArtifactPanel from '../ArtifactPanel';
 import { ProcessingStatus } from '../../types/status';
+import { SenderType, AgentType } from '../../constants';
 
 // Dynamically import the multimedia modal to improve initial load time
 const MultimediaModal = dynamic(() => import('../MultimediaModal'), { ssr: false });
@@ -179,7 +180,7 @@ function ChatInterfaceComponent({
     }, [processingError, isAsyncProcessing, cancelAsyncRequest]);
 
     // Track the current active agent based on the latest bot message
-    const [activeAgent, setActiveAgent] = useState<string>('default');
+    const [activeAgent, setActiveAgent] = useState<AgentType>(AgentType.DEFAULT);
 
     // Control the visibility of the file dropzone
     const [showFileDropzone, setShowFileDropzone] = useState<boolean>(false);
@@ -288,9 +289,9 @@ function ChatInterfaceComponent({
     // Effect to update active agent based on latest bot message
     useEffect(() => {
         if (messages.length > 0) {
-            const latestBotMessage = [...messages].reverse().find(msg => msg.sender === 'bot');
+            const latestBotMessage = [...messages].reverse().find(msg => msg.sender === SenderType.BOT);
             if (latestBotMessage && latestBotMessage.agentType) {
-                setActiveAgent(latestBotMessage.agentType);
+                setActiveAgent(latestBotMessage.agentType as AgentType);
             }
         }
     }, [messages]);

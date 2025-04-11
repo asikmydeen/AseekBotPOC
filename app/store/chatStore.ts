@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { apiService } from '../utils/apiService';
 import { MessageType } from '../types/shared';
+import { SenderType, AgentType, ReactionType, DEFAULT_WELCOME_MESSAGE } from '../constants';
 
 interface ChatState {
   // Message state
@@ -23,7 +24,7 @@ interface ChatState {
   pendingInput: string;
 
   // Agent state
-  activeAgent: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support';
+  activeAgent: AgentType;
 
   // Computed values
   filteredMessages: MessageType[];
@@ -40,8 +41,8 @@ interface ChatState {
   setTicketTriggerContext: (context: string | null) => void;
   setShowFileDropzone: (show: boolean) => void;
   setPendingInput: (input: string) => void;
-  setActiveAgent: (agent: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support') => void;
-  handleReaction: (index: number, reaction: 'thumbs-up' | 'thumbs-down') => void;
+  setActiveAgent: (agent: AgentType) => void;
+  handleReaction: (index: number, reaction: ReactionType) => void;
   handlePinMessage: (index: number) => void;
   handleSuggestionClick: (suggestion: string) => void;
   exportChatAsPDF: () => void;
@@ -58,7 +59,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ticketTriggerContext: null,
   showFileDropzone: false,
   pendingInput: '',
-  activeAgent: 'default',
+  activeAgent: AgentType.DEFAULT,
 
   // Computed values
   get filteredMessages() {
@@ -84,7 +85,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Create a new user message
     const newUserMessage: MessageType = {
-      sender: 'user',
+      sender: SenderType.USER,
       text: text,
       timestamp: new Date().toISOString(),
       id: `user-${Date.now()}`,
@@ -130,7 +131,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       setTimeout(() => {
         // Create a bot response
         const botResponse: MessageType = {
-          sender: 'bot',
+          sender: SenderType.BOT,
           text: `This is a simulated response to: "${text}"`,
           timestamp: new Date().toISOString(),
           id: `bot-${Date.now()}`,

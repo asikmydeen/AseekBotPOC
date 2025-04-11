@@ -8,6 +8,7 @@ import Message from '../message/Message';
 import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 import { ProcessingStatus, getStatusMessage } from '../../types/status';
+import { ReactionType } from '../../constants';
 
 // Enhanced Empty State Component
 const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (
@@ -124,8 +125,8 @@ interface MessageListProps {
   isThinking: boolean;
   progress: number;
   isDarkMode: boolean;
-  openMultimedia: (multimedia: { type: 'video' | 'graph' | 'image'; data: MultimediaData }) => void;
-  handleReaction: (index: number, reaction: 'thumbs-up' | 'thumbs-down') => void;
+  openMultimedia: (multimedia: { type: MultimediaType; data: MultimediaData }) => void;
+  handleReaction: (index: number, reaction: ReactionType) => void;
   handlePinMessage: (index: number) => void;
   messagesEndRef?: React.RefObject<HTMLDivElement | null> | React.MutableRefObject<HTMLDivElement | null>;
   // New async props
@@ -209,8 +210,8 @@ const MessageList: React.FC<MessageListProps> = ({
               <Message
                 message={message}
                 isDarkMode={isDarkMode}
-                onMultimediaClick={(multimedia) => openMultimedia({ type: 'video', data: multimedia })}
-                onReact={(_, reaction) => handleReaction(index, reaction ? 'thumbs-up' : 'thumbs-down')}
+                onMultimediaClick={(multimedia) => openMultimedia({ type: MultimediaType.VIDEO, data: multimedia })}
+                onReact={(_, reaction) => handleReaction(index, reaction ? ReactionType.THUMBS_UP : ReactionType.THUMBS_DOWN)}
                 onPin={(messageId, isPinned) => handlePinMessage(index)}
                 showCitations={true}
               />

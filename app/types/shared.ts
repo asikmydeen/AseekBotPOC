@@ -1,5 +1,6 @@
 // app/types/shared.ts
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { SenderType, AgentType, ReactionType, MultimediaType } from '../constants';
 
 // Shared multimedia data types
 export interface VideoData {
@@ -61,10 +62,10 @@ export interface FeedbackData {
 export interface MessageType {
   chatId: string;
   chatSessionId: string;
-  sender: 'user' | 'bot';
+  sender: SenderType;
   text: string;
   multimedia?: {
-    type: 'video' | 'graph' | 'image';
+    type: MultimediaType;
     data: MultimediaData;
   };
   suggestions?: string[];
@@ -73,7 +74,7 @@ export interface MessageType {
     content: string;
     citations?: string[];
   };
-  reaction?: 'thumbs-up' | 'thumbs-down';
+  reaction?: ReactionType;
   timestamp: string;
   ticket?: {
     id: string;
@@ -83,7 +84,7 @@ export interface MessageType {
   triggerTicket?: boolean;
   attachments?: FileAttachment[];
   id?: string;
-  agentType?: 'default' | 'bid-analysis' | 'supplier-search' | 'product-comparison' | 'technical-support';
+  agentType?: AgentType;
   message?: string; // For backward compatibility
   formattedMessage?: string;  // Optional formatted message for display override
   isError?: boolean;

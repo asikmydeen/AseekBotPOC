@@ -1,4 +1,5 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { SenderType } from '../constants';
 
 // Ticket types
 export enum TicketStep {
@@ -35,7 +36,7 @@ export type SetState<T> = Dispatch<SetStateAction<T>>;
 export interface MessageType {
   id: string;
   text: string;
-  sender: 'user' | 'bot';
+  sender: SenderType;
   timestamp: string;
   isLoading?: boolean;
   quickLinks?: QuickLink[];

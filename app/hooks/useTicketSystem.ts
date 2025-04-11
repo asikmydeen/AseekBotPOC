@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { TicketStep, TicketDetails } from '../types/shared';
 import { apiService } from '../utils/apiService';
+import { SenderType } from '../constants';
 
 /**
  * Custom hook to manage the ticket system functionality
@@ -74,7 +75,7 @@ const useTicketSystem = () => {
 
       // Create the ticket message using the API response
       const ticketMessage = {
-        sender: 'bot',
+        sender: SenderType.BOT,
         text: `Ticket created: ${response.subject}`,
         timestamp: response.createdAt ?? new Date().toISOString(),
         ticket: {
@@ -93,7 +94,7 @@ const useTicketSystem = () => {
 
       // Return an error message if ticket creation fails
       return {
-        sender: 'bot',
+        sender: SenderType.BOT,
         text: 'Failed to create ticket. Please try again.',
         timestamp: new Date().toISOString(),
         isError: true,

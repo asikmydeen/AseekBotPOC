@@ -276,7 +276,7 @@ function ChatApp() {
 
         // Create a bot message with the response
         const botMessage = {
-          sender: 'bot',
+          sender: SenderType.BOT,
           text: completionData || userMessage, // Use completion data if available, otherwise use userMessage
           timestamp: new Date().toISOString(),
           id: `bot-${Date.now()}`,

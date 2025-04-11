@@ -1,4 +1,5 @@
 import { MessageType } from "../types/shared";
+import { SenderType, AgentType } from '../constants';
 
 /**
  * Deep search for a property in an object
@@ -348,14 +349,14 @@ export function createDocumentAnalysisMessage(status: any, chatSessionId: string
   // Use analysisText for both formattedMessage and text to ensure proper markdown rendering
   // Also include the completion field if available
   return {
-    sender: 'bot',
+    sender: SenderType.BOT,
     formattedMessage: analysisText,
     text: analysisText,
     timestamp: status.timestamp || new Date().toISOString(),
     suggestions: suggestions,
     chatId: status.requestId || documentId,
     chatSessionId: chatSessionId,
-    agentType: 'bid-analysis', // Mark this as a document analysis message
+    agentType: AgentType.BID_ANALYSIS, // Mark this as a document analysis message
     completion: status.completion, // Include the completion field from the status response
     aggregatedResults: status.aggregatedResults // Include the aggregatedResults field from the status response
   };

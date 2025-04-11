@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClock, FiRefreshCw } from 'react-icons/fi';
 import { TicketStep, TicketDetails, FeedbackData } from '../../types/shared';
+import { SenderType } from '../../constants';
 import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
@@ -89,7 +90,7 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(true);
 
   // Extract suggestions from last bot message
-  const lastBotMessage = [...messages].reverse().find(msg => msg.sender === 'bot');
+  const lastBotMessage = [...messages].reverse().find(msg => msg.sender === SenderType.BOT);
   const suggestions = lastBotMessage?.suggestions || [];
 
 

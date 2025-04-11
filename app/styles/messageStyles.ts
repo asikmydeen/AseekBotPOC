@@ -1,6 +1,8 @@
 // app/styles/messageStyles.ts
 // Centralized styles for the Message component
 
+import { SenderType } from '../constants';
+
 // Animation types
 type SpinnerTransition = {
   duration: number;
@@ -201,8 +203,8 @@ export const buttonAnimationVariants = {
 /**
  * Get message container class based on sender and theme
  */
-export const getMessageContainerClass = (sender: 'user' | 'bot', isDarkMode: boolean): string => {
-  if (sender === 'user') {
+export const getMessageContainerClass = (sender: SenderType, isDarkMode: boolean): string => {
+  if (sender === SenderType.USER) {
     return isDarkMode
       ? 'bg-gradient-to-br from-gray-800 to-gray-900 dark-text border dark-border text-left'
       : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border border-gray-200 text-left';
@@ -216,8 +218,8 @@ export const getMessageContainerClass = (sender: 'user' | 'bot', isDarkMode: boo
 /**
  * Get message background colors based on sender and theme
  */
-export const getMessageBackgroundColors = (sender: 'user' | 'bot', isDarkMode: boolean): { backgroundColor: string } => {
-  if (sender === 'user') {
+export const getMessageBackgroundColors = (sender: SenderType, isDarkMode: boolean): { backgroundColor: string } => {
+  if (sender === SenderType.USER) {
     return { backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6' };
   } else {
     return { backgroundColor: isDarkMode ? '#172554' : '#EFF6FF' };
@@ -227,8 +229,8 @@ export const getMessageBackgroundColors = (sender: 'user' | 'bot', isDarkMode: b
 /**
  * Get avatar container class based on sender and theme
  */
-export const getAvatarContainerClass = (sender: 'user' | 'bot', isDarkMode: boolean): string => {
-  return sender === 'user'
+export const getAvatarContainerClass = (sender: SenderType, isDarkMode: boolean): string => {
+  return sender === SenderType.USER
     ? isDarkMode ? 'dark-active' : 'bg-gray-200'
     : isDarkMode ? 'dark-info-bg' : 'bg-blue-100';
 };
@@ -362,15 +364,15 @@ export const getTimestampClass = (isDarkMode: boolean): string => {
 /**
  * Get message wrapper class based on sender
  */
-export const getMessageWrapperClass = (sender: 'user' | 'bot'): string => {
-  return `mb-8 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+export const getMessageWrapperClass = (sender: SenderType): string => {
+  return `mb-8 ${sender === SenderType.USER ? 'text-right' : 'text-left'}`;
 };
 
 /**
  * Get message flex container class based on sender
  */
-export const getMessageFlexContainerClass = (sender: 'user' | 'bot'): string => {
-  return `flex items-start gap-3 ${sender === 'user' ? 'flex-row-reverse justify-start' : 'flex-row'}`;
+export const getMessageFlexContainerClass = (sender: SenderType): string => {
+  return `flex items-start gap-3 ${sender === SenderType.USER ? 'flex-row-reverse justify-start' : 'flex-row'}`;
 };
 
 /**
@@ -441,7 +443,7 @@ export const getSpinnerTransition = (): SpinnerTransition => {
 /**
  * Get all message styles
  */
-export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): MessageStyles => {
+export const getMessageStyles = (isDarkMode: boolean, sender: SenderType): MessageStyles => {
   return {
     container: {
       base: `p-5 rounded-2xl max-w-[85%] md:max-w-2xl overflow-hidden break-words ${getMessageContainerClass(sender, isDarkMode)}`,
@@ -451,9 +453,9 @@ export const getMessageStyles = (isDarkMode: boolean, sender: 'user' | 'bot'): M
     wrapper: getMessageWrapperClass(sender),
     flexContainer: getMessageFlexContainerClass(sender),
     avatar: {
-      container: getAvatarPositionClass(sender === 'user'),
-      inner: getAvatarInnerClass(sender === 'user', isDarkMode),
-      icon: sender === 'user' ? getUserThumbnailClass(isDarkMode) : getBotIconClass(isDarkMode)
+      container: getAvatarPositionClass(sender === SenderType.USER),
+      inner: getAvatarInnerClass(sender === SenderType.USER, isDarkMode),
+      icon: sender === SenderType.USER ? getUserThumbnailClass(isDarkMode) : getBotIconClass(isDarkMode)
     },
     content: {
       container: getMessageContainerClass(sender, isDarkMode),

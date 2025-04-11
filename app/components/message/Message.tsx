@@ -18,11 +18,12 @@ import ImageDialog from './ImageDialog';
 
 // Import types
 import { MessageType, MultimediaData } from '../../types/shared';
+import { SenderType, ReactionType } from '../../constants';
 
 interface MessageProps {
   message: MessageType;
   onMultimediaClick?: (multimedia: MultimediaData) => void;
-  onReact?: (messageId: string, reaction: boolean) => void;
+  onReact?: (messageId: string, isPositive: boolean) => void;
   onPin?: (messageId: string, isPinned: boolean) => void;
   isDarkMode: boolean;
   showCitations?: boolean;
@@ -89,7 +90,7 @@ function Message({
 
     // Handle empty content case
     if (!messageContent) {
-      const errorMessage = message.sender === 'bot'
+      const errorMessage = message.sender === SenderType.BOT
         ? "Error: No message content available."
         : "";
       setDisplayedText(errorMessage);
@@ -129,9 +130,9 @@ function Message({
   };
 
   // Handle reaction
-  const handleReaction = (reaction: boolean) => {
+  const handleReaction = (isPositive: boolean) => {
     if (onReact) {
-      onReact(message.id ?? '', reaction);
+      onReact(message.id ?? '', isPositive);
     }
   };
 
@@ -210,9 +211,9 @@ function Message({
           )}
 
           {/* Message Actions */}
-          {message.sender === 'bot' && (
+          {message.sender === SenderType.BOT && (
             <MessageActions
-              reaction={message.reaction === 'thumbs-up' ? true : message.reaction === 'thumbs-down' ? false : null}
+              reaction={message.reaction === ReactionType.THUMBS_UP ? true : message.reaction === ReactionType.THUMBS_DOWN ? false : null}
               isPinned={!!message.pinned}
               showCitations={showCitationPanel}
               onReact={handleReaction}
