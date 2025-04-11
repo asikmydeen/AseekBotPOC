@@ -82,11 +82,13 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     console.log('ModalContext: handleSubmit called with', files.length, 'files and', Object.keys(variables).length, 'variables');
     console.log('ModalContext: Current prompt:', currentPrompt?.title);
 
-    if (onFileSubmit) {
-      console.log('ModalContext: Calling onFileSubmit callback');
-      // Pass the files and variables to the callback
-      onFileSubmit(files, variables);
+    if (onFileSubmit && currentPrompt) {
+      console.log('ModalContext: Calling onFileSubmit callback with prompt:', currentPrompt.title);
+      // Pass the files, variables, and the current prompt to the callback
+      onFileSubmit(files, variables, currentPrompt);
       console.log('ModalContext: onFileSubmit callback called successfully');
+    } else if (!currentPrompt) {
+      console.error('ModalContext: No current prompt found!');
     } else {
       console.error('ModalContext: onFileSubmit callback is not defined!');
     }
