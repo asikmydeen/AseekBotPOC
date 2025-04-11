@@ -463,7 +463,7 @@ function ChatApp() {
             externalFileToAdd={preselectedFile} // New prop for adding files from sidebar
             // Pass the async processing state to show the typing indicator
             externalAsyncProcessing={isAsyncProcessing}
-            externalAsyncStatus={processingStatus}
+            externalAsyncStatus={asyncStatus}
             externalAsyncProgress={processingProgress}
             onRefreshStatus={() => {
               // Implement refresh functionality if needed
