@@ -362,8 +362,9 @@ const usePromptFileHandler = ({
     console.log('usePromptFileHandler: openFileDialog called for prompt:', prompt.title);
     console.log('usePromptFileHandler: Prompt ID:', prompt.promptId);
 
-    // Set the selected prompt locally
+    // Set the selected prompt locally - this is critical for the handleFileSelection callback
     setSelectedPrompt(prompt);
+    console.log('usePromptFileHandler: Set selectedPrompt state to:', prompt.title);
     setError(null);
 
     // Parse prompt requirements first
