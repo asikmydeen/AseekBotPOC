@@ -9,6 +9,7 @@ import { MessageType, MultimediaData } from '../../types/shared';
 import { EnhancedTypingIndicator, messageAnimations } from './EnhancedUIComponents';
 import { ProcessingStatus, getStatusMessage } from '../../types/status';
 import { MultimediaType, ReactionType } from '../../constants';
+import { getMessageListStyles } from '../../styles/chatStyles';
 
 // Enhanced Empty State Component
 const EmptyState = ({ isDarkMode }: { isDarkMode: boolean }) => (
@@ -180,12 +181,15 @@ const MessageList: React.FC<MessageListProps> = ({
     return (Math.random() * 10 - 5); // Random number between -5 and 5
   };
 
+  // Get centralized styles
+  const styles = getMessageListStyles();
+
   return (
     <motion.div
       initial="hidden"
       animate="show"
       variants={container}
-      className="flex flex-col space-y-4 sm:space-y-6 px-1 sm:px-2 w-full"
+      className={styles.container}
     >
       {messages.length === 0 ? (
         <EmptyState isDarkMode={isDarkMode} />
@@ -205,7 +209,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 mass: 1,
                 delay: 0.05 * index
               }}
-              className="message-container w-full max-w-full"
+              className={styles.messageItem}
             >
               <Message
                 message={message}

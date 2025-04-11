@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSuggestionChipStyles } from '../../styles/chatStyles';
 
 interface SuggestionChipsProps {
   suggestions?: string[];
@@ -53,9 +54,12 @@ const EnhancedSuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, 
     }
   };
 
+  // Get centralized styles
+  const styles = getSuggestionChipStyles();
+
   return (
     <motion.div
-      className="flex flex-wrap gap-3 mb-4"
+      className={styles.container}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -67,20 +71,7 @@ const EnhancedSuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, 
           onClick={() => handleChipClick(suggestion)}
           onMouseEnter={() => setHoveredChip(suggestion)}
           onMouseLeave={() => setHoveredChip(null)}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300
-            whitespace-nowrap ${selectedChip === suggestion
-              ? darkMode
-                ? 'border-2 border-blue-400 bg-blue-800 shadow-lg shadow-blue-900/30'
-                : 'border-2 border-blue-500 bg-blue-100 shadow-md shadow-blue-500/20'
-              : hoveredChip === suggestion
-                ? darkMode
-                  ? 'border-2 border-blue-400/50 bg-blue-800/80 shadow-md shadow-blue-900/20'
-                  : 'border-2 border-blue-500/50 bg-blue-100/80 shadow-sm shadow-blue-500/10'
-                : 'border-2 border-transparent'
-            } ${darkMode
-              ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 shadow-md'
-              : 'bg-blue-50 hover:bg-blue-100 text-blue-800 shadow-sm'
-            }`}
+          className={styles.chip(selectedChip === suggestion, hoveredChip === suggestion, darkMode)}
           whileHover={{
             scale: 1.05,
             boxShadow: darkMode

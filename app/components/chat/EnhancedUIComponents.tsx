@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiPaperclip, FiMic } from 'react-icons/fi';
 import TextareaAutosize from 'react-textarea-autosize';
+import { getEnhancedChatInputStyles, getEnhancedTypingIndicatorStyles, messageAnimations } from '../../styles/chatStyles';
 
 interface EnhancedChatInputProps {
   onSubmit: (message: string) => void;
@@ -62,28 +63,18 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     }
   };
 
-  // Button pulse animation
-  const pulseVariants = {
-    inactive: { scale: 1 },
-    active: {
-      scale: [1, 1.05, 1],
-      transition: {
-        repeat: Infinity,
-        repeatType: "mirror" as const,
-        duration: 1.5
-      }
-    }
-  };
+  // Get centralized styles
+  const styles = getEnhancedChatInputStyles(isDarkMode);
 
   return (
-    <div className="relative w-full mt-2 px-1 sm:px-0">
+    <div className={styles.container}>
       <motion.div
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className={`relative flex-1 transition-all duration-300 ${isFocused ? 'shadow-lg' : 'shadow-md'}`}
+        className={`${styles.innerContainer} ${isFocused ? 'shadow-lg' : 'shadow-md'}`}
       >
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className={styles.form}>
           <TextareaAutosize
             ref={actualRef}
             value={inputValue}
@@ -93,13 +84,7 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             onBlur={() => setIsFocused(false)}
             placeholder={isThinking ? "AseekBot is thinking..." : "Type your message here..."}
             disabled={isThinking}
-            className={`w-full p-3 sm:p-4 pr-16 sm:pr-24 rounded-2xl resize-none transition-all duration-300 focus:outline-none text-sm sm:text-base ${
-              isDarkMode
-                ? 'dark-bg dark-text dark-border focus:ring-2 focus:ring-blue-500 dark-placeholder'
-                : 'bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-600 placeholder-gray-500'
-            } ${isFocused ? 'border-transparent' : 'border'} ${
-              isThinking ? 'opacity-70' : 'opacity-100'
-            }`}
+            className={`${styles.textarea} ${isFocused ? 'border-transparent' : 'border'} ${isThinking ? 'opacity-70' : 'opacity-100'}`}
             minRows={1}
             maxRows={5}
             style={{
@@ -107,19 +92,13 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             }}
           />
 
-          <div className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 flex items-center space-x-1 sm:space-x-2">
+          <div className={styles.buttonsContainer}>
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onFileUploadClick}
-              className={`p-2 sm:p-3 rounded-full transition-colors ${
-                isDarkMode
-                  ? 'dark-text-secondary hover:dark-text dark-bg-secondary hover:dark-bg-hover'
-                  : 'text-gray-600 hover:text-gray-800 bg-gray-200 hover:bg-gray-300'
-              } ${
-                showFileDropzone ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-700') : ''
-              }`}
+              className={showFileDropzone ? styles.fileButtonActive : styles.fileButton}
               aria-label="Attach files"
               disabled={isThinking}
             >
@@ -129,19 +108,11 @@ const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             <motion.button
               type="submit"
               disabled={!inputValue.trim() || isThinking}
-              variants={pulseVariants}
+              variants={messageAnimations.pulseVariants}
               animate={inputValue.trim() && !isThinking ? "active" : "inactive"}
               whileHover={{ scale: inputValue.trim() && !isThinking ? 1.05 : 1 }}
               whileTap={{ scale: inputValue.trim() && !isThinking ? 0.95 : 1 }}
-              className={`p-2 sm:p-3 rounded-full transition-all duration-300 ${
-                !inputValue.trim() || isThinking
-                  ? isDarkMode
-                    ? 'dark-bg dark-text-disabled cursor-not-allowed'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : isDarkMode
-                    ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-md'
-                    : 'bg-blue-600 text-white hover:bg-blue-500 shadow-md'
-              }`}
+              className={styles.sendButton(!inputValue.trim() || isThinking, isDarkMode)}
               aria-label="Send message"
             >
               <FiSend size={20} />
@@ -342,116 +313,31 @@ const EnhancedFileDropzone: React.FC<EnhancedFileDropzoneProps> = ({
   );
 };
 
-// Enhanced Message Component Animation Variants
-const messageAnimations = {
-  // Message entry animation
-  messageEntry: {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 200,
-        damping: 20,
-        mass: 0.8
-      }
-    },
-    exit: {
-      opacity: 0,
-      y: -20,
-      transition: {
-        duration: 0.2
-      }
-    }
-  },
-
-  // Typing indicator animation
-  typingIndicator: {
-    dot1: {
-      y: [0, -6, 0],
-      transition: {
-        repeat: Infinity,
-        duration: 0.8,
-        ease: "easeInOut"
-      }
-    },
-    dot2: {
-      y: [0, -6, 0],
-      transition: {
-        repeat: Infinity,
-        duration: 0.8,
-        delay: 0.2,
-        ease: "easeInOut"
-      }
-    },
-    dot3: {
-      y: [0, -6, 0],
-      transition: {
-        repeat: Infinity,
-        duration: 0.8,
-        delay: 0.4,
-        ease: "easeInOut"
-      }
-    }
-  },
-
-  // Button hover animations
-  buttonHover: {
-    hover: {
-      scale: 1.1,
-      transition: { duration: 0.2 }
-    },
-    tap: {
-      scale: 0.9,
-      transition: { duration: 0.2 }
-    }
-  },
-
-  // For collapsible sections
-  collapse: {
-    hidden: {
-      height: 0,
-      opacity: 0,
-      transition: {
-        height: { duration: 0.3, ease: "easeInOut" },
-        opacity: { duration: 0.2 }
-      }
-    },
-    visible: {
-      height: "auto",
-      opacity: 1,
-      transition: {
-        height: { duration: 0.3, ease: "easeInOut" },
-        opacity: { duration: 0.2, delay: 0.1 }
-      }
-    }
-  }
-};
+// Animation variants are now imported from chatStyles.ts
 
 // Enhanced Typing Indicator
 const EnhancedTypingIndicator = ({ isDarkMode }: { isDarkMode: boolean }) => {
+  // Get centralized styles
+  const styles = getEnhancedTypingIndicatorStyles(isDarkMode);
+
   return (
-    <div className={`p-3 sm:p-4 rounded-2xl inline-flex items-center ${
-      isDarkMode ? 'bg-gray-800 shadow-lg shadow-gray-900/50' : 'bg-white shadow-lg shadow-gray-200/50'
-    }`}>
-      <div className="font-semibold text-xs sm:text-sm mr-2 sm:mr-3">AseekBot is thinking</div>
-      <div className="flex space-x-1.5">
+    <div className={styles.container}>
+      <div className={styles.text}>AseekBot is thinking</div>
+      <div className={styles.dotsContainer}>
         <motion.div
           variants={messageAnimations.typingIndicator}
           animate="dot1"
-          className={`w-2.5 h-2.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
+          className={styles.dot}
         />
         <motion.div
           variants={messageAnimations.typingIndicator}
           animate="dot2"
-          className={`w-2.5 h-2.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
+          className={styles.dot}
         />
         <motion.div
           variants={messageAnimations.typingIndicator}
           animate="dot3"
-          className={`w-2.5 h-2.5 rounded-full ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
+          className={styles.dot}
         />
       </div>
     </div>

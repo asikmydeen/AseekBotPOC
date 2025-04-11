@@ -2,6 +2,7 @@
 import { useState, KeyboardEvent, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import { MdSend } from 'react-icons/md';
 import { FaPaperclip } from 'react-icons/fa';
+import { getChatInputStyles } from '../../styles/chatStyles';
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -67,15 +68,15 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
     }
   };
 
+  // Get centralized styles
+  const styles = getChatInputStyles(isDarkMode);
+
   return (
-    <div className="flex flex-col">
-      <form onSubmit={handleSubmit} className="relative">
+    <div className={styles.container}>
+      <form onSubmit={handleSubmit} className={styles.form}>
         <textarea
           ref={internalRef}
-          className={`w-full p-4 pr-24 rounded-lg resize-none focus:outline-none focus:ring-2 ${isDarkMode
-            ? 'bg-gray-800 text-white border-gray-700 focus:ring-blue-500'
-            : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-600'
-            } border transition-colors`}
+          className={styles.textarea}
           placeholder="Type your message here..."
           rows={1}
           value={inputText}
@@ -84,14 +85,11 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
           disabled={isThinking}
           style={{ minHeight: '60px', maxHeight: '120px' }}
         />
-        <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+        <div className={styles.buttonsContainer}>
           <button
             type="button"
             onClick={onFileUploadClick}
-            className={`p-2 rounded-full transition-colors ${isDarkMode
-              ? 'text-gray-400 hover:text-gray-200 bg-gray-700 hover:bg-gray-600'
-              : 'text-gray-500 hover:text-gray-700 bg-gray-200 hover:bg-gray-300'
-              } ${showFileDropzone ? (isDarkMode ? 'bg-gray-600 text-blue-300' : 'bg-gray-300 text-blue-500') : ''}`}
+            className={showFileDropzone ? styles.fileButtonActive : styles.fileButton}
             aria-label="Attach files"
           >
             <FaPaperclip size={18} />
@@ -99,14 +97,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
           <button
             type="submit"
             disabled={!inputText.trim() || isThinking}
-            className={`p-2 rounded-full transition-colors ${!inputText.trim() || isThinking
-              ? isDarkMode
-                ? 'text-gray-500 bg-gray-700'
-                : 'text-gray-400 bg-gray-200'
-              : isDarkMode
-                ? 'text-white bg-blue-600 hover:bg-blue-700'
-                : 'text-white bg-blue-500 hover:bg-blue-600'
-              }`}
+            className={!inputText.trim() || isThinking ? styles.sendButtonDisabled : styles.sendButton}
             aria-label="Send message"
           >
             <MdSend size={20} />

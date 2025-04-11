@@ -2,6 +2,7 @@
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TicketDetails, TicketStep } from '../../types/shared';
+import { getTicketFormStyles } from '../../styles/chatStyles';
 
 interface TicketFormProps {
   isDarkMode: boolean;
@@ -50,15 +51,17 @@ const TicketForm: React.FC<TicketFormProps> = ({
     }
   }, [ticketDetails, setTicketDetails]);
 
+  // Get centralized styles
+  const styles = getTicketFormStyles(isDarkMode);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className={`mb-6 p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-        }`}
+      className={styles.container}
     >
-      <h3 className="text-lg font-semibold mb-4">Create A Ticket</h3>
+      <h3 className={styles.title}>Create A Ticket</h3>
       <form onSubmit={handleSubmit}>
         <AnimatePresence mode="wait">
           {ticketStep === 0 ? (
@@ -69,8 +72,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="mb-4">
-                <label htmlFor="ticketTitle" className="block mb-2 text-sm font-medium">
+              <div className={styles.formGroup}>
+                <label htmlFor="ticketTitle" className={styles.label}>
                   Ticket Title
                 </label>
                 <input
@@ -78,10 +81,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   id="ticketTitle"
                   value={String(ticketDetails.title || '')}
                   onChange={handleTitleChange}
-                  className={`w-full p-2 rounded-md ${isDarkMode
-                      ? 'bg-gray-700 text-white border-gray-600'
-                      : 'bg-gray-50 text-gray-900 border-gray-300'
-                    } border focus:ring-blue-500 focus:border-blue-500`}
+                  className={styles.input}
                   placeholder="Enter a title for your ticket"
                   required
                 />
@@ -95,8 +95,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="mb-4">
-                <label htmlFor="ticketDescription" className="block mb-2 text-sm font-medium">
+              <div className={styles.formGroup}>
+                <label htmlFor="ticketDescription" className={styles.label}>
                   Ticket Description
                 </label>
                 <textarea
@@ -104,10 +104,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                   value={ticketDetails.description}
                   onChange={handleDescriptionChange}
                   rows={4}
-                  className={`w-full p-2 rounded-md ${isDarkMode
-                      ? 'bg-gray-700 text-white border-gray-600'
-                      : 'bg-gray-50 text-gray-900 border-gray-300'
-                    } border focus:ring-blue-500 focus:border-blue-500`}
+                  className={styles.textarea}
                   placeholder="Describe your request in detail"
                   required
                 />
@@ -116,13 +113,12 @@ const TicketForm: React.FC<TicketFormProps> = ({
           )}
         </AnimatePresence>
 
-        <div className="flex justify-between mt-6">
+        <div className={styles.buttonContainer}>
           <div>
             <button
               type="button"
               onClick={closeTicketForm}
-              className={`px-4 py-2 rounded-md mr-2 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                }`}
+              className={`${styles.buttonSecondary} mr-2`}
             >
               Cancel
             </button>
@@ -130,8 +126,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
               <button
                 type="button"
                 onClick={handlePreviousStep}
-                className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
+                className={styles.buttonSecondary}
               >
                 Back
               </button>
@@ -143,12 +138,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 type="button"
                 onClick={handleNextStep}
                 disabled={!String(ticketDetails.title || '').trim()}
-                className={`px-4 py-2 rounded-md ${!String(ticketDetails.title || '').trim()
-                    ? 'bg-gray-500 cursor-not-allowed'
-                    : isDarkMode
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-blue-500 hover:bg-blue-600'
-                  } text-white`}
+                className={!String(ticketDetails.title || '').trim()
+                    ? 'bg-gray-500 cursor-not-allowed px-4 py-2 rounded-md text-white'
+                    : styles.button
+                }
               >
                 Next
               </button>
@@ -156,12 +149,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
               <button
                 type="submit"
                 disabled={!(ticketDetails.description && ticketDetails.description.trim())}
-                className={`px-4 py-2 rounded-md ${!(ticketDetails.description && ticketDetails.description.trim())
-                    ? 'bg-gray-500 cursor-not-allowed'
-                    : isDarkMode
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-green-500 hover:bg-green-600'
-                  } text-white`}
+                className={!(ticketDetails.description && ticketDetails.description.trim())
+                    ? 'bg-gray-500 cursor-not-allowed px-4 py-2 rounded-md text-white'
+                    : styles.button
+                }
               >
                 Submit Ticket
               </button>

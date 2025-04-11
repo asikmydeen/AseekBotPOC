@@ -9,6 +9,7 @@ import SuggestionChips from './SuggestionChips';
 import TicketForm from './TicketForm';
 import FeedbackForm from './FeedbackForm';
 import { EnhancedChatInput, EnhancedFileDropzone } from './EnhancedUIComponents';
+import { getChatFooterStyles } from '../../styles/chatStyles';
 
 interface ChatFooterProps {
   isDarkMode: boolean;
@@ -182,8 +183,11 @@ const ChatFooter: React.FC<ChatFooterProps> = ({
     );
   };
 
+  // Get centralized styles
+  const styles = getChatFooterStyles(isDarkMode);
+
   return (
-    <div className={`px-2 sm:px-4 pt-2 pb-3 sm:pb-4 border-t ${isDarkMode ? 'dark-border dark-bg' : 'border-gray-200 bg-white'}`}>
+    <div className={styles.container}>
       {/* Main content based on state */}
       <AnimatePresence mode="wait">
         {renderFooterContent()}

@@ -12,6 +12,7 @@ import {
   FaFile,
   FaTimes
 } from 'react-icons/fa';
+import { getFileDropzoneStyles } from '../../styles/chatStyles';
 
 interface UploadedFile {
   name: string;
@@ -138,17 +139,16 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
     return null;
   };
 
+  // Get centralized styles
+  const styles = getFileDropzoneStyles(isDarkMode);
+
   return (
-    <div className="mb-2">
+    <div className={styles.container}>
       {/* Collapsible toggle button */}
       <button
         type="button"
         onClick={toggleExpanded}
-        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors w-full
-          ${isDarkMode
-            ? 'text-gray-300 hover:bg-gray-700'
-            : 'text-gray-700 hover:bg-gray-100'
-          }`}
+        className={styles.toggleButton}
       >
         <FaPaperclip size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
         <span className="flex-1 text-left">
@@ -166,23 +166,12 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
       {isExpanded && (
         <div
           {...getRootProps()}
-          className={`
-            mt-2 p-3 border border-dashed rounded-lg text-center cursor-pointer transition-all
-            ${isDarkMode
-              ? 'bg-gray-800/50 border-gray-600 hover:border-blue-500'
-              : 'bg-gray-50/50 border-gray-300 hover:border-blue-500'
-            }
-            ${isDragActive
-              ? (isDarkMode ? 'border-blue-400 bg-gray-700/50' : 'border-blue-400 bg-blue-50/50')
-              : ''
-            }
-          `}
+          className={isDragActive ? styles.dropAreaActive : styles.dropArea}
         >
           <input {...getInputProps()} />
 
           {fileSizeLimit && (
-            <div className={`inline-block px-2 py-1 mb-2 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/70 text-blue-200' : 'bg-blue-100 text-blue-800'
-              }`}>
+            <div className={styles.fileSizeLimit}>
               Max file size: {fileSizeLimit}MB
             </div>
           )}
@@ -204,13 +193,14 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                   return (
                     <li
                       key={`${safeFile.name}-${index}`}
-                      className={`flex items-center justify-between p-1.5 rounded ${isDarkMode ? 'bg-gray-700/70' : 'bg-gray-100'
-                        }`}
+                      className={styles.fileItem}
                     >
                       <div className="flex items-center flex-1 min-w-0">
-                        {getFileIcon(safeFile.type)}
-                        <span className="ml-2 text-sm truncate max-w-[200px]">{safeFile.name}</span>
-                        <span className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <span className={styles.fileIcon.container}>
+                          {getFileIcon(safeFile.type)}
+                        </span>
+                        <span className={styles.fileName}>{safeFile.name}</span>
+                        <span className={styles.fileSize}>
                           ({formatFileSize(safeFile.size)})
                         </span>
                         {getFileStatusIndicator(file)}
@@ -222,10 +212,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                             e.stopPropagation();
                             onRemoveFile(file.name);
                           }}
-                          className={`p-1 rounded-full ${isDarkMode
-                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-600'
-                            : 'text-gray-500 hover:text-red-500 hover:bg-gray-200'
-                            }`}
+                          className={styles.fileRemoveButton}
                         >
                           <FaTimes size={14} />
                         </button>
@@ -243,21 +230,21 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({
                 color={isDarkMode ? "#3B82F6" : "#2563EB"}
                 size={36}
               />
-              <p className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className={styles.uploadingText}>
                 Uploading file...
               </p>
-              <progress
-                value={uploadProgress}
-                max="100"
-                className={`w-64 h-2 mt-3 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                  }`}
-              />
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className={styles.progressContainer}>
+                <div
+                  className={styles.progressBar}
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className={styles.progressText}>
                 {uploadProgress}%
               </p>
             </div>
           ) : isDragActive ? (
-            <p className={`py-3 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+            <p className={styles.dragPrompt}>
               Drop the files here...
             </p>
           ) : (
