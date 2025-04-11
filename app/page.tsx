@@ -347,7 +347,7 @@ function ChatApp() {
       name: file.fileName || 'Unnamed File',
       size: typeof file.fileSize === 'number' ? file.fileSize : 0,
       type: file.fileType || 'application/octet-stream',
-      url: file.presignedUrl || '',
+      url: file.url || file.presignedUrl || '',
       fileId: file.fileId || fileKey || '',
       status: 'success',
       progress: 100,
