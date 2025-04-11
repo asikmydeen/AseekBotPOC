@@ -507,7 +507,7 @@ const usePromptFileHandler = ({
         });
 
         console.log('Detected variable types:', types);
-        setVariableTypes(types);
+        setVariableTypes(types as Record<string, VariableType>);
       }
 
       // Set the state and immediately use the values
