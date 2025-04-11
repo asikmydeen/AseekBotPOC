@@ -374,6 +374,12 @@ const usePromptFileHandler = ({
         // This will trigger the typing indicator and progress bar
         currentStatusCallback('PROCESSING', 10);
         console.log('usePromptFileHandler: Updated status to PROCESSING');
+
+        // Start polling for status updates
+        if (apiResponse && apiResponse.requestId) {
+          setIsPolling(true);
+          setRequestId(apiResponse.requestId);
+        }
       }
 
       // Reset state after successful submission
