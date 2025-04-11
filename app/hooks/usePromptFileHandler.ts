@@ -4,7 +4,7 @@ import { UploadedFile, Prompt, PromptVariable } from '../types/shared';
 import { useModal } from '../contexts/ModalContext';
 
 interface UsePromptFileHandlerProps {
-  onStatusUpdate?: (status: string, progress: number, userMessage?: string) => void;
+  onStatusUpdate?: (status: string, progress: number, userMessage?: string, isPromptMessage?: boolean) => void;
   sessionId: string;
   chatId: string;
   userId: string;
