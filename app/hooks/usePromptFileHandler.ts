@@ -376,8 +376,10 @@ const usePromptFileHandler = ({
     console.log('usePromptFileHandler: Prompt ID:', prompt.promptId);
 
     // Set the selected prompt locally - this is critical for the handleFileSelection callback
-    setSelectedPrompt(prompt);
-    console.log('usePromptFileHandler: Set selectedPrompt state to:', prompt.title);
+    // We need to create a new object to ensure React detects the change
+    const promptCopy = { ...prompt };
+    setSelectedPrompt(promptCopy);
+    console.log('usePromptFileHandler: Set selectedPrompt state to:', promptCopy.title);
     setError(null);
 
     // Parse prompt requirements first
