@@ -494,16 +494,16 @@ const usePromptFileHandler = ({
             type = 'select';
             // Add some default options for common select types
             if (variable.includes('priority')) {
-              types[variable] = { type, options: ['Low', 'Medium', 'High'] };
+              types[variable] = { type: 'select', options: ['Low', 'Medium', 'High'] };
             } else if (variable.includes('status')) {
-              types[variable] = { type, options: ['New', 'In Progress', 'Completed'] };
+              types[variable] = { type: 'select', options: ['New', 'In Progress', 'Completed'] };
             } else {
-              types[variable] = { type };
+              types[variable] = { type: 'select' };
             }
             return; // Skip the default assignment below
           }
 
-          types[variable] = { type };
+          types[variable] = { type: type as 'text' | 'file' | 'number' | 'date' | 'select' };
         });
 
         console.log('Detected variable types:', types);
